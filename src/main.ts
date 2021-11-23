@@ -1,0 +1,23 @@
+/* istanbul ignore file */
+
+import { AppModule } from './app.module';
+import { NestFactory } from '@nestjs/core';
+import { SwaggerModule, DocumentBuilder } from '@nestjs/swagger';
+import { ValidationPipe } from '@nestjs/common/pipes';
+
+async function bootstrap() {
+  const app = await NestFactory.create(AppModule, { cors: true });
+  app.useGlobalPipes(new ValidationPipe());
+
+  const openApiConfig = new DocumentBuilder()
+    .setTitle('dependabot')
+    .setDescription('Api for dependabot poc')
+    .setVersion('1.0')
+    .build();
+
+  const document = SwaggerModule.createDocument(app, openApiConfig);
+  SwaggerModule.setup('api', app, document);
+
+  await app.listen(process.env.PORT);
+}
+bootstrap();
