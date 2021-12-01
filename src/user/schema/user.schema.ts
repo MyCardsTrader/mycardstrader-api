@@ -1,8 +1,8 @@
 import { Prop, Schema, SchemaFactory } from '@nestjs/mongoose';
-import { Document } from 'mongoose';
+import { Document, Schema as SchemaNative } from 'mongoose';
+import UserLocation from '../interfaces/user-location.interface';
 
 export type UserDocument = User & Document;
-
 @Schema({
   timestamps: true,
 })
@@ -29,6 +29,11 @@ export class User {
   })
   availableTreasures?: number;
 
+  @Prop({
+    required: false,
+    type: SchemaNative.Types.Mixed,
+  })
+  location?: UserLocation;
 
   @Prop({
     required: true,

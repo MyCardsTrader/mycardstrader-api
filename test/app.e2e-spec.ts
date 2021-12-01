@@ -28,21 +28,75 @@ describe('AppController (e2e)', () => {
   it('/ (POST) user', async () => {
     const requestUser = await request(app.getHttpServer())
       .post('/user')
-      .send({ email: 'nemo@nautilus.sub', password: 'aronnax'})
+      .send({
+        email: 'nemo@nautilus.sub',
+        password: 'aronnax',
+        location: {
+          address: "6210 Fremlin St, Vancouver, BC V5Z 3X3, Canada",
+          lat: 49.2290631,
+          lng: -123.1264691,
+        }})
       .expect(201);
       userId = requestUser.body._id;
       expect(requestUser.body.availableTreasures).toBe(0);
       expect(requestUser.body.holdTreasures).toBe(0);
   });
 
-  it('/ (POST) user fail', async () => {
+  it('/ (POST) user fail because no password or location', async () => {
     const requestUser = await request(app.getHttpServer())
       .post('/user')
       .send({ email: 'nemo@nautilus.sub' })
       .expect(400);
+      expect(requestUser.body.message.length).toEqual(3);
+      expect(requestUser.body.message[0]).toBe('password must be a string');
+      expect(requestUser.body.message[1]).toBe('password should not be empty');
+      expect(requestUser.body.message[2]).toBe('location should not be empty');
+  });
+
+  it('/ (POST) user fail because no password', async () => {
+    const requestUser = await request(app.getHttpServer())
+      .post('/user')
+      .send({
+        email: 'nemo@nautilus.sub',
+        location: {
+          address: "6210 Fremlin St, Vancouver, BC V5Z 3X3, Canada",
+          lat: 49.2290631,
+          lng: -123.1264691,
+        },
+      })
+      .expect(400);
       expect(requestUser.body.message.length).toEqual(2);
       expect(requestUser.body.message[0]).toBe('password must be a string');
       expect(requestUser.body.message[1]).toBe('password should not be empty');
+  });
+
+  it('/ (POST) user fail because no email', async () => {
+    const requestUser = await request(app.getHttpServer())
+      .post('/user')
+      .send({
+        password: 'aronnax',
+        location: {
+          address: "6210 Fremlin St, Vancouver, BC V5Z 3X3, Canada",
+          lat: 49.2290631,
+          lng: -123.1264691,
+        },
+      })
+      .expect(400);
+      expect(requestUser.body.message.length).toEqual(2);
+      expect(requestUser.body.message[0]).toBe('email must be an email');
+      expect(requestUser.body.message[1]).toBe('email should not be empty');
+  });
+
+  it('/ (POST) user fail because no location', async () => {
+    const requestUser = await request(app.getHttpServer())
+      .post('/user')
+      .send({
+        email: 'nemo@nautilus.sub',
+        password: 'aronnax',
+      })
+      .expect(400);
+      expect(requestUser.body.message.length).toEqual(1);
+      expect(requestUser.body.message[0]).toBe('location should not be empty');
   });
 
   it('/ (GET) user', async () => {
