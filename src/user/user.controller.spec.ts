@@ -42,6 +42,11 @@ describe('UserController', () => {
     const userDto: CreateUserDto = {
       email: 'captain.nemo@nautilus.sub',
       password: 'aronnax',
+      location: {
+        address: "6210 Fremlin St, Vancouver, BC V5Z 3X3, Canada",
+        lat: 49.2290631,
+        lng: -123.1264691,
+      }
     };
     // When
     controller.createUser(userDto);

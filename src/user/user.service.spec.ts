@@ -1,7 +1,7 @@
 import { getModelToken } from '@nestjs/mongoose';
 import { Test, TestingModule } from '@nestjs/testing';
 import { CreateUserDto } from './dto/create-user.dto';
-import { User, UserSchema } from './schema/user.schema';
+import { UserSchema } from './schema/user.schema';
 import { UserService } from './user.service';
 import * as mongoose from 'mongoose';
 import { HttpException } from '@nestjs/common';
@@ -55,6 +55,11 @@ describe('UserService', () => {
     const userDto: CreateUserDto = {
       email: 'captain.nemo@nautilus.sub',
       password: 'aronnax',
+      location: {
+        address: "6210 Fremlin St, Vancouver, BC V5Z 3X3, Canada",
+        lat: 49.2290631,
+        lng: -123.1264691,
+      },
     };
 
     beforeEach(() => {
