@@ -1,10 +1,10 @@
-import { scryptSync, randomBytes } from 'crypto';
 import { mocked } from 'ts-jest/utils';
-import { Test, TestingModule } from '@nestjs/testing';
 import { JwtService } from '@nestjs/jwt';
-import { UnauthorizedException } from '@nestjs/common';
 import { AuthService } from './auth.service';
+import { scryptSync, randomBytes } from 'crypto';
 import { UserService } from '../user/user.service';
+import { Test, TestingModule } from '@nestjs/testing';
+import { UnauthorizedException } from '@nestjs/common';
 
 jest.mock('crypto', () => ({
   ...(jest.requireActual('crypto') as any),

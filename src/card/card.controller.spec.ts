@@ -1,10 +1,10 @@
 import { CardService } from './card.service';
 import { CardLang } from './interfaces/lang.enum';
 import { CardController } from './card.controller';
+import { Grading } from './interfaces/grading.enum';
 import { Test, TestingModule } from '@nestjs/testing';
 import { CreateCardDto } from './dto/create-card.dto';
 import { DeleteCardDto } from './dto/delete-card.dto';
-import { Grading } from './interfaces/grading.enum';
 
 const cardServiceProviderMock = {
   createCard: jest.fn(),
