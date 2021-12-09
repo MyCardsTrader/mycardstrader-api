@@ -1,8 +1,8 @@
+import { UserService } from './user.service';
+import { UserController } from './user.controller';
 import { Test, TestingModule } from '@nestjs/testing';
 import { CreateUserDto } from './dto/create-user.dto';
 import { DeleteUserDto } from './dto/delete-user.dto';
-import { UserController } from './user.controller';
-import { UserService } from './user.service';
 
 const userServiceProviderMock = {
   findAll: jest.fn(),
@@ -43,9 +43,8 @@ describe('UserController', () => {
       email: 'captain.nemo@nautilus.sub',
       password: 'aronnax',
       location: {
-        address: "6210 Fremlin St, Vancouver, BC V5Z 3X3, Canada",
-        lat: 49.2290631,
-        lng: -123.1264691,
+        type: 'Point',
+        coordinates: [-123.1264691, 49.2290631],
       }
     };
     // When
@@ -59,7 +58,7 @@ describe('UserController', () => {
   it('should call service deleteUser()', () => {
     // Given
     const deleteUserDto: DeleteUserDto = {
-      id: 'monId', 
+      id: 'userId', 
     };
     // When
     controller.deleteUser(deleteUserDto);

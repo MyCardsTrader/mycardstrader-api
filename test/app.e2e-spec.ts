@@ -32,9 +32,8 @@ describe('AppController (e2e)', () => {
         email: 'nemo@nautilus.sub',
         password: 'aronnax',
         location: {
-          address: "6210 Fremlin St, Vancouver, BC V5Z 3X3, Canada",
-          lat: 49.2290631,
-          lng: -123.1264691,
+          type: 'Point',
+          coordinates: [-123.1264691, 49.2290631],
         }})
       .expect(201);
       userId = requestUser.body._id;
@@ -59,9 +58,8 @@ describe('AppController (e2e)', () => {
       .send({
         email: 'nemo@nautilus.sub',
         location: {
-          address: "6210 Fremlin St, Vancouver, BC V5Z 3X3, Canada",
-          lat: 49.2290631,
-          lng: -123.1264691,
+          type: 'Point',
+          coordinates: [-123.1264691, 49.2290631],
         },
       })
       .expect(400);
@@ -76,9 +74,8 @@ describe('AppController (e2e)', () => {
       .send({
         password: 'aronnax',
         location: {
-          address: "6210 Fremlin St, Vancouver, BC V5Z 3X3, Canada",
-          lat: 49.2290631,
-          lng: -123.1264691,
+          type: 'Point',
+          coordinates: [-123.1264691, 49.2290631],
         },
       })
       .expect(400);

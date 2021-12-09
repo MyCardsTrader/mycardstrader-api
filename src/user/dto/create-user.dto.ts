@@ -1,6 +1,6 @@
 import { ApiProperty } from '@nestjs/swagger';
 import { IsEmail, IsNotEmpty, IsString } from 'class-validator';
-import UserLocation from '../interfaces/user-location.interface';
+import { Location } from '../schema/user.schema';
 
 export class CreateUserDto {
   @ApiProperty({
@@ -21,5 +21,5 @@ export class CreateUserDto {
     required: true,
   })
   @IsNotEmpty()
-  location: UserLocation;
+  location: Location;
 }
