@@ -10,6 +10,7 @@ async function bootstrap() {
   app.useGlobalPipes(new ValidationPipe());
 
   const openApiConfig = new DocumentBuilder()
+    .addBearerAuth()
     .setTitle('dependabot')
     .setDescription('Api for dependabot poc')
     .setVersion('1.0')
