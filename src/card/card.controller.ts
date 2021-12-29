@@ -1,22 +1,32 @@
-import { 
-  Body,
-  Controller,
-  Delete,
+import {
   Get,
-  HttpException,
+  Body,
+  Post,
   Param,
-  Post
+  Delete,
+  UseGuards,
+  Controller,
+  HttpException,
 } from '@nestjs/common';
-import { ApiParam } from '@nestjs/swagger';
 import { Card } from './schema/card.schema';
 import { CardService } from './card.service';
+import { JwtAuthGuard } from '../auth/jwt.guard';
 import { CreateCardDto } from './dto/create-card.dto';
 import { DeleteCardDto } from './dto/delete-card.dto';
+import { PoliciesGuard } from '../casl/policies.guard';
+import { ApiBearerAuth, ApiParam } from '@nestjs/swagger';
+import { CheckPolicies } from '../casl/check-policy.decorator';
+import { ReadCardPolicyHandler, CreateCardPolicyHandler } from '../casl/policies';
 
 @Controller('card')
 export class CardController {
-  constructor(private readonly cardService: CardService) {}
+  constructor(
+    private readonly cardService: CardService,
+  ) {}
 
+  @ApiBearerAuth()
+  @UseGuards(JwtAuthGuard, PoliciesGuard)
+  @CheckPolicies(new ReadCardPolicyHandler())
   @ApiParam({
     name: 'userId',
     required: true,
@@ -26,9 +36,12 @@ export class CardController {
     return await this.cardService.findCardByUser(userId);
   }
 
+  @ApiBearerAuth()
+  @UseGuards(JwtAuthGuard, PoliciesGuard)
+  @CheckPolicies(new CreateCardPolicyHandler)
   @Post()
   async createCard(
-    @Body() cardDto: CreateCardDto
+    @Body() cardDto: CreateCardDto,
   ): Promise<Card | HttpException> {
     return await this.cardService.createCard(cardDto);
   }

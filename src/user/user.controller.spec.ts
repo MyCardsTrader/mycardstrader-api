@@ -3,11 +3,16 @@ import { UserController } from './user.controller';
 import { Test, TestingModule } from '@nestjs/testing';
 import { CreateUserDto } from './dto/create-user.dto';
 import { DeleteUserDto } from './dto/delete-user.dto';
+import { JwtAuthGuard } from '../auth/jwt.guard';
 
 const userServiceProviderMock = {
   findAll: jest.fn(),
   createUser: jest.fn(),
   deleteUser: jest.fn(),
+}
+
+const jwtAuthGuardMock = {
+  canActivate: jest.fn(),
 }
 
 describe('UserController', () => {
@@ -16,8 +21,10 @@ describe('UserController', () => {
   beforeEach(async () => {
     const module: TestingModule = await Test.createTestingModule({
       controllers: [UserController],
-      providers: [UserService],
+      providers: [UserService, JwtAuthGuard],
     })
+      .overrideProvider(JwtAuthGuard)
+      .useValue(jwtAuthGuardMock)
       .overrideProvider(UserService)
       .useValue(userServiceProviderMock)
       .compile();

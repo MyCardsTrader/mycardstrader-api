@@ -1,6 +1,5 @@
-import { Prop, Schema, SchemaFactory, raw } from '@nestjs/mongoose';
 import { Document, Schema as SchemaNative } from 'mongoose';
-import UserLocation from '../interfaces/user-location.interface';
+import { Prop, Schema, SchemaFactory, raw } from '@nestjs/mongoose';
 
 export type Location = {
   type: 'Point';

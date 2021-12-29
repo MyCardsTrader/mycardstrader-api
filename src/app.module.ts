@@ -8,6 +8,7 @@ import { AuthModule } from './auth/auth.module';
 import { CardModule } from './card/card.module';
 import { AppController } from './app.controller';
 import { MongooseModule } from '@nestjs/mongoose';
+import { CaslModule } from './casl/casl.module';
 @Module({
   imports: [
     MongooseModule.forRootAsync({
@@ -24,6 +25,7 @@ import { MongooseModule } from '@nestjs/mongoose';
     UserModule,
     AuthModule,
     CardModule,
+    CaslModule,
   ],
   controllers: [AppController],
   providers: [AppService],

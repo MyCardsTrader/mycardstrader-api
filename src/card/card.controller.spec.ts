@@ -1,15 +1,26 @@
 import { CardService } from './card.service';
+import { JwtAuthGuard } from '../auth/jwt.guard';
 import { CardLang } from './interfaces/lang.enum';
 import { CardController } from './card.controller';
 import { Grading } from './interfaces/grading.enum';
 import { Test, TestingModule } from '@nestjs/testing';
 import { CreateCardDto } from './dto/create-card.dto';
 import { DeleteCardDto } from './dto/delete-card.dto';
+import { PoliciesGuard } from '../casl/policies.guard';
+import { CaslAbilityFactory } from '../casl/casl-ability.factory';
 
 const cardServiceProviderMock = {
   createCard: jest.fn(),
   deleteCard: jest.fn(),
   findCardByUser: jest.fn(), 
+}
+
+const jwtAuthGuardMock = {
+  canActivate: jest.fn(),
+}
+
+const policiesGuardMock = {
+  canActivate: jest.fn(),
 }
 
 describe('CardController', () => {
@@ -18,8 +29,17 @@ describe('CardController', () => {
   beforeEach(async () => {
     const module: TestingModule = await Test.createTestingModule({
       controllers: [CardController],
-      providers: [CardService],
+      providers: [
+        CardService,
+        JwtAuthGuard,
+        PoliciesGuard,
+        CaslAbilityFactory,
+      ],
     })
+      .overrideProvider(PoliciesGuard)
+      .useValue(policiesGuardMock)
+      .overrideProvider(JwtAuthGuard)
+      .useValue(jwtAuthGuardMock)
       .overrideProvider(CardService)
       .useValue(cardServiceProviderMock)
       .compile();
