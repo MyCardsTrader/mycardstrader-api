@@ -13,6 +13,8 @@ const cardModel = getModelToken('Card');
 
 const CardTestModel = mongoose.model('Card', CardSchema);
 
+const userId = 'userId';
+
 const formatMongo = (doc) => {
   return JSON.parse(JSON.stringify(doc));
 }
@@ -73,8 +75,7 @@ describe('CardService', () => {
         png: 'https://c1.scryfall.com/file/scryfall-cards/png/front/2/5/25158cd5-749b-408c-9ab1-0f83e38730f7.png?1562902485',
         art_crop: 'https://c1.scryfall.com/file/scryfall-cards/art_crop/front/2/5/25158cd5-749b-408c-9ab1-0f83e38730f7.jpg?1562902485',
         border_crop: 'https://c1.scryfall.com/file/scryfall-cards/border_crop/front/2/5/25158cd5-749b-408c-9ab1-0f83e38730f7.jpg?1562902485',
-      },
-      user: "61aff9b226d0e050c18bfcae",
+      }
     }
     
     beforeEach(() => {
@@ -86,7 +87,7 @@ describe('CardService', () => {
       Mock(CardTestModel).toReturn(cardDoc, 'save');
   
       // When
-      const result = await service.createCard(cardDto);
+      const result = await service.createCard(cardDto, userId);
 
       // Then
       expect(formatMongo(result)).toEqual(cardDoc);
@@ -97,7 +98,7 @@ describe('CardService', () => {
       Mock(CardTestModel).toReturn(new Error('Cannot save'), 'save');
       // When
       //Then
-      await expect(service.createCard(cardDto)).rejects.toThrow(HttpException);
+      await expect(service.createCard(cardDto, userId)).rejects.toThrow(HttpException);
     });
   });
 

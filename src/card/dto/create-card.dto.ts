@@ -43,12 +43,4 @@ export class CreateCardDto {
   })
   @IsNotEmpty()
   image_uri: ImageUris;
-
-  @ApiProperty({
-    required: true,
-  })
-  @IsNotEmpty()
-  @IsMongoId()
-  user: string;
-
 }

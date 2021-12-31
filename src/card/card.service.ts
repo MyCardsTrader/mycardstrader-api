@@ -11,17 +11,22 @@ export class CardService {
   ) { }
 
   async createCard(
-    createCardDto: CreateCardDto
-  ): Promise< Card | HttpException> {
+    createCardDto: CreateCardDto,
+    userId: string,
+  ): Promise< Card> {
+    console.log('userId', userId);
     try {
-      const newCard = new this.cardModel(createCardDto);
+      const newCard = new this.cardModel({
+        ...createCardDto,
+        user: userId,
+      });
       return await newCard.save();
     } catch (error) {
       throw new HttpException(error.message, 520);
     }
   }
 
-  async deleteCard(cardId: string): Promise <Card | HttpException> {
+  async deleteCard(cardId: string): Promise <Card> {
     try {
       return await this.cardModel.findOneAndDelete({ _id: cardId });
     } catch (error) {
@@ -29,7 +34,7 @@ export class CardService {
     }
   }
 
-  async findCardByUser( userId: string): Promise<Card[] | HttpException> {
+  async findCardByUser( userId: string): Promise<Card[]> {
     try {
       return await this.cardModel.find({ user: userId }).exec();
     } catch (error) {

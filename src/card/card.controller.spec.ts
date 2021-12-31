@@ -23,6 +23,12 @@ const policiesGuardMock = {
   canActivate: jest.fn(),
 }
 
+const reqMock = {
+  user: {
+    userId: 'userId',
+  }
+};
+
 describe('CardController', () => {
   let controller: CardController;
 
@@ -66,16 +72,15 @@ describe('CardController', () => {
         png: 'https://c1.scryfall.com/file/scryfall-cards/png/front/2/5/25158cd5-749b-408c-9ab1-0f83e38730f7.png?1562902485',
         art_crop: 'https://c1.scryfall.com/file/scryfall-cards/art_crop/front/2/5/25158cd5-749b-408c-9ab1-0f83e38730f7.jpg?1562902485',
         border_crop: 'https://c1.scryfall.com/file/scryfall-cards/border_crop/front/2/5/25158cd5-749b-408c-9ab1-0f83e38730f7.jpg?1562902485',
-      },
-      user: "61aff9b226d0e050c18bfcae"
+      }
     }
 
     // When
-    controller.createCard(createCardDto);
+    controller.createCard(createCardDto, reqMock);
 
     // Then
     expect(cardServiceProviderMock.createCard).toHaveBeenCalledTimes(1);
-    expect(cardServiceProviderMock.createCard).toHaveBeenLastCalledWith(createCardDto);
+    expect(cardServiceProviderMock.createCard).toHaveBeenLastCalledWith(createCardDto, reqMock.user.userId);
   });
 
   it('should call card service deleteCard()', () => {

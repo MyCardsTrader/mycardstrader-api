@@ -1,9 +1,9 @@
 import { UserService } from './user.service';
+import { JwtAuthGuard } from '../auth/jwt.guard';
 import { UserController } from './user.controller';
 import { Test, TestingModule } from '@nestjs/testing';
 import { CreateUserDto } from './dto/create-user.dto';
 import { DeleteUserDto } from './dto/delete-user.dto';
-import { JwtAuthGuard } from '../auth/jwt.guard';
 
 const userServiceProviderMock = {
   findAll: jest.fn(),

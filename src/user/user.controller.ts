@@ -13,21 +13,21 @@ export class UserController {
   @ApiBearerAuth()
   @UseGuards(JwtAuthGuard)
   @Get()
-  async getUsers(): Promise<User[] | HttpException> {
+  async getUsers(): Promise<User[]> {
     return await this.userService.findAll();
   }
 
   @Post()
   async createUser(
     @Body() userDto: CreateUserDto,
-  ): Promise<User | HttpException> {
+  ): Promise<User> {
     return await this.userService.createUser(userDto);
   }
 
   @Delete()
   async deleteUser(
     @Body() deleteUserDto: DeleteUserDto 
-  ): Promise<User | HttpException> {
+  ): Promise<User> {
     return await this.userService.deleteUser(deleteUserDto);
   }
 }

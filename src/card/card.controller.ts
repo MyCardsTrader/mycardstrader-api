@@ -7,6 +7,7 @@ import {
   UseGuards,
   Controller,
   HttpException,
+  Request,
 } from '@nestjs/common';
 import { Card } from './schema/card.schema';
 import { CardService } from './card.service';
@@ -32,7 +33,7 @@ export class CardController {
     required: true,
   })
   @Get('/user/:userId')
-  async findByUser(@Param('userId') userId): Promise<Card[] | HttpException> {
+  async findByUser(@Param('userId') userId): Promise<Card[]> {
     return await this.cardService.findCardByUser(userId);
   }
 
@@ -41,15 +42,16 @@ export class CardController {
   @CheckPolicies(new CreateCardPolicyHandler)
   @Post()
   async createCard(
-    @Body() cardDto: CreateCardDto,
-  ): Promise<Card | HttpException> {
-    return await this.cardService.createCard(cardDto);
+    @Body() createCardDto: CreateCardDto,
+    @Request() req,
+  ): Promise<Card> {
+    return await this.cardService.createCard(createCardDto, req.user.userId);
   }
 
   @Delete()
   async deleteCard(
     @Body() deleteCardDto: DeleteCardDto
-  ): Promise<Card | HttpException> {
+  ): Promise<Card> {
     return await this.cardService.deleteCard(deleteCardDto.id);
   }
 }

@@ -14,7 +14,7 @@ export class UserService {
 
   async createUser(
     createUserDto: CreateUserDto,
-  ): Promise<User | HttpException> {
+  ): Promise<User> {
     const salt = randomBytes(16).toString('hex');
     const password = scryptSync(createUserDto.password, salt, 64).toString('hex');
 
@@ -32,7 +32,7 @@ export class UserService {
     }
   }
 
-  async findAll(): Promise<User[] | HttpException> {
+  async findAll(): Promise<User[]> {
     try {
       return await this.userModel.find({}).exec();
     } catch (error) {
@@ -40,7 +40,7 @@ export class UserService {
     }
   }
 
-  async deleteUser(deleteUserDto: DeleteUserDto): Promise<User | HttpException> {
+  async deleteUser(deleteUserDto: DeleteUserDto): Promise<User> {
     try {
       return await this.userModel.findOneAndDelete({ _id: deleteUserDto.id });
     } catch (error) {
@@ -48,7 +48,7 @@ export class UserService {
     }
   }
 
-  async findOneByEmail(email: string): Promise<User | HttpException> {
+  async findOneByEmail(email: string): Promise<User> {
     try {
       const user: User = await this.userModel.findOne({ email });
       if (!user) {

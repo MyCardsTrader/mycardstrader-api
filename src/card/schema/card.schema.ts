@@ -1,7 +1,7 @@
-import { Schema, SchemaFactory, Prop } from "@nestjs/mongoose";
+import { CardLang } from "../interfaces/lang.enum";
 import { Document, Schema as SchemaNative } from 'mongoose';
 import { ImageUris } from "../interfaces/image-uris.interface";
-import { CardLang } from "../interfaces/lang.enum";
+import { Schema, SchemaFactory, Prop } from "@nestjs/mongoose";
 
 export type CardDocument = Card & Document;
 
