@@ -1,12 +1,10 @@
-import { Ability, defineAbility } from "@casl/ability";
-import { Reflector } from "@nestjs/core";
-import { Test, TestingModule } from "@nestjs/testing";
-import { UserDocument } from "../user/schema/user.schema";
-import { Card } from "../card/schema/card.schema";
 import { Action } from "./action.enum";
-import { CaslAbilityFactory } from "./casl-ability.factory";
-import { ReadCardPolicyHandler } from "./policies";
+import { Reflector } from "@nestjs/core";
 import { PoliciesGuard } from "./policies.guard";
+import { Card } from "../card/schema/card.schema";
+import { Test, TestingModule } from "@nestjs/testing";
+import { defineAbility } from "@casl/ability";
+import { CaslAbilityFactory } from "./casl-ability.factory";
 
 const reqMock: any = {
   user: Symbol('user'),
@@ -23,7 +21,7 @@ const reflectorMock = {
   get : jest.fn(),
 }
 const caslAbilityFactoryMock = {
-  createForUser: (UserDocument: UserDocument) => {
+  createForUser: (userId: string) => {
     defineAbility((can) => {
       can(Action.Read, Card);
     })
@@ -97,14 +95,3 @@ describe('Policy guard', () => {
     });
   });
 });
-
-
-// const policyHanlders =
-// this.reflector.get<PolicyHandler[]>(
-//   CHECK_POLICIES_KEY,
-//   context.getHandler(),
-// ) || [];
-// const { user } = context.switchToHttp().getRequest();
-// const ability = this.caslAbilityFactory.createForUser(user);
-
-// return policyHanlders.every((handler) => this.execPolicyHandler(handler, ability));

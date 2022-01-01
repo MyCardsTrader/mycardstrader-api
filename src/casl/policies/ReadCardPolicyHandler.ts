@@ -7,7 +7,6 @@ import { IPolicyHandler } from '../interfaces/policy-handler.interface'
 
 export class ReadCardPolicyHandler implements IPolicyHandler {
   handle(ability: AppAbility) {
-    console.log('ability readcard', ability);
     return ability.can(Action.Read, Card);
   }
 }

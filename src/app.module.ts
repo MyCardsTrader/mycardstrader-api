@@ -9,6 +9,7 @@ import { CardModule } from './card/card.module';
 import { AppController } from './app.controller';
 import { MongooseModule } from '@nestjs/mongoose';
 import { CaslModule } from './casl/casl.module';
+import { TradeModule } from './trade/trade.module';
 @Module({
   imports: [
     MongooseModule.forRootAsync({
@@ -26,6 +27,7 @@ import { CaslModule } from './casl/casl.module';
     AuthModule,
     CardModule,
     CaslModule,
+    TradeModule,
   ],
   controllers: [AppController],
   providers: [AppService],

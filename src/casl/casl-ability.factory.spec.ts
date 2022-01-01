@@ -1,10 +1,6 @@
 import { CaslAbilityFactory } from './casl-ability.factory';
 
-const userDocumentMock = {
-  email: 'nemo@nautilus.com',
-  password: 'arronax',
-  location: {},
-}
+const userId = Symbol('userId');
 
 describe('CaslAbilityFactory', () => {
 
@@ -35,16 +31,16 @@ describe('CaslAbilityFactory', () => {
     });
 
     it('Should call 4 times can and build', () => {
-      caslAbilityFactory.createForUser(userDocumentMock);
+      caslAbilityFactory.createForUser(userId);
 
-      expect(abilityMock.can).toHaveBeenCalledTimes(4);
+      expect(abilityMock.can).toHaveBeenCalledTimes(6);
       expect(abilityMock.because).toHaveBeenCalledTimes(1);
     });
     
     it('should call build', () => {
       const buildReturn = Symbol('buildReturn');
       abilityMock.build.mockReturnValueOnce(buildReturn);
-      const result = caslAbilityFactory.createForUser(userDocumentMock);
+      const result = caslAbilityFactory.createForUser(userId);
 
       expect(abilityMock.build).toHaveBeenCalledTimes(1);
       expect(abilityMock.build).toHaveBeenCalledWith({
