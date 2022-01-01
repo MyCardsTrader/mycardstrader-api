@@ -14,7 +14,6 @@ export class CardService {
     createCardDto: CreateCardDto,
     userId: string,
   ): Promise< Card> {
-    console.log('userId', userId);
     try {
       const newCard = new this.cardModel({
         ...createCardDto,
