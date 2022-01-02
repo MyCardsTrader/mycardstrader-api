@@ -1,8 +1,10 @@
 import { Action } from './action.enum';
+import { UpdateTradeDto } from '../trade/dto';
 import { Card } from '../card/schema/card.schema';
 import { Trade } from '../trade/schema/trade.schema';
 import { CaslAbilityFactory } from './casl-ability.factory';
 import { Injectable, UnauthorizedException } from '@nestjs/common';
+import { UpdateCardDto } from 'src/card/dto';
 
 @Injectable()
 export class CaslService {
@@ -19,9 +21,34 @@ export class CaslService {
     return true;
   }
 
-  async checkForTrade(trade: Trade, userId: string, action: Action): Promise<boolean> {
+  async checkUpdateForTrade(
+    trade: Trade,
+    userId: string,
+    updateTradeDto: UpdateTradeDto,
+  ): Promise<boolean> {
     const ability = await this.abilityFactory.createForUser(userId);
-    if(!ability.can(action, trade)) {
+    const tradeToTest = new Trade();
+    Object.keys(updateTradeDto).map((key) => {
+      tradeToTest[key] = updateTradeDto[key];
+    });
+    console.log('tradeToTest', tradeToTest);
+    const abilitiesCheck = Object.keys(updateTradeDto).map((key) => key).every((key) => {
+      return ability.can(Action.Update, tradeToTest, key);
+    });
+    if (!abilitiesCheck) {
+      throw new UnauthorizedException('You cannot access this trade');
+    }
+    return abilitiesCheck;
+  }
+
+  // To split into checkDeleteForTrade and checkUpdateForTrade functions
+  async checkDeleteForTrade(
+    trade: Trade,
+    userId: string,
+  ): Promise<boolean> {
+    const ability = await this.abilityFactory.createForUser(userId);
+    const tradeToTest: Trade = trade;
+    if(!ability.can(Action.Delete, tradeToTest)) {
       throw new UnauthorizedException('You cannot access this trade');
     }
     return true;

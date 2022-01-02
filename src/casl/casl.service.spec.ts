@@ -80,12 +80,16 @@ describe('CaslService', () => {
 
   });
 
-  describe('CheckForTrade', () => {
+  describe('CheckUpdateForTrade', () => {
+    const updateTradeDtoMock = {
+      userCards: ['cardId'],
+      userAccept: true,
+    };
 
     it('Should return true if user is owner', async() => {
       // Given
       // When
-      const result = await service.checkForTrade(tradeMock, userIdMock, Action.Delete);
+      const result = await service.checkUpdateForTrade(tradeMock, userIdMock, updateTradeDtoMock);
       // Then
       expect(result).toBe(true);
     });
@@ -97,10 +101,32 @@ describe('CaslService', () => {
       });
       // When
       // Then
-      await expect(service.checkForTrade(tradeMock, userIdMock, Action.Delete))
+      await expect(service.checkUpdateForTrade(tradeMock, userIdMock, updateTradeDtoMock))
         .rejects.toThrow(UnauthorizedException);
     });
-  })
+  });
+
+  describe('CheckDeleteForTrade', () => {
+
+    it('Should return true if user is owner', async() => {
+      // Given
+      // When
+      const result = await service.checkDeleteForTrade(tradeMock, userIdMock);
+      // Then
+      expect(result).toBe(true);
+    });
+
+    it('Should throw a UnauthorizedException', async() => {
+      // Given
+      jest.spyOn(caslAbilityFactoryMock, 'createForUser').mockReturnValueOnce({
+        can: () => false,
+      });
+      // When
+      // Then
+      await expect(service.checkDeleteForTrade(tradeMock, userIdMock))
+        .rejects.toThrow(UnauthorizedException);
+    });
+  });
 
   describe('CheckForCard', () => {
     let cardMock;
