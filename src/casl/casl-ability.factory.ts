@@ -24,12 +24,14 @@ export class CaslAbilityFactory {
     // istanbul ignore next
     const detectSubjectType = item => item.constructor as ExtractSubjectType<Subjects>;
 
-    can(Action.Read, Card);
-    can(Action.Create, Card);
+    can([Action.Read, Action.Create], Card);
     can(Action.Update, Card, { user: userId }).because('Only for owner');
     can(Action.Delete, Card, { user: userId });
     can(Action.Read, Trade, { user: userId });
     can(Action.Read, Trade, { trader: userId });
+    can(Action.Delete, Trade, { user: userId });
+    can(Action.Update, Trade, ['userCards', 'userAccept'], { user: userId });
+    can(Action.Update, Trade, ['traderCards', 'traderAccept'], { trader: userId });
 
     return build({
       detectSubjectType
