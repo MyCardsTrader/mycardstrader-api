@@ -29,7 +29,7 @@ export class CardService {
     try {
       return await this.cardModel.findOneAndDelete({ _id: cardId });
     } catch (error) {
-      throw new HttpException(error.message, 404);
+      throw new NotFoundException(error.message);
     }
   }
 

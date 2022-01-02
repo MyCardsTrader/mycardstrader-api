@@ -49,7 +49,7 @@ describe('TradeService', () => {
     expect(service).toBeDefined();
   });
 
-  describe('Create a Trade', () => {
+  describe('createTrade', () => {
     const tradeDto: CreateTradeDto = {
       trader: 'tradeId',
       traderCards: ['61aff9b226d0e050c18bfcae'],
@@ -81,7 +81,7 @@ describe('TradeService', () => {
     });
   });
 
-  describe('Get All Trades', () => {
+  describe('getAllTrades', () => {
 
     beforeEach(() => {
       Mock.resetAll();
@@ -109,7 +109,7 @@ describe('TradeService', () => {
     });
   });
 
-  describe('Get Trade By Id', () => {    
+  describe('getTradeById', () => {    
     const tradeId = '507f191e810c19729de860ea';
 
     beforeEach(() => {
@@ -139,12 +139,54 @@ describe('TradeService', () => {
 
     it('Should throw HttpException', async () => {
       // Given
-      Mock(TradeTestModel).toReturn(new Error('Cannot find trades'), 'findOne');
+      Mock(TradeTestModel)
+        .toReturn(new Error('Cannot find trades'), 'findOne');
 
       // When
       // Then
       await expect(service.getTradeById(tradeId))
         .rejects.toThrowError(HttpException);
+    });
+  });
+
+  describe('DeleteTrade', () => {
+    const tradeId = '507f191e810c19729de860ea';
+
+    beforeEach(() => {
+      Mock.resetAll();
+    });
+
+    it('Should delete a specific trade', async() => {
+      // Given
+      Mock(TradeTestModel).toReturn(tradeDoc, 'findOneAndDelete');
+
+      // When
+      const result = await service.deleteTrade(tradeId);
+
+      // Then
+      expect(formatMongo(result)).toEqual(tradeDoc);
+    });
+
+    it('Should throw an HttpException', async() => {
+      // Given
+      Mock(TradeTestModel)
+        .toReturn(new Error('cannot find trade'), 'findOneAndDelete');
+
+      // When
+      // Then
+      await expect(service.deleteTrade(tradeId))
+        .rejects.toThrow(HttpException);
+    });
+
+    it('Should throw an NotFoundException', async() => {
+      // Given
+      Mock(TradeTestModel)
+        .toReturn(undefined, 'findOneAndDelete');
+
+      // When
+      // Then
+      await expect(service.deleteTrade(tradeId))
+        .rejects.toThrow(NotFoundException);
     });
   });
 });

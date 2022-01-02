@@ -45,11 +45,22 @@ export class TradeService {
   }
 
   async getTradeById(tradeId: string): Promise<Trade> {
-    let trade;
+    let trade: Trade;
     try {
       trade = await this.tradeModel.findOne({ _id: tradeId});
     } catch (error) {
       throw new HttpException('Database error', 520);
+    }
+    if (!trade) throw new NotFoundException();
+    return trade;
+  }
+
+  async deleteTrade(tradeId: string): Promise<Trade> {
+    let trade: Trade;
+    try {
+      trade = await this.tradeModel.findOneAndDelete({ _id: tradeId });
+    } catch (error) {
+      throw new HttpException(error.message, 520);
     }
     if (!trade) throw new NotFoundException();
     return trade;
