@@ -31,7 +31,6 @@ export class CaslService {
     Object.keys(updateTradeDto).map((key) => {
       tradeToTest[key] = updateTradeDto[key];
     });
-    console.log('tradeToTest', tradeToTest);
     const abilitiesCheck = Object.keys(updateTradeDto).map((key) => key).every((key) => {
       return ability.can(Action.Update, tradeToTest, key);
     });
