@@ -1,13 +1,14 @@
 import * as Mock from 'mockingoose';
 import * as mongoose from 'mongoose';
 import { CardService } from './card.service';
-import { HttpException } from '@nestjs/common';
 import { getModelToken } from '@nestjs/mongoose';
 import { CardSchema } from './schema/card.schema';
 import { CardLang } from './interfaces/lang.enum';
 import { Grading } from './interfaces/grading.enum';
 import { Test, TestingModule } from '@nestjs/testing';
 import { CreateCardDto } from './dto/create-card.dto';
+import { UpdateCardDto } from './dto/update-card.dto';
+import { HttpException, NotFoundException } from '@nestjs/common';
 
 const cardModel = getModelToken('Card');
 
@@ -19,12 +20,15 @@ const formatMongo = (doc) => {
   return JSON.parse(JSON.stringify(doc));
 }
 
+const cardId = '507f191e810c19729de860ea';
+
 const cardDoc = {
   _id: '507f191e810c19729de860ea',
   oracle_id: '8d02b297-97c4-4379-9862-0a462400f66f',
   cardmarket_id: 3574,
   name:'Phyrexian Altar',
   lang: CardLang.EN,
+  grading: Grading.M,
   image_uri: {
     small: 'https://c1.scryfall.com/file/scryfall-cards/small/front/2/5/25158cd5-749b-408c-9ab1-0f83e38730f7.jpg?1562902485',
     normal: 'https://c1.scryfall.com/file/scryfall-cards/normal/front/2/5/25158cd5-749b-408c-9ab1-0f83e38730f7.jpg?1562902485',
@@ -136,13 +140,79 @@ describe('CardService', () => {
       // Then
       expect(formatMongo(result)).toEqual(returnValue);
     });
-    it('should throw HttpException on find cards', async() => {
+    it('should throw HttpException on find cards by user', async() => {
       // Given
       Mock(CardTestModel).toReturn(new Error('Cannot find cards'), 'find');
 
       // When
       // Given
       await expect(service.findCardByUser('userId')).rejects.toThrow(HttpException);
+    });
+  });
+
+  describe('Find cards by id', () => {
+
+    it('should find cards by id', async()=> {
+      // Given
+      const returnValue = cardDoc;
+      Mock(CardTestModel).toReturn(returnValue, 'findOne');
+
+      // When
+      const result  = await service.findCardById(cardId);
+
+      // Then
+      expect(formatMongo(result)).toEqual(returnValue);
+    });
+
+    it('should find no cards by id', async()=> {
+      // Given
+      Mock(CardTestModel).toReturn(null, 'findOne');
+
+      // When
+      // Then
+      await expect(service.findCardById(cardId))
+        .rejects.toThrow(NotFoundException);
+    });
+
+    it('should throw HttpException on find cards by id', async() => {
+      // Given
+      Mock(CardTestModel).toReturn(new Error(), 'findOne');
+
+      // When
+      // Given
+      await expect(service.findCardById(cardId)).rejects.toThrow(HttpException);
+    });
+  });
+
+  describe('UpdateCard', () => {
+    const updateDto: UpdateCardDto = {
+      grading: Grading.PL,
+      lang: CardLang.RU,
+    };
+
+    it('Should Update card', async() => {
+      // Given
+      const returnValue = cardDoc;
+      returnValue.lang = CardLang.RU;
+      returnValue.grading = Grading.PL;
+
+      Mock(CardTestModel).toReturn(returnValue, 'findOneAndUpdate');
+
+      // When
+      const result  = await service.updateCard(cardId, updateDto);
+
+      // Then
+      expect(formatMongo(result)).toEqual(returnValue);
+    });
+
+    it('Should throw HttpException', async() => {
+      // Given
+      Mock(CardTestModel).toReturn(new Error(), 'findOneAndUpdate');
+
+      // When
+      // Then
+      await expect(service.updateCard(cardId, updateDto))
+        .rejects.toThrow(HttpException);
     });
   });
 });

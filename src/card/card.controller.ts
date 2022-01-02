@@ -1,19 +1,21 @@
 import {
   Get,
+  Put,
   Body,
   Post,
   Param,
   Delete,
+  Request,
   UseGuards,
   Controller,
-  HttpException,
-  Request,
 } from '@nestjs/common';
 import { Card } from './schema/card.schema';
+import { Action } from '../casl/action.enum';
 import { CardService } from './card.service';
 import { JwtAuthGuard } from '../auth/jwt.guard';
+import { CaslService } from '../casl/casl.service';
 import { CreateCardDto } from './dto/create-card.dto';
-import { DeleteCardDto } from './dto/delete-card.dto';
+import { UpdateCardDto } from './dto/update-card.dto';
 import { PoliciesGuard } from '../casl/policies.guard';
 import { ApiBearerAuth, ApiParam } from '@nestjs/swagger';
 import { CheckPolicies } from '../casl/check-policy.decorator';
@@ -23,6 +25,7 @@ import { ReadCardPolicyHandler, CreateCardPolicyHandler } from '../casl/policies
 export class CardController {
   constructor(
     private readonly cardService: CardService,
+    private readonly caslService: CaslService,
   ) {}
 
   @ApiBearerAuth()
@@ -48,10 +51,36 @@ export class CardController {
     return await this.cardService.createCard(createCardDto, req.user.userId);
   }
 
-  @Delete()
+  @ApiBearerAuth()
+  @UseGuards(JwtAuthGuard)
+  @ApiParam({
+    name: 'cardId',
+    required: true,
+  })
+  @Delete(':cardId')
   async deleteCard(
-    @Body() deleteCardDto: DeleteCardDto
+    @Param('cardId') cardId: string,
+    @Request() req,
   ): Promise<Card> {
-    return await this.cardService.deleteCard(deleteCardDto.id);
+    const card = await this.cardService.findCardById(cardId);
+    await this.caslService.checkForCard(card, req.user.userId, Action.Delete);
+    return await this.cardService.deleteCard(cardId);
+  }
+
+  @ApiBearerAuth()
+  @UseGuards(JwtAuthGuard)
+  @ApiParam({
+    name: 'cardId',
+    required: true,
+  })
+  @Put(':cardId')
+  async updateCard(
+    @Param('cardId') cardId: string,
+    @Body() UpdateCardDto: UpdateCardDto,
+    @Request() req,
+  ): Promise<Card> {
+    const card = await this.cardService.findCardById(cardId);
+    await this.caslService.checkForCard(card, req.user.userId, Action.Update);
+    return await this.cardService.updateCard(cardId, UpdateCardDto);
   }
 }

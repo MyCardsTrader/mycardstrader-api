@@ -1,10 +1,10 @@
 /* istanbul ignore file */
 
+import { IsNotEmpty } from 'class-validator';
 import { ApiProperty } from '@nestjs/swagger';
-import { IsMongoId, IsNotEmpty } from 'class-validator';
-import { ImageUris } from '../interfaces/image-uris.interface';
 import { CardLang } from '../interfaces/lang.enum';
 import { Grading } from '../interfaces/grading.enum';
+import { ImageUris } from '../interfaces/image-uris.interface';
 
 export class CreateCardDto {
   @ApiProperty({
