@@ -1,12 +1,14 @@
 import { 
   Body,
   Controller,
+  Delete,
   Get,
   Param,
   Post,
   Request,
   UseGuards 
 } from '@nestjs/common';
+import { Action } from '../casl/action.enum';
 import { Trade } from './schema/trade.schema';
 import { TradeService } from './trade.service';
 import { JwtAuthGuard } from '../auth/jwt.guard';
@@ -51,6 +53,22 @@ export class TradeController {
   ): Promise<Trade> {
     const trade: Trade = await this.tradeService.getTradeById(tradeId);
     await this.caslService.checkReadForTradeById(trade, req.user.userId);
+    return trade;
+  }
+
+  @ApiBearerAuth()
+  @UseGuards(JwtAuthGuard)
+  @ApiParam({
+    name: 'tradeId',
+    required: true,
+  })
+  @Delete(':tradeId')
+  async deleteTrade(
+    @Param('tradeId') tradeId,
+    @Request() req,
+  ): Promise<Trade> {
+    const trade: Trade = await this.tradeService.deleteTrade(tradeId);
+    await this.caslService.checkForTrade(trade, req.user.userId, Action.Delete);
     return trade;
   }
 }
