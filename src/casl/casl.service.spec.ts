@@ -10,6 +10,16 @@ import { CaslAbilityFactory } from './casl-ability.factory';
 const userIdMock = 'userId';
 const traderIdMock = 'traderId';
 
+const tradeMock: Trade = {
+  user: userIdMock,
+  trader: traderIdMock,
+  userCards: [],
+  traderCards: [],
+  userAccept: false,
+  traderAccept: false,
+  tradeStatus: 'pending',
+};
+
 const caslAbilityFactoryMock = {
   createForUser: (userId: string) => {
     return {
@@ -40,19 +50,6 @@ describe('CaslService', () => {
   });
 
   describe('checkReadForTradeById', () => {
-    let tradeMock: Trade;
-
-    beforeEach(() => {
-      tradeMock = {
-        user: userIdMock,
-        trader: traderIdMock,
-        userCards: [],
-        traderCards: [],
-        userAccept: false,
-        traderAccept: false,
-        tradeStatus: 'pending',
-      };
-    });
 
     it('Should return true if userId is equal', async () => {
       // Given
@@ -80,7 +77,30 @@ describe('CaslService', () => {
       await expect(service.checkReadForTradeById(tradeMock, userIdMock))
         .rejects.toThrow(UnauthorizedException);
     });
+
   });
+
+  describe('CheckForTrade', () => {
+
+    it('Should return true if user is owner', async() => {
+      // Given
+      // When
+      const result = await service.checkForTrade(tradeMock, userIdMock, Action.Delete);
+      // Then
+      expect(result).toBe(true);
+    });
+
+    it('Should throw a UnauthorizedException', async() => {
+      // Given
+      jest.spyOn(caslAbilityFactoryMock, 'createForUser').mockReturnValueOnce({
+        can: () => false,
+      });
+      // When
+      // Then
+      await expect(service.checkForTrade(tradeMock, userIdMock, Action.Delete))
+        .rejects.toThrow(UnauthorizedException);
+    });
+  })
 
   describe('CheckForCard', () => {
     let cardMock;

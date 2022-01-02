@@ -19,6 +19,14 @@ export class CaslService {
     return true;
   }
 
+  async checkForTrade(trade: Trade, userId: string, action: Action): Promise<boolean> {
+    const ability = await this.abilityFactory.createForUser(userId);
+    if(!ability.can(action, trade)) {
+      throw new UnauthorizedException('You cannot access this trade');
+    }
+    return true;
+  }
+
   async checkForCard(card: Card, userId: string, action: Action): Promise<boolean> {
     const ability = await this.abilityFactory.createForUser(userId);
     const cardForTest = new Card();
