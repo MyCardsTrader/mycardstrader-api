@@ -2,7 +2,7 @@ import { Model } from 'mongoose';
 import { InjectModel } from '@nestjs/mongoose';
 import { Card } from '../card/schema/card.schema';
 import { User } from '../user/schema/user.schema';
-import { CreateTradeDto } from './dto/create-trade.dto';
+import { CreateTradeDto, UpdateTradeDto } from './dto';
 import { Trade, TradeDocument } from './schema/trade.schema';
 import { HttpException, Injectable, NotFoundException } from '@nestjs/common';
 
@@ -59,6 +59,22 @@ export class TradeService {
     let trade: Trade;
     try {
       trade = await this.tradeModel.findOneAndDelete({ _id: tradeId });
+    } catch (error) {
+      throw new HttpException(error.message, 520);
+    }
+    if (!trade) throw new NotFoundException();
+    return trade;
+  }
+
+  async updateTrade(tradeId: string, updateTradeDto: UpdateTradeDto): Promise<Trade> {
+    let trade: Trade;
+    try {
+      trade = await this.tradeModel
+        .findOneAndUpdate(
+          { _id: tradeId },
+          { $set: { ...updateTradeDto }},
+          { new: true },
+        );
     } catch (error) {
       throw new HttpException(error.message, 520);
     }
