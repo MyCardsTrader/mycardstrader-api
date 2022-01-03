@@ -124,7 +124,18 @@ describe('CardService', () => {
 
       // When
       // Then
-      await expect(service.deleteCard(cardDeleteDoc.id)).rejects.toThrow(HttpException);
+      await expect(service.deleteCard(cardDeleteDoc.id))
+        .rejects.toThrow(HttpException);
+    });
+
+    it('should throw NotFoundException on findOneAndDelete card', async() => {
+      // Given
+      Mock(CardTestModel).toReturn(undefined, 'findOneAndDelete');
+
+      // When
+      // Then
+      await expect(service.deleteCard(cardDeleteDoc.id))
+        .rejects.toThrow(NotFoundException);
     });
   });
 

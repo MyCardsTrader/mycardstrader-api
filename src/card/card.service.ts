@@ -26,11 +26,14 @@ export class CardService {
   }
 
   async deleteCard(cardId: string): Promise <Card> {
+    let cardDeleted: Card;
     try {
-      return await this.cardModel.findOneAndDelete({ _id: cardId });
+      cardDeleted = await this.cardModel.findOneAndDelete({ _id: cardId });
     } catch (error) {
       throw new NotFoundException(error.message);
     }
+    if (!cardDeleted) throw new NotFoundException();
+    return cardDeleted;
   }
 
   async findCardByUser( userId: string): Promise<Card[]> {
