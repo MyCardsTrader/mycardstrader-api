@@ -1,11 +1,13 @@
 import { Action } from './action.enum';
 import { CaslService } from './casl.service';
+import { Card } from '../card/schema/card.schema';
 import { Trade } from '../trade/schema/trade.schema';
 import { Test, TestingModule } from '@nestjs/testing';
 import { UnauthorizedException } from '@nestjs/common';
 import { CardLang } from '../card/interfaces/lang.enum';
 import { Grading } from '../card/interfaces/grading.enum';
 import { CaslAbilityFactory } from './casl-ability.factory';
+import { Message } from 'src/message/schema/message.schema';
 
 const userIdMock = 'userId';
 const traderIdMock = 'traderId';
@@ -70,7 +72,7 @@ describe('CaslService', () => {
     it('Should throw a UnauthorizedException', async () => {
       // Given
       jest.spyOn(caslAbilityFactoryMock, 'createForUser').mockReturnValueOnce({
-        can: () => false
+        can: () => false,
       });
       // When
       // Then
@@ -129,20 +131,23 @@ describe('CaslService', () => {
   });
 
   describe('CheckForCard', () => {
-    let cardMock;
-
-    beforeEach(() => {
-      cardMock = {
-        _id: 'cardId',
-        user: 'userId',
-        grading: Grading.EX,
-        lang: CardLang.FR,
-        oracle_id: 'oracle_id',
-        cardmarket_id: 1111,
-        name: 'Black lotus',
-        image_uri: {},
-      };
-    });
+    const cardMock = {
+      _id: 'cardId',
+      user: 'userId',
+      grading: Grading.EX,
+      lang: CardLang.FR,
+      oracle_id: 'oracle_id',
+      cardmarket_id: 1111,
+      name: 'Black lotus',
+      image_uri: {
+        small: '',
+        large: '',
+        normal: '',
+        png: '',
+        art_crop: '',
+        border_crop: '',
+      },
+    };;
 
     it('Should return true if user own the card', async() => {
       // Given
@@ -155,11 +160,65 @@ describe('CaslService', () => {
     it('Should throw and UnauthorizedException', async() => {
       // Given
       jest.spyOn(caslAbilityFactoryMock, 'createForUser').mockReturnValueOnce({
-        can: () => false
+        can: () => false,
       });
       // When
       // Then
       await expect(service.checkForCard(cardMock, 'userId', Action.Update))
+        .rejects.toThrow(UnauthorizedException);
+    });
+  });
+
+  describe('CheckCreateForMessage', () => {
+    it ('Should return true if user can read the associated trade', async() => {
+      // Given
+      // When
+      const result = await service.checkCreateForMessage(tradeMock, userIdMock);
+
+      // Then
+      expect(result).toBe(true);
+    });
+
+    it('Should throw an UnauthorizedException', async() => {
+      // Given
+      jest.spyOn(caslAbilityFactoryMock, 'createForUser').mockReturnValueOnce({
+        can: () => false,
+      });
+
+      // When
+      // Then
+      await expect(service.checkCreateForMessage(tradeMock, userIdMock))
+        .rejects.toThrow(UnauthorizedException);
+    })
+  });
+
+  describe('CheckDeleteForMessage', () => {
+    const messageMock: Message = {
+      user: userIdMock,
+      trade: 'tradeId',
+      content: 'Nice message',
+      viewed: false,
+    }
+
+    it('Should return true if user is the message owner', async() => {
+      // Given
+      // When
+      const result = await service.checkDeleteForMessage(messageMock, userIdMock);
+
+      // Then
+      expect(result).toBe(true);
+    });
+
+    it('Should throw an UnauthorizedException', async() => {
+      // Given
+      jest.spyOn(caslAbilityFactoryMock, 'createForUser')
+        .mockReturnValueOnce({
+          can: () => false,
+        });
+      
+      // When
+      // Then
+      await expect(service.checkDeleteForMessage(messageMock, userIdMock))
         .rejects.toThrow(UnauthorizedException);
     });
   });

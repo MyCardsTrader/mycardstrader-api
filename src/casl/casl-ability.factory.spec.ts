@@ -33,7 +33,7 @@ describe('CaslAbilityFactory', () => {
     it('Should call 4 times can and build', () => {
       caslAbilityFactory.createForUser(userId);
 
-      expect(abilityMock.can).toHaveBeenCalledTimes(8);
+      expect(abilityMock.can).toHaveBeenCalledTimes(9);
       expect(abilityMock.because).toHaveBeenCalledTimes(1);
     });
     

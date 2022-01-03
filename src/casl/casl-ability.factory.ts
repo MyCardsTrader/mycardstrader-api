@@ -2,9 +2,10 @@ import { Action } from "./action.enum";
 import { Injectable } from "@nestjs/common";
 import { Card } from "../card/schema/card.schema";
 import { Trade } from "../trade/schema/trade.schema";
+import { Message } from "../message/schema/message.schema";
 import { Ability, AbilityBuilder, AbilityClass, ExtractSubjectType, InferSubjects } from '@casl/ability';
 
-type Subjects = InferSubjects<typeof Card | typeof Trade> | 'all';
+type Subjects = InferSubjects<typeof Card | typeof Trade | typeof Message> | 'all';
 
 export type AppAbility = Ability<[Action, Subjects]>;
 
@@ -30,8 +31,9 @@ export class CaslAbilityFactory {
     can(Action.Read, Trade, { user: userId });
     can(Action.Read, Trade, { trader: userId });
     can(Action.Delete, Trade, { user: userId });
-    can(Action.Update, Trade, ['userCards', 'userAccept'], { user: userId });
-    can(Action.Update, Trade, ['traderCards', 'traderAccept'], { trader: userId });
+    can(Action.Update, Trade, ['traderCards', 'userAccept'], { user: userId });
+    can(Action.Update, Trade, ['userCards', 'traderAccept'], { trader: userId });
+    can(Action.Delete, Message, { user: userId });
 
     return build({
       detectSubjectType

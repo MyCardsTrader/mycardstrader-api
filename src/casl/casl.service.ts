@@ -2,9 +2,9 @@ import { Action } from './action.enum';
 import { UpdateTradeDto } from '../trade/dto';
 import { Card } from '../card/schema/card.schema';
 import { Trade } from '../trade/schema/trade.schema';
+import { Message } from '../message/schema/message.schema';
 import { CaslAbilityFactory } from './casl-ability.factory';
 import { Injectable, UnauthorizedException } from '@nestjs/common';
-import { UpdateCardDto } from 'src/card/dto';
 
 @Injectable()
 export class CaslService {
@@ -46,8 +46,7 @@ export class CaslService {
     userId: string,
   ): Promise<boolean> {
     const ability = await this.abilityFactory.createForUser(userId);
-    const tradeToTest: Trade = trade;
-    if(!ability.can(Action.Delete, tradeToTest)) {
+    if(!ability.can(Action.Delete, trade)) {
       throw new UnauthorizedException('You cannot access this trade');
     }
     return true;
@@ -59,6 +58,19 @@ export class CaslService {
     cardForTest.user = card.user;
     if (!ability.can(action, cardForTest)) {
       throw new UnauthorizedException('You cannot delete this card');
+    }
+    return true;
+  }
+
+  async checkCreateForMessage(trade: Trade, userId: string): Promise<boolean> {
+    await this.checkReadForTradeById(trade, userId);
+    return true;
+  }
+
+  async checkDeleteForMessage(message: Message, userId: string): Promise<boolean> {
+    const ability = await this.abilityFactory.createForUser(userId);
+    if (!ability.can(Action.Delete, message)) {
+      throw new UnauthorizedException('You cannot delete this message');
     }
     return true;
   }
