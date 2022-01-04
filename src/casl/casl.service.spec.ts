@@ -192,6 +192,29 @@ describe('CaslService', () => {
     })
   });
 
+  describe('checkReadForMessageByTrade', () => {
+    it ('Should return true if user can read the associated trade', async() => {
+      // Given
+      // When
+      const result = await service.checkReadForMessageByTrade(tradeMock, userIdMock);
+
+      // Then
+      expect(result).toBe(true);
+    });
+
+    it('Should throw an UnauthorizedException', async() => {
+      // Given
+      jest.spyOn(caslAbilityFactoryMock, 'createForUser').mockReturnValueOnce({
+        can: () => false,
+      });
+
+      // When
+      // Then
+      await expect(service.checkReadForMessageByTrade(tradeMock, userIdMock))
+        .rejects.toThrow(UnauthorizedException);
+    })
+  });
+
   describe('CheckDeleteForMessage', () => {
     const messageMock: Message = {
       user: userIdMock,

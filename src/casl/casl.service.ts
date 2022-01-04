@@ -66,7 +66,12 @@ export class CaslService {
     await this.checkReadForTradeById(trade, userId);
     return true;
   }
-
+  
+  async checkReadForMessageByTrade(trade:Trade, userId: string): Promise<boolean> {
+    await this.checkReadForTradeById(trade, userId);
+    return true;
+  }
+  
   async checkDeleteForMessage(message: Message, userId: string): Promise<boolean> {
     const ability = await this.abilityFactory.createForUser(userId);
     if (!ability.can(Action.Delete, message)) {
@@ -74,4 +79,5 @@ export class CaslService {
     }
     return true;
   }
+
 }

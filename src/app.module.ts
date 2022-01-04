@@ -6,10 +6,11 @@ import { ConfigModule } from '@nestjs/config';
 import { UserModule } from './user/user.module';
 import { AuthModule } from './auth/auth.module';
 import { CardModule } from './card/card.module';
+import { CaslModule } from './casl/casl.module';
 import { AppController } from './app.controller';
 import { MongooseModule } from '@nestjs/mongoose';
-import { CaslModule } from './casl/casl.module';
 import { TradeModule } from './trade/trade.module';
+import { MessageModule } from './message/message.module';
 @Module({
   imports: [
     MongooseModule.forRootAsync({
@@ -28,6 +29,7 @@ import { TradeModule } from './trade/trade.module';
     CardModule,
     CaslModule,
     TradeModule,
+    MessageModule,
   ],
   controllers: [AppController],
   providers: [AppService],

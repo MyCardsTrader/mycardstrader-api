@@ -23,7 +23,7 @@ const formatMongo = (doc) => {
 const cardId = '507f191e810c19729de860ea';
 
 const cardDoc = {
-  _id: '507f191e810c19729de860ea',
+  _id: cardId,
   oracle_id: '8d02b297-97c4-4379-9862-0a462400f66f',
   cardmarket_id: 3574,
   name:'Phyrexian Altar',
@@ -86,7 +86,7 @@ describe('CardService', () => {
       Mock.resetAll();
     })
 
-    it('should create a card', async() => {
+    it('Should create a card', async() => {
       // Given
       Mock(CardTestModel).toReturn(cardDoc, 'save');
   
@@ -97,7 +97,7 @@ describe('CardService', () => {
       expect(formatMongo(result)).toEqual(cardDoc);
     });
 
-    it('should throw an HttpException', async() => {
+    it('Should throw an HttpException', async() => {
       // Given
       Mock(CardTestModel).toReturn(new Error('Cannot save'), 'save');
       // When
@@ -107,7 +107,7 @@ describe('CardService', () => {
   });
 
   describe('Delete a card', () => {
-    it('should findOneAndDelete card', async() => {
+    it('Should findOneAndDelete card', async() => {
       // Given
       Mock(CardTestModel).toReturn(cardDoc, 'findOneAndDelete');
 
@@ -118,7 +118,7 @@ describe('CardService', () => {
       expect(formatMongo(result)).toEqual(cardDoc);
     });
 
-    it('should throw HttpException on findOneAndDelete card', async() => {
+    it('Should throw HttpException on findOneAndDelete card', async() => {
       // Given
       Mock(CardTestModel).toReturn(new Error('Cannot findOneAndDelete'), 'findOneAndDelete');
 
@@ -128,7 +128,7 @@ describe('CardService', () => {
         .rejects.toThrow(HttpException);
     });
 
-    it('should throw NotFoundException on findOneAndDelete card', async() => {
+    it('Should throw NotFoundException on findOneAndDelete card', async() => {
       // Given
       Mock(CardTestModel).toReturn(undefined, 'findOneAndDelete');
 
@@ -140,7 +140,7 @@ describe('CardService', () => {
   });
 
   describe('Find cards by user', () => {
-    it('should find cards by user', async()=> {
+    it('Should find cards by user', async()=> {
       // Given
       const returnValue = [cardDoc];
       Mock(CardTestModel).toReturn(returnValue, 'find');
@@ -151,7 +151,7 @@ describe('CardService', () => {
       // Then
       expect(formatMongo(result)).toEqual(returnValue);
     });
-    it('should throw HttpException on find cards by user', async() => {
+    it('Should throw HttpException on find cards by user', async() => {
       // Given
       Mock(CardTestModel).toReturn(new Error('Cannot find cards'), 'find');
 
@@ -163,7 +163,7 @@ describe('CardService', () => {
 
   describe('Find cards by id', () => {
 
-    it('should find cards by id', async()=> {
+    it('Should find cards by id', async()=> {
       // Given
       const returnValue = cardDoc;
       Mock(CardTestModel).toReturn(returnValue, 'findOne');
@@ -175,7 +175,7 @@ describe('CardService', () => {
       expect(formatMongo(result)).toEqual(returnValue);
     });
 
-    it('should find no cards by id', async()=> {
+    it('Should find no cards by id', async()=> {
       // Given
       Mock(CardTestModel).toReturn(null, 'findOne');
 
@@ -185,7 +185,7 @@ describe('CardService', () => {
         .rejects.toThrow(NotFoundException);
     });
 
-    it('should throw HttpException on find cards by id', async() => {
+    it('Should throw HttpException on find cards by id', async() => {
       // Given
       Mock(CardTestModel).toReturn(new Error(), 'findOne');
 

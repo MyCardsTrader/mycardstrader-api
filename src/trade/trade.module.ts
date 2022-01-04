@@ -17,5 +17,6 @@ import { Trade, TradeSchema } from './schema/trade.schema';
   ],
   controllers: [TradeController],
   providers: [TradeService],
+  exports: [TradeService],
 })
 export class TradeModule {}
