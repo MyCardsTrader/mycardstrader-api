@@ -60,6 +60,6 @@ describe('Jwt Strategy', () => {
   });
 
   it('Should not validate', async () => {
-    expect(jwtStrategy.validate(null)).rejects.toThrow("Cannot read property 'sub' of null");
+    expect(jwtStrategy.validate(null)).rejects.toThrow();
   });
 })
