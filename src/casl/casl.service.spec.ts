@@ -1,6 +1,5 @@
 import { Action } from './action.enum';
 import { CaslService } from './casl.service';
-import { Card } from '../card/schema/card.schema';
 import { Trade } from '../trade/schema/trade.schema';
 import { Test, TestingModule } from '@nestjs/testing';
 import { UnauthorizedException } from '@nestjs/common';
@@ -147,6 +146,11 @@ describe('CaslService', () => {
         art_crop: '',
         border_crop: '',
       },
+      cmc: '3.0',
+      type_line: 'Artifact',
+      set: '2x2',
+      colors: [],
+      color_identity: [],
     };;
 
     it('Should return true if user own the card', async() => {

@@ -43,4 +43,32 @@ export class CreateCardDto {
   })
   @IsNotEmpty()
   image_uri: ImageUris;
+
+  @ApiProperty({
+    required: true,
+  })
+  @IsNotEmpty()
+  cmc: string;
+
+  @ApiProperty({
+    required: true,
+  })
+  @IsNotEmpty()
+  type_line: string;
+
+  @ApiProperty({
+    required: true,
+  })
+  @IsNotEmpty()
+  set: string;
+
+  @ApiProperty({
+    required: false,
+  })
+  colors: string[];
+
+  @ApiProperty({
+    required: false,
+  })
+  color_identity: string[];
 }

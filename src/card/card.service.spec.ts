@@ -37,7 +37,12 @@ const cardDoc = {
     art_crop: 'https://c1.scryfall.com/file/scryfall-cards/art_crop/front/2/5/25158cd5-749b-408c-9ab1-0f83e38730f7.jpg?1562902485',
     border_crop: 'https://c1.scryfall.com/file/scryfall-cards/border_crop/front/2/5/25158cd5-749b-408c-9ab1-0f83e38730f7.jpg?1562902485',
   },
-  user: "61aff9b226d0e050c18bfcae",
+  cmc: '3.0',
+  type_line: 'Artifact',
+  set: '2x2',
+  colors: [],
+  color_identity: [],
+  user: '61aff9b226d0e050c18bfcae',
 }
 
 const cardDeleteDoc = {
@@ -79,7 +84,12 @@ describe('CardService', () => {
         png: 'https://c1.scryfall.com/file/scryfall-cards/png/front/2/5/25158cd5-749b-408c-9ab1-0f83e38730f7.png?1562902485',
         art_crop: 'https://c1.scryfall.com/file/scryfall-cards/art_crop/front/2/5/25158cd5-749b-408c-9ab1-0f83e38730f7.jpg?1562902485',
         border_crop: 'https://c1.scryfall.com/file/scryfall-cards/border_crop/front/2/5/25158cd5-749b-408c-9ab1-0f83e38730f7.jpg?1562902485',
-      }
+      },
+      cmc: '3.0',
+      type_line: 'Artifact',
+      set: '2x2',
+      colors: [],
+      color_identity: [],
     }
     
     beforeEach(() => {

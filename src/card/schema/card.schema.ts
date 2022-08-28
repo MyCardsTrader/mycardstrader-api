@@ -48,6 +48,34 @@ export class Card {
     default: Grading.EX,
   })
   grading: Grading;
+
+  @Prop({
+    required: true,
+  })
+  cmc: string;
+
+  @Prop({
+    required: true,
+  })
+  type_line: string;
+
+  @Prop({
+    required: true,
+  })
+  set: string;
+
+  @Prop({
+    required: false,
+    type: [String]
+  })
+  colors: string[];
+
+  @Prop({
+    required: true,
+    type: [String]
+  })
+  color_identity: string[];
+
 }
 
 export const CardSchema = SchemaFactory.createForClass(Card);
