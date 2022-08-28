@@ -11,6 +11,7 @@ import { AppController } from './app.controller';
 import { MongooseModule } from '@nestjs/mongoose';
 import { TradeModule } from './trade/trade.module';
 import { MessageModule } from './message/message.module';
+import { SearchModule } from './search/search.module';
 @Module({
   imports: [
     MongooseModule.forRootAsync({
@@ -30,6 +31,7 @@ import { MessageModule } from './message/message.module';
     CaslModule,
     TradeModule,
     MessageModule,
+    SearchModule,
   ],
   controllers: [AppController],
   providers: [AppService],
