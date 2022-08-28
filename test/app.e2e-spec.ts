@@ -34,7 +34,8 @@ describe('AppController (e2e)', () => {
         location: {
           type: 'Point',
           coordinates: [-123.1264691, 49.2290631],
-        }})
+        },
+        country: 'fr',})
       .expect(201);
       userId = requestUser.body._id;
       expect(requestUser.body.availableTreasures).toBe(0);
@@ -46,10 +47,11 @@ describe('AppController (e2e)', () => {
       .post('/user')
       .send({ email: 'nemo@nautilus.sub' })
       .expect(400);
-      expect(requestUser.body.message.length).toEqual(3);
+      expect(requestUser.body.message.length).toEqual(4);
       expect(requestUser.body.message[0]).toBe('password must be a string');
       expect(requestUser.body.message[1]).toBe('password should not be empty');
       expect(requestUser.body.message[2]).toBe('location should not be empty');
+      expect(requestUser.body.message[3]).toBe('country should not be empty');
   });
 
   it('/ (POST) user fail because no password', async () => {
@@ -63,9 +65,10 @@ describe('AppController (e2e)', () => {
         },
       })
       .expect(400);
-      expect(requestUser.body.message.length).toEqual(2);
+      expect(requestUser.body.message.length).toEqual(3);
       expect(requestUser.body.message[0]).toBe('password must be a string');
       expect(requestUser.body.message[1]).toBe('password should not be empty');
+      expect(requestUser.body.message[2]).toBe('country should not be empty');
   });
 
   it('/ (POST) user fail because no email', async () => {
@@ -79,9 +82,10 @@ describe('AppController (e2e)', () => {
         },
       })
       .expect(400);
-      expect(requestUser.body.message.length).toEqual(2);
+      expect(requestUser.body.message.length).toEqual(3);
       expect(requestUser.body.message[0]).toBe('email must be an email');
       expect(requestUser.body.message[1]).toBe('email should not be empty');
+      expect(requestUser.body.message[2]).toBe('country should not be empty');
   });
 
   it('/ (POST) user fail because no location', async () => {
@@ -92,19 +96,37 @@ describe('AppController (e2e)', () => {
         password: 'aronnax',
       })
       .expect(400);
-      expect(requestUser.body.message.length).toEqual(1);
+      expect(requestUser.body.message.length).toEqual(2);
       expect(requestUser.body.message[0]).toBe('location should not be empty');
+      expect(requestUser.body.message[1]).toBe('country should not be empty');
   });
 
-  it('/ (GET) user', async () => {
+  it('/ (POST) user fail because no country', async () => {
     const requestUser = await request(app.getHttpServer())
-      .get('/user')
-      .expect(200);
-      expect(requestUser.body.length).toEqual(1);
+      .post('/user')
+      .send({
+        email: 'nemo@nautilus.sub',
+        password: 'aronnax',
+        location: {
+          type: 'Point',
+          coordinates: [-123.1264691, 49.2290631],
+        }
+      })
+      .expect(400);
+      expect(requestUser.body.message.length).toEqual(1);
+      expect(requestUser.body.message[0]).toBe('country should not be empty');
   });
+
+  // Need to be authorized
+  // it('/ (GET) user', async () => {
+  //   const requestUser = await request(app.getHttpServer())
+  //     .get('/user')
+  //     .expect(200);
+  //     expect(requestUser.body.length).toEqual(1);
+  // });
 
   it('/ (POST) login', () => {
-    return request(app.getHttpServer())
+    const token = request(app.getHttpServer())
       .post('/auth/login')
       .send({ email: 'nemo@nautilus.sub', password: 'aronnax'})
       .expect(201)

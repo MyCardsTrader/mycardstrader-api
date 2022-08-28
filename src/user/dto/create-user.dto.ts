@@ -24,4 +24,10 @@ export class CreateUserDto {
   })
   @IsNotEmpty()
   location: Location;
+
+  @ApiProperty({
+    required: true,
+  })
+  @IsNotEmpty()
+  country: string;
 }

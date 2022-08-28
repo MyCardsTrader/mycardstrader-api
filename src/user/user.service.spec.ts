@@ -21,6 +21,7 @@ const userDoc = {
   password: 'aronnax',
   availableTreasures: 0,
   holdTreasures: 0,
+  country: 'fr',
 }
 
 const userDeleteDoc = {
@@ -57,7 +58,8 @@ describe('UserService', () => {
       location: {
         type: 'Point',
         coordinates: [-123.1264691, 49.2290631],
-      }
+      },
+      country: 'fr',
     };
 
     beforeEach(() => {

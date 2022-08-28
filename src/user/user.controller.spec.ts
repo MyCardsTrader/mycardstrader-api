@@ -52,7 +52,8 @@ describe('UserController', () => {
       location: {
         type: 'Point',
         coordinates: [-123.1264691, 49.2290631],
-      }
+      },
+      country: 'fr',
     };
     // When
     controller.createUser(userDto);

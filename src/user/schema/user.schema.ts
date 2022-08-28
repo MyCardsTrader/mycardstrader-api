@@ -42,6 +42,11 @@ export class User {
   location: Location;
 
   @Prop({
+    required: false,
+  })
+  country: string;
+
+  @Prop({
     required: true,
     default: 0,
   })

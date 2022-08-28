@@ -2,8 +2,8 @@
 import { Module } from '@nestjs/common';
 import { TradeService } from './trade.service';
 import { MongooseModule } from '@nestjs/mongoose';
-import { AuthModule } from 'src/auth/auth.module';
-import { CaslModule } from 'src/casl/casl.module';
+import { AuthModule } from '../auth/auth.module';
+import { CaslModule } from '../casl/casl.module';
 import { TradeController } from './trade.controller';
 import { Trade, TradeSchema } from './schema/trade.schema';
 
