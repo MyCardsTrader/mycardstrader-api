@@ -1,7 +1,6 @@
-import { Controller, Get, Query } from '@nestjs/common';
-import { ApiParam, ApiQuery } from '@nestjs/swagger';
-import { last } from 'rxjs';
 import { SearchService } from './search.service';
+import { ApiParam, ApiQuery } from '@nestjs/swagger';
+import { Controller, Get, Query } from '@nestjs/common';
 
 @Controller('search')
 export class SearchController {
@@ -10,18 +9,22 @@ export class SearchController {
   @ApiQuery({
     name: 'lat',
     required: true,
+    description: "Longitude",
   })
   @ApiQuery({
     name: 'lng',
     required: true,
+    description: "Latitude",
   })
   @ApiQuery({
     name: 'distance',
     required: false,
+    description: "Max distance in Km",
   })
   @ApiQuery({
     name: 'country',
     required: false,
+    description: "Restrict to a country",
   })
   @Get('nearme')
   async searchNearMe(
@@ -37,18 +40,22 @@ export class SearchController {
   @ApiParam({
     name: 'country',
     required: false,
+    description: "Restrict to a country",
   })
   @ApiParam({
     name: 'name',
     required: false,
+    description: "Card name",
   })
   @ApiParam({
     name: 'type',
     required: false,
+    description: "Card type",
   })
   @ApiParam({
-    name: 'edition',
+    name: 'set',
     required: false,
+    description: "Set id",
   })
   @Get()
   async searchCardByCritera(): Promise<any> {
