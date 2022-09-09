@@ -10,6 +10,46 @@ export class SearchService {
     @InjectModel(User.name) private readonly userModel: Model<UserDocument>,
   ) {}
 
+  getGeoNearStage(
+    lat: string,
+    lng: string,
+    distanceKm?: string,
+    country?: string,
+    name?: string,
+    type?: string,
+    set?: string,
+    ) {
+    const distance = distanceKm ? parseInt(distanceKm) * 1000: 10000;
+
+    const geoNear = {
+      $geoNear: {
+        near: {
+          type: 'Point', 
+          coordinates: [
+            parseFloat(lat), parseFloat(lng)
+          ]
+        },
+        query: {}, 
+        distanceField: 'distance', 
+        maxDistance: distance, 
+        spherical: true
+      }
+    };
+    if (country) {
+      geoNear.$geoNear.query['country'] = country;
+    };
+    if (name) {
+      geoNear.$geoNear.query['name'] = name;
+    };
+    if (type) {
+      geoNear.$geoNear.query['type'] = type;
+    }
+    if (set) {
+      geoNear.$geoNear.query['set'] = set;
+    }
+    return geoNear;
+  }
+
   async getCardsNearMe(
     lat: string,
     lng: string,
@@ -17,30 +57,8 @@ export class SearchService {
     country: string,
   ): Promise<any> {
     try {
-      const distance = distanceKm ? parseInt(distanceKm) * 1000: 10000;
-      
-      const geoNear = {
-        $geoNear: {
-          near: {
-            type: 'Point', 
-            coordinates: [
-              parseFloat(lat), parseFloat(lng)
-            ]
-          },
-          query: {}, 
-          distanceField: 'distance', 
-          maxDistance: distance, 
-          spherical: true
-        }
-      };
-      if (country) {
-        geoNear.$geoNear.query = {
-          country,
-        };
-      } 
-
       const cardsResult = await this.userModel.aggregate([
-        geoNear, {
+        this.getGeoNearStage(lat, lng, distanceKm, country), {
           $addFields: {
             userId: {
               $toString: '$_id'
@@ -57,11 +75,11 @@ export class SearchService {
           $unwind: {
             path: '$cards'
           }
-        },{
+        }, {
           $match: {
             distance: { $gt: 0}
           }
-        },{
+        }, {
           $project: {
             _id: 0, 
             userId: 1, 
@@ -82,7 +100,54 @@ export class SearchService {
     }
   }
 
-  async findCards(): Promise<any> {
-    return [];
+  async findCards(
+    lat: string,
+    lng: string,
+    country: string,
+    name: string,
+    type: string,
+    set: string,
+  ): Promise<any> {
+    try {
+      const cardsResult = await this.userModel.aggregate([
+        this.getGeoNearStage(lat, lng, country, name, type, set),{
+          $addFields: {
+            userId: {
+              $toString: '$_id'
+            }
+          }
+        }, {
+          $lookup: {
+            from: 'cards', 
+            localField: 'userId', 
+            foreignField: 'user', 
+            as: 'cards'
+          }
+        }, {
+          $unwind: {
+            path: '$cards'
+          }
+        }, {
+          $match: {
+            distance: { $gt: 0}
+          }
+        }, {
+          $project: {
+            _id: 0, 
+            userId: 1, 
+            email: 1, 
+            distance: 1, 
+            cardName: '$cards.name', 
+            image_uri: '$cards.image_uri', 
+            grading: '$cards.grading', 
+            cardId: {
+              $toString: '$cards._id'
+            }
+          }
+        }
+      ]);
+    } catch(error) {
+      throw new HttpException(error.message, 520);
+    }
   }
 }

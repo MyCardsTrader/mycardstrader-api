@@ -1,6 +1,8 @@
 import { SearchService } from './search.service';
 import { ApiParam, ApiQuery } from '@nestjs/swagger';
 import { Controller, Get, Query } from '@nestjs/common';
+import { type } from 'os';
+import { last } from 'rxjs';
 
 @Controller('search')
 export class SearchController {
@@ -38,6 +40,16 @@ export class SearchController {
   }
 
   @ApiParam({
+    name: 'lat',
+    required: true,
+    description: "Latitude for the search",
+  })
+  @ApiParam({
+    name: 'lng',
+    required: true,
+    description: "Longitude for the search",
+  })
+  @ApiParam({
     name: 'country',
     required: false,
     description: "Restrict to a country",
@@ -58,7 +70,14 @@ export class SearchController {
     description: "Set id",
   })
   @Get()
-  async searchCardByCritera(): Promise<any> {
-    return await this.searchService.findCards();
+  async searchCardByCritera(
+    @Query('lat') lat,
+    @Query('lng') lng,
+    @Query('country') country,
+    @Query('name') name,
+    @Query('type') type,
+    @Query('set') set,
+  ): Promise<any> {
+    return await this.searchService.findCards(lat, lng, country, name, type, set);
   }
 }
