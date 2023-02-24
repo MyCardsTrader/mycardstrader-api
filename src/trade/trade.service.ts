@@ -1,4 +1,4 @@
-import { Model } from 'mongoose';
+import { Model, MongooseOptions, PopulateOptions } from 'mongoose';
 import { InjectModel } from '@nestjs/mongoose';
 import { Card } from '../card/schema/card.schema';
 import { User } from '../user/schema/user.schema';
@@ -8,10 +8,6 @@ import { HttpException, Injectable, NotFoundException } from '@nestjs/common';
 
 @Injectable()
 export class TradeService {
-  private userPopulateOption = {
-    select: '-salt -password -holdTreasures -availableTreasures',
-    model: User,
-  }
 
   constructor(
     @InjectModel(Trade.name) private readonly tradeModel: Model<TradeDocument>,
@@ -31,13 +27,21 @@ export class TradeService {
     }
   }
 
+  getPopulateOptionsForUser = (path: string): PopulateOptions => {
+    return {
+      path: path,
+      select: '-salt -password -holdTreasures -availableTreasures',
+      model: 'User',
+    }
+  }
+
   async getAllTrades(): Promise<Trade[]> {
     try {
       return await this.tradeModel.find({})
-        .populate({ path: 'user', ...this.userPopulateOption })
-        .populate({ path: 'trader', ...this.userPopulateOption })
-        .populate({ path: 'traderCards', model: Card})
-        .populate({ path: 'userCards', model: Card})
+        .populate(this.getPopulateOptionsForUser('user'))
+        .populate(this.getPopulateOptionsForUser('trader'))
+        .populate('traderCards', Card)
+        .populate('userCards', Card)
         .exec();
     } catch (error) {
       throw new HttpException(error.message, 520);

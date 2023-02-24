@@ -1,4 +1,4 @@
-import { Model } from 'mongoose';
+import { Model, PipelineStage } from 'mongoose';
 import { InjectModel } from '@nestjs/mongoose';
 import { HttpException, Injectable } from '@nestjs/common';
 import { User, UserDocument } from '../user/schema/user.schema';
@@ -18,13 +18,13 @@ export class SearchService {
     name?: string,
     type?: string,
     set?: string,
-    ) {
+    ): PipelineStage {
     const distance = distanceKm ? parseInt(distanceKm) * 1000: 10000;
 
     const geoNear = {
       $geoNear: {
         near: {
-          type: 'Point', 
+          type: "Point", 
           coordinates: [
             parseFloat(lat), parseFloat(lng)
           ]
@@ -47,7 +47,7 @@ export class SearchService {
     if (set) {
       geoNear.$geoNear.query['set'] = set;
     }
-    return geoNear;
+    return geoNear as PipelineStage;
   }
 
   async getCardsNearMe(
