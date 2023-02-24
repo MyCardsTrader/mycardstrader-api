@@ -1,3 +1,4 @@
+import * as moment from 'moment';
 import { scryptSync } from 'crypto';
 import { JwtService } from '@nestjs/jwt';
 import { UserService } from '../user/user.service';
@@ -34,7 +35,8 @@ export class AuthService {
 
     const payload = { sub: validatedUser._id };
     return {
-      access_token: this.jwtService.sign(payload),
+      access_token: this.jwtService.sign(payload, { expiresIn: `${process.env.JWT_EXPIRE}m` }),
+      expires_in: moment().add(process.env.JWT_EXPIRE, 'm'),
     }
   }
 }
