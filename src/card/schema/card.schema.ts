@@ -34,7 +34,7 @@ export class Card {
     required: true,
     type: SchemaNative.Types.Mixed,
   })
-  image_uri: ImageUris;
+  image_uri: ImageUris | ImageUris[];
 
   @Prop({
     required: true,
