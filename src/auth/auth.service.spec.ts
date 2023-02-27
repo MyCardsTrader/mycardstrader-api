@@ -5,6 +5,7 @@ import { scryptSync, randomBytes } from 'crypto';
 import { UserService } from '../user/user.service';
 import { Test, TestingModule } from '@nestjs/testing';
 import { UnauthorizedException } from '@nestjs/common';
+import * as moment from 'moment';
 
 jest.mock('crypto', () => ({
   ...(jest.requireActual('crypto') as any),
@@ -199,7 +200,7 @@ describe('AuthService', () => {
 
       // THEN
       expect(jwtServiceMock.sign).toHaveBeenCalledTimes(1);
-      expect(jwtServiceMock.sign).toHaveBeenCalledWith({ sub: 123456});
+      expect(jwtServiceMock.sign).toHaveBeenCalledWith({ sub: 123456}, { expiresIn: '60m'});
     });
 
     it('should return an object with an access token', async () => {
@@ -208,10 +209,14 @@ describe('AuthService', () => {
       jwtServiceMock.sign.mockReturnValueOnce('eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiIxMjM0NTY3ODkwIiwibmFtZSI6IkpvaG4gRG9lIiwiaWF0IjoxNTE2MjM5MDIyfQ.SflKxwRJSMeKKF2QT4fwpMeJf36POk6yJV_adQssw5c');
 
       // WHEN
+      const expireDate = moment().add('60m');
       const result = await service.login(userDoc);
 
       // THEN
-      expect(result).toEqual({ access_token: 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiIxMjM0NTY3ODkwIiwibmFtZSI6IkpvaG4gRG9lIiwiaWF0IjoxNTE2MjM5MDIyfQ.SflKxwRJSMeKKF2QT4fwpMeJf36POk6yJV_adQssw5c'});
+      expect(result).toEqual({
+        access_token: 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiIxMjM0NTY3ODkwIiwibmFtZSI6IkpvaG4gRG9lIiwiaWF0IjoxNTE2MjM5MDIyfQ.SflKxwRJSMeKKF2QT4fwpMeJf36POk6yJV_adQssw5c',
+        expires_in: expireDate,
+      });
     });
   });
 });
