@@ -32,7 +32,8 @@ export class SearchService {
         },
         query: {
 
-        }, 
+        },
+        distanceMultiplier: 0.001,
         distanceField: 'distance', 
         maxDistance: distance, 
         spherical: true
