@@ -55,6 +55,7 @@ export class SearchService {
     lng: string,
     distanceKm: string,
     country: string,
+    userId: string,
   ): Promise<any> {
     try {
       const cardsResult = await this.userModel.aggregate([
@@ -77,7 +78,8 @@ export class SearchService {
           }
         }, {
           $match: {
-            distance: { $gt: 0}
+            distance: { $gt: 0},
+            user: { $ne: userId },
           }
         }, {
           $project: {

@@ -1,8 +1,6 @@
 import { SearchService } from './search.service';
 import { ApiParam, ApiQuery } from '@nestjs/swagger';
-import { Controller, Get, Query } from '@nestjs/common';
-import { type } from 'os';
-import { last } from 'rxjs';
+import { Controller, Get, Query, Request } from '@nestjs/common';
 
 @Controller('search')
 export class SearchController {
@@ -34,9 +32,10 @@ export class SearchController {
     @Query('lng') lng,
     @Query('distance') distance,
     @Query('country') country,
+    @Request() req,
   ): Promise<any> {
     return await this.searchService
-      .getCardsNearMe(lat, lng, distance, country);
+      .getCardsNearMe(lat, lng, distance, country, req.user._id);
   }
 
   @ApiParam({

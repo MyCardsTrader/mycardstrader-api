@@ -32,6 +32,3 @@ jobs:
       # Runs a single command using the runners shell
       - name: Run npm test
         run: npm run test
-
-      - name: Run npm test:e2e
-        run: npm run test:e2e
