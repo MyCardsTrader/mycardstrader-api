@@ -63,6 +63,12 @@ export class CreateCardDto {
   set: string;
 
   @ApiProperty({
+    required: true,
+  })
+  @IsNotEmpty()
+  collector_number: number;
+
+  @ApiProperty({
     required: false,
   })
   colors: string[];

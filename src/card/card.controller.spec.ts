@@ -60,6 +60,7 @@ const cardMock = {
   cmc: '3.0',
   type_line: 'Artifact',
   set: '2x2',
+  collector_number: 1,
   colors: [],
   color_identity: [],
 }
@@ -115,6 +116,7 @@ describe('CardController', () => {
       cmc: '3.0',
       type_line: 'Artifact',
       set: '2x2',
+      collector_number: 1,
       colors: [],
       color_identity: [],
     }

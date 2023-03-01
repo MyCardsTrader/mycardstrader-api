@@ -65,6 +65,11 @@ export class Card {
   set: string;
 
   @Prop({
+    required: true,
+  })
+  collector_number: number;
+
+  @Prop({
     required: false,
     type: [String]
   })
