@@ -67,7 +67,7 @@ export class SearchService {
     try {
       const cardsResult = await this.userModel.aggregate([
         this.getGeoNearStage(lat, lng, distanceKm, country, userId),
-        { $sort: { distance: -1 } },
+        { $sort: { distance: 1 } },
         {
           $addFields: {
             userId: {
