@@ -15,9 +15,7 @@ export class Card {
   })
   oracle_id: string;
   
-  @Prop({
-    required: true,
-  })
+  @Prop()
   cardmarket_id: number;
   
   @Prop({

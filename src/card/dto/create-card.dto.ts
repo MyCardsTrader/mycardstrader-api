@@ -1,6 +1,6 @@
 /* istanbul ignore file */
 
-import { IsNotEmpty } from 'class-validator';
+import { IsNotEmpty, Allow } from 'class-validator';
 import { ApiProperty } from '@nestjs/swagger';
 import { CardLang } from '../interfaces/lang.enum';
 import { Grading } from '../interfaces/grading.enum';
@@ -16,7 +16,7 @@ export class CreateCardDto {
   @ApiProperty({
     required: true,
   })
-  @IsNotEmpty()
+  @Allow(null)
   cardmarket_id: number;
 
   @ApiProperty({
@@ -77,4 +77,8 @@ export class CreateCardDto {
     required: false,
   })
   color_identity: string[];
+}
+
+function AllowNull() {
+  throw new Error('Function not implemented.');
 }
