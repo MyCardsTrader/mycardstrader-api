@@ -32,12 +32,12 @@ describe('SearchController', () => {
     const lng = '10.111';
     const distance = '10000';
     const country = 'fr';
-    const req = { user: { _id: 'userId'} };
+    const userId = 'userId';
 
-    await controller.searchNearMe(lat, lng, distance, country, req);
+    await controller.searchNearMe(lat, lng, distance, country, userId);
 
     expect(searchServiceMock.getCardsNearMe).toHaveBeenCalledTimes(1);
-    expect(searchServiceMock.getCardsNearMe).toHaveBeenCalledWith(lat, lng, distance, country, req.user._id);
+    expect(searchServiceMock.getCardsNearMe).toHaveBeenCalledWith(lat, lng, distance, country, userId);
   });
 
   it('Should call findCards()', async() => {

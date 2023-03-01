@@ -32,10 +32,10 @@ export class SearchController {
     @Query('lng') lng,
     @Query('distance') distance,
     @Query('country') country,
-    @Request() req,
+    @Query('userId') userId?,
   ): Promise<any> {
     return await this.searchService
-      .getCardsNearMe(lat, lng, distance, country, req.user._id);
+      .getCardsNearMe(lat, lng, distance, country, userId);
   }
 
   @ApiParam({

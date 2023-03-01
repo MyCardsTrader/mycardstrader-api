@@ -55,7 +55,7 @@ export class SearchService {
     lng: string,
     distanceKm: string,
     country: string,
-    userId: string,
+    userId: string = '',
   ): Promise<any> {
     try {
       const cardsResult = await this.userModel.aggregate([
