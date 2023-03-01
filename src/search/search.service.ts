@@ -15,6 +15,7 @@ export class SearchService {
     lng: string,
     distanceKm?: string,
     country?: string,
+    userId?: string,
     name?: string,
     type?: string,
     set?: string,
@@ -29,7 +30,9 @@ export class SearchService {
             parseFloat(lat), parseFloat(lng)
           ]
         },
-        query: {}, 
+        query: {
+
+        }, 
         distanceField: 'distance', 
         maxDistance: distance, 
         spherical: true
@@ -47,6 +50,9 @@ export class SearchService {
     if (set) {
       geoNear.$geoNear.query['set'] = set;
     }
+    if (userId) {
+      geoNear.$geoNear.query['_id'] = { $ne: userId };
+    }
     return geoNear as PipelineStage;
   }
 
@@ -59,7 +65,7 @@ export class SearchService {
   ): Promise<any> {
     try {
       const cardsResult = await this.userModel.aggregate([
-        this.getGeoNearStage(lat, lng, distanceKm, country), {
+        this.getGeoNearStage(lat, lng, distanceKm, country, userId), {
           $addFields: {
             userId: {
               $toString: '$_id'
@@ -79,7 +85,6 @@ export class SearchService {
         }, {
           $match: {
             distance: { $gt: 0},
-            user: { $ne: userId },
           }
         }, {
           $project: {
