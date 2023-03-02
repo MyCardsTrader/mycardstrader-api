@@ -51,7 +51,12 @@ export class TradeService {
   async getTradeById(tradeId: string): Promise<Trade> {
     let trade: Trade;
     try {
-      trade = await this.tradeModel.findOne({ _id: tradeId});
+      trade = await this.tradeModel.findOne({ _id: tradeId})
+        .populate(this.getPopulateOptionsForUser('user'))
+        .populate(this.getPopulateOptionsForUser('trader'))
+        .populate('traderCards', Card)
+        .populate('userCards', Card)
+        .exec();
     } catch (error) {
       throw new HttpException('Database error', 520);
     }
