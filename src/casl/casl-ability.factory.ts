@@ -20,7 +20,7 @@ export class CaslAbilityFactory {
   }
 
   createForUser(userId: string): AppAbility {
-    const { can, cannot, build } = CaslAbilityFactory.getAbilityBuilder();
+    const { can, build } = CaslAbilityFactory.getAbilityBuilder();
     // Base option for CASL nestjs implements
     // istanbul ignore next
     const detectSubjectType = item => item.constructor as ExtractSubjectType<Subjects>;
