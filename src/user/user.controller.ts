@@ -1,11 +1,12 @@
 import { User } from './schema/user.schema';
 import { UserService } from './user.service';
+import { JwtAuthGuard } from '../auth/jwt.guard';
 import { DeleteUserDto } from './dto/delete-user.dto';
 import { CreateUserDto } from './dto/create-user.dto';
-import { Body, Controller, Delete, Get, HttpException, Post, UseGuards } from '@nestjs/common';
-import { ApiBearerAuth } from '@nestjs/swagger';
-import { JwtAuthGuard } from '../auth/jwt.guard';
+import { ApiBearerAuth, ApiTags } from '@nestjs/swagger';
+import { Body, Controller, Delete, Get, Post, UseGuards } from '@nestjs/common';
 
+@ApiTags('user')
 @Controller('user')
 export class UserController {
   constructor(private readonly userService: UserService) { }

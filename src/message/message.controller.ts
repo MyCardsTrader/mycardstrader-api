@@ -13,9 +13,10 @@ import { Message } from './schema/message.schema';
 import { MessageService } from './message.service';
 import { CaslService } from '../casl/casl.service';
 import { TradeService } from '../trade/trade.service';
-import { ApiBearerAuth, ApiParam } from '@nestjs/swagger';
 import { CreateMessageDto } from './dto/create-message.dto';
+import { ApiBearerAuth, ApiParam, ApiTags } from '@nestjs/swagger';
 
+@ApiTags('message')
 @Controller('message')
 export class MessageController {
   constructor(

@@ -1,3 +1,4 @@
+import { ApiTags } from '@nestjs/swagger';
 import { AppService } from './app.service';
 import { LoginDto } from './auth/dto/login.dto';
 import { AuthService } from './auth/auth.service';
@@ -10,13 +11,15 @@ export class AppController {
     private readonly authService: AuthService,
   ) { }
 
+  @Get('/health-check')
+  getHealthCheck(): string {
+    return this.appService.getHealthCheck();
+  }
+
+  @ApiTags('login')
   @Post('auth/login')
   async login(@Body() loginDto: LoginDto) {
     return await this.authService.login(loginDto);
   }
 
-  @Get('/health-check')
-  getHealthCheck(): string {
-    return this.appService.getHealthCheck();
-  }
 }

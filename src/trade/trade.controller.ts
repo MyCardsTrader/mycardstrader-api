@@ -8,14 +8,14 @@ import {
   Request,
   UseGuards 
 } from '@nestjs/common';
-import { Action } from '../casl/action.enum';
 import { Trade } from './schema/trade.schema';
 import { TradeService } from './trade.service';
 import { JwtAuthGuard } from '../auth/jwt.guard';
 import { CaslService } from '../casl/casl.service';
 import { CreateTradeDto, UpdateTradeDto } from './dto';
-import { ApiBearerAuth, ApiParam } from '@nestjs/swagger';
+import { ApiBearerAuth, ApiParam, ApiTags } from '@nestjs/swagger';
 
+@ApiTags('trade')
 @Controller('trade')
 export class TradeController {
   constructor(

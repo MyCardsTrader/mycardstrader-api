@@ -16,10 +16,11 @@ import { JwtAuthGuard } from '../auth/jwt.guard';
 import { CaslService } from '../casl/casl.service';
 import { CreateCardDto, UpdateCardDto } from './dto';
 import { PoliciesGuard } from '../casl/policies.guard';
-import { ApiBearerAuth, ApiParam } from '@nestjs/swagger';
 import { CheckPolicies } from '../casl/check-policy.decorator';
+import { ApiBearerAuth, ApiParam, ApiTags } from '@nestjs/swagger';
 import { ReadCardPolicyHandler, CreateCardPolicyHandler } from '../casl/policies';
 
+@ApiTags('card')
 @Controller('card')
 export class CardController {
   constructor(
