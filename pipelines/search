@@ -1,0 +1,103 @@
+[
+  {
+    $geoNear:
+      /**
+       * near: The point to search near.
+       * distanceField: The calculated distance.
+       * maxDistance: The maximum distance, in meters, documents can be before being excluded from results.
+       * query: Limits results that match the query
+       * includeLocs: Optional. Labels and includes the point used to match the document.
+       * num: Optional. The maximum number of documents to return.
+       * spherical: Defaults to false. Specifies whether to use spherical geometry.
+       */
+      {
+        near: {
+          type: "Point",
+          coordinates: [45.7622595, 4.8466441],
+        },
+        query: {
+          country: "FR",
+        },
+        distanceMultiplier: 0.001,
+        distanceField: "distance",
+        maxDistance: 10000,
+        spherical: true,
+      },
+  },
+  {
+    $addFields:
+      /**
+       * newField: The new field name.
+       * expression: The new field expression.
+       */
+      {
+        userId: {
+          $toString: "$_id",
+        },
+      },
+  },
+  {
+    $lookup:
+      /**
+       * from: The target collection.
+       * localField: The local join field.
+       * foreignField: The target join field.
+       * as: The name for the results.
+       * pipeline: Optional pipeline to run on the foreign collection.
+       * let: Optional variables to use in the pipeline field stages.
+       */
+      {
+        from: "cards",
+        localField: "userId",
+        foreignField: "user",
+        as: "cards",
+      },
+  },
+  {
+    $unwind:
+      /**
+       * path: Path to the array field.
+       * includeArrayIndex: Optional name for index.
+       * preserveNullAndEmptyArrays: Optional
+       *   toggle to unwind null and empty values.
+       */
+      {
+        path: "$cards",
+      },
+  },
+  {
+    $match:
+      /**
+       * query: The query in MQL.
+       */
+      {
+        distance: {
+          $gt: 0,
+        },
+        email: {
+          $not: {
+            $eq: "email@email.com",
+          },
+        },
+      },
+  },
+  {
+    $project:
+      /**
+       * specifications: The fields to
+       *   include or exclude.
+       */
+      {
+        _id: 0,
+        userId: 1,
+        email: 1,
+        distance: 1,
+        cardName: "$cards.name",
+        image_uri: "$cards.image_uri",
+        grading: "$cards.grading",
+        cardId: {
+          $toString: "$cards._id",
+        },
+      },
+  },
+]
