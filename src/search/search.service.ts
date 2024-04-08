@@ -146,7 +146,7 @@ export class SearchService {
           $project: {
             _id: 0, 
             userId: 1, 
-            email: 1, 
+            email: 0, 
             distance: 1, 
             cardName: '$cards.name', 
             image_uri: '$cards.image_uri', 
