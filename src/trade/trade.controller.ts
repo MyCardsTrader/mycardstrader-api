@@ -1,6 +1,7 @@
 import { 
   Body,
   Controller,
+  Put,
   Delete,
   Get,
   Param,
@@ -78,7 +79,7 @@ export class TradeController {
     name: 'tradeId',
     required: true,
   })
-  @Delete(':tradeId')
+  @Put(':tradeId')
   async updateTrade(
     @Param('tradeId') tradeId,
     @Body() updateTradeDto: UpdateTradeDto,
