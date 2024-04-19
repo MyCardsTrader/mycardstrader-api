@@ -80,7 +80,7 @@ export class CardController {
     @Request() req,
   ): Promise<Card> {
     const card = await this.cardService.findCardById(cardId);
-    await this.caslService.checkForCard(card, req.user.userId, Action.Update);
+    await this.caslService.checkForCard(card, req.user.userId, Action.Put);
     return await this.cardService.updateCard(cardId, UpdateCardDto);
   }
 }

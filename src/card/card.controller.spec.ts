@@ -172,7 +172,7 @@ describe('CardController', () => {
     expect(cardServiceProviderMock.findCardById).toHaveBeenCalledTimes(1);
     expect(cardServiceProviderMock.findCardById).toHaveBeenCalledWith(cardId);
     expect(caslServiceMock.checkForCard).toHaveBeenCalledTimes(1);
-    expect(caslServiceMock.checkForCard).toHaveBeenLastCalledWith(cardMock, userId, Action.Update);
+    expect(caslServiceMock.checkForCard).toHaveBeenLastCalledWith(cardMock, userId, Action.Put);
     expect(cardServiceProviderMock.updateCard).toHaveBeenCalledTimes(1);
     expect(cardServiceProviderMock.updateCard).toHaveBeenCalledWith(cardId, cardUpdateDto);
   });
