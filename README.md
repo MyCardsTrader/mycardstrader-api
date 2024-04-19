@@ -38,8 +38,9 @@ $ npm install
 Before runing the application you need to start a mongodb docker container :
 
 ```
-docker run -d -p 27017:27017 mongo:latest
+docker run -d -p 27017:27017 -v /your/local/path:/data/db mongo:latest
 ```
+Replace `/your/locale/path` by an absolute path where you want to persist the mongodb data.
 
 ```bash
 # development
