@@ -11,7 +11,7 @@ export class CaslService {
   constructor(private readonly abilityFactory: CaslAbilityFactory) {}
 
   async checkReadForTradeById(trade: Trade, userId: string): Promise<boolean> {
-    const ability = await this.abilityFactory.createForUser(userId);
+    const ability = this.abilityFactory.createForUser(userId);
     const tradeToTest = new Trade();
     tradeToTest.user = trade.user;
     tradeToTest.trader = trade.trader;
@@ -22,17 +22,16 @@ export class CaslService {
   }
 
   async checkUpdateForTrade(
-    trade: Trade,
     userId: string,
     updateTradeDto: UpdateTradeDto,
   ): Promise<boolean> {
-    const ability = await this.abilityFactory.createForUser(userId);
+    const ability = this.abilityFactory.createForUser(userId);
     const tradeToTest = new Trade();
     Object.keys(updateTradeDto).map((key) => {
       tradeToTest[key] = updateTradeDto[key];
     });
     const abilitiesCheck = Object.keys(updateTradeDto).map((key) => key).every((key) => {
-      return ability.can(Action.Update, tradeToTest, key);
+      return ability.can(Action.Put, tradeToTest, key);
     });
     if (!abilitiesCheck) {
       throw new UnauthorizedException('You cannot access this trade');
@@ -45,7 +44,7 @@ export class CaslService {
     trade: Trade,
     userId: string,
   ): Promise<boolean> {
-    const ability = await this.abilityFactory.createForUser(userId);
+    const ability = this.abilityFactory.createForUser(userId);
     if(!ability.can(Action.Delete, trade)) {
       throw new UnauthorizedException('You cannot access this trade');
     }
@@ -53,7 +52,7 @@ export class CaslService {
   }
 
   async checkForCard(card: Card, userId: string, action: Action): Promise<boolean> {
-    const ability = await this.abilityFactory.createForUser(userId);
+    const ability = this.abilityFactory.createForUser(userId);
     const cardForTest = new Card();
     cardForTest.user = card.user;
     if (!ability.can(action, cardForTest)) {
@@ -73,7 +72,7 @@ export class CaslService {
   }
   
   async checkDeleteForMessage(message: Message, userId: string): Promise<boolean> {
-    const ability = await this.abilityFactory.createForUser(userId);
+    const ability = this.abilityFactory.createForUser(userId);
     if (!ability.can(Action.Delete, message)) {
       throw new UnauthorizedException('You cannot delete this message');
     }

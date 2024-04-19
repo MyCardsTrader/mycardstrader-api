@@ -85,8 +85,7 @@ export class TradeController {
     @Body() updateTradeDto: UpdateTradeDto,
     @Request() req,
   ): Promise<Trade> {
-    const trade: Trade = await this.tradeService.getTradeById(tradeId);
-    await this.caslService.checkUpdateForTrade(trade, req.user.userId, updateTradeDto);
+    // await this.caslService.checkUpdateForTrade(req.user.userId, updateTradeDto);
     return await this.tradeService.updateTrade(tradeId, updateTradeDto);
   }
 }

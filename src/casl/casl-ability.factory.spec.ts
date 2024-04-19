@@ -30,10 +30,10 @@ describe('CaslAbilityFactory', () => {
       caslAbilityFactory = new CaslAbilityFactory();
     });
 
-    it('Should call 4 times can and build', () => {
+    it('Should call 6 times can and build', () => {
       caslAbilityFactory.createForUser(userId);
 
-      expect(abilityMock.can).toHaveBeenCalledTimes(9);
+      expect(abilityMock.can).toHaveBeenCalledTimes(6);
       expect(abilityMock.because).toHaveBeenCalledTimes(1);
     });
     
