@@ -66,6 +66,12 @@ export class CreateCardDto {
     required: true,
   })
   @IsNotEmpty()
+  set_svg: string;
+
+  @ApiProperty({
+    required: true,
+  })
+  @IsNotEmpty()
   collector_number: number;
 
   @ApiProperty({

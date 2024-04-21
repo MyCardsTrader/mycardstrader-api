@@ -116,6 +116,7 @@ describe('CardController', () => {
       cmc: '3.0',
       type_line: 'Artifact',
       set: '2x2',
+      set_svg: "https://svgs.scryfall.io/sets/mh2.svg?1713153600",
       collector_number: 1,
       colors: [],
       color_identity: [],

@@ -65,6 +65,11 @@ export class Card {
   @Prop({
     required: true,
   })
+  set_svg: string;
+
+  @Prop({
+    required: true,
+  })
   collector_number: number;
 
   @Prop({
