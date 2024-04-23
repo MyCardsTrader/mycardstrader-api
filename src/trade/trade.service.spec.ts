@@ -1,11 +1,14 @@
 import * as Mock from 'mockingoose';
 import * as mongoose from "mongoose";
-import { TradeService } from './trade.service';
 import { getModelToken } from '@nestjs/mongoose';
-import { TradeSchema } from './schema/trade.schema';
 import { Test, TestingModule } from '@nestjs/testing';
-import { UpdateTradeDto, CreateTradeDto } from './dto';
 import { HttpException, NotFoundException } from '@nestjs/common';
+
+import { TradeService } from './trade.service';
+import { TradeSchema } from './schema/trade.schema';
+import { UpdateTradeDto, CreateTradeDto } from './dto';
+import { CardLang } from '../card/interfaces/lang.enum';
+import { Grading } from '../card/interfaces/grading.enum';
 
 const tradeModel = getModelToken('Trade');
 
@@ -17,12 +20,39 @@ const formatMongo = (doc) => {
   return JSON.parse(JSON.stringify(doc));
 }
 
+const cardId = '507f191e810c19729de860ea';
+
+const cardDoc = {
+  _id: cardId,
+  oracle_id: '8d02b297-97c4-4379-9862-0a462400f66f',
+  cardmarket_id: 3574,
+  name:'Phyrexian Altar',
+  lang: CardLang.EN,
+  grading: Grading.M,
+  image_uri: {
+    small: 'https://c1.scryfall.com/file/scryfall-cards/small/front/2/5/25158cd5-749b-408c-9ab1-0f83e38730f7.jpg?1562902485',
+    normal: 'https://c1.scryfall.com/file/scryfall-cards/normal/front/2/5/25158cd5-749b-408c-9ab1-0f83e38730f7.jpg?1562902485',
+    large: 'https://c1.scryfall.com/file/scryfall-cards/large/front/2/5/25158cd5-749b-408c-9ab1-0f83e38730f7.jpg?1562902485',
+    png: 'https://c1.scryfall.com/file/scryfall-cards/png/front/2/5/25158cd5-749b-408c-9ab1-0f83e38730f7.png?1562902485',
+    art_crop: 'https://c1.scryfall.com/file/scryfall-cards/art_crop/front/2/5/25158cd5-749b-408c-9ab1-0f83e38730f7.jpg?1562902485',
+    border_crop: 'https://c1.scryfall.com/file/scryfall-cards/border_crop/front/2/5/25158cd5-749b-408c-9ab1-0f83e38730f7.jpg?1562902485',
+  },
+  cmc: '3.0',
+  type_line: 'Artifact',
+  set: '2x2',
+  set_svg: "https://svgs.scryfall.io/sets/mh2.svg?1713153600",
+  collector_number: 1,
+  colors: [],
+  color_identity: [],
+  user: '61aff9b226d0e050c18bfcae',
+}
+
 const tradeDoc = {
   _id: '507f191e810c19729de860ea',
   user: 'userId',
   trader: 'traderId',
   userCards: [],
-  traderCards: ['cardId'],
+  traderCards: [cardId],
   userAccept: false,
   traderAccept: false,
   tradeStatus: 'pending',
@@ -52,7 +82,7 @@ describe('TradeService', () => {
   describe('createTrade', () => {
     const tradeDto: CreateTradeDto = {
       trader: 'tradeId',
-      traderCards: ['61aff9b226d0e050c18bfcae'],
+      traderCards: [cardId],
     }
 
     beforeEach(() => {
@@ -193,7 +223,7 @@ describe('TradeService', () => {
   describe('UpdateTrade', () => {
     const tradeIdMock = '507f191e810c19729de860ea';
     const updateTradeDtoMock: UpdateTradeDto = {
-      userCards: ['cardIdMock'],
+      userCards: [cardId],
       traderAccept: true,
     };
 
@@ -201,7 +231,7 @@ describe('TradeService', () => {
       // Given
       const tradeDocUpdated = {
         ...tradeDoc,
-        userCards: ['cardIdMock'],
+        userCards: [cardId],
         traderAccept: true,
       };
       Mock(TradeTestModel).toReturn(tradeDocUpdated, 'findOneAndUpdate');

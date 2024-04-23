@@ -90,7 +90,7 @@ describe('CaslService', () => {
     it('Should return true if user is owner', async() => {
       // Given
       // When
-      const result = await service.checkUpdateForTrade(tradeMock, userIdMock, updateTradeDtoMock);
+      const result = await service.checkUpdateForTrade(userIdMock, updateTradeDtoMock);
       // Then
       expect(result).toBe(true);
     });
@@ -102,7 +102,7 @@ describe('CaslService', () => {
       });
       // When
       // Then
-      await expect(service.checkUpdateForTrade(tradeMock, userIdMock, updateTradeDtoMock))
+      await expect(service.checkUpdateForTrade(userIdMock, updateTradeDtoMock))
         .rejects.toThrow(UnauthorizedException);
     });
   });
@@ -149,6 +149,7 @@ describe('CaslService', () => {
       cmc: '3.0',
       type_line: 'Artifact',
       set: '2x2',
+      set_svg: 'https://svgs.scryfall.io/sets/2x2.svg?1713758400',
       collector_number: 1,
       colors: [],
       color_identity: [],
@@ -169,7 +170,7 @@ describe('CaslService', () => {
       });
       // When
       // Then
-      await expect(service.checkForCard(cardMock, 'userId', Action.Update))
+      await expect(service.checkForCard(cardMock, 'userId', Action.Put))
         .rejects.toThrow(UnauthorizedException);
     });
   });

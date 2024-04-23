@@ -1,4 +1,4 @@
-import { Document, Schema as SchemaNative } from 'mongoose';
+import { Document, ObjectId, Schema as SchemaNative } from 'mongoose';
 import { Prop, Schema, SchemaFactory } from "@nestjs/mongoose";
 
 export type TradeDocument = Trade & Document;
@@ -18,16 +18,16 @@ export class Trade {
   trader: string;
 
   @Prop({
-    type: [String],
+    type: [{ type: SchemaNative.Types.ObjectId, ref: 'Card' }],
     default: [],
   })
-  userCards: string[];
+  userCards: ObjectId[];
 
   @Prop({
-    type: [String],
+    type: [{ type: SchemaNative.Types.ObjectId, ref: 'Card' }],
     default: [],
   })
-  traderCards: string[];
+  traderCards: ObjectId[];
 
   @Prop({
     default: false,

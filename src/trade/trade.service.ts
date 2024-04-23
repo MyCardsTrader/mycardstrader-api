@@ -27,14 +27,6 @@ export class TradeService {
     }
   }
 
-  getPopulateOptionsForUser = (path: string): PopulateOptions => {
-    return {
-      path: path,
-      select: '-salt -password -holdTreasures -availableTreasures',
-      model: 'User',
-    }
-  }
-
   async getAllTrades(): Promise<Trade[]> {
     try {
       return await this.tradeModel.find({})
@@ -48,6 +40,8 @@ export class TradeService {
     let trade: Trade;
     try {
       trade = await this.tradeModel.findOne({ _id: tradeId})
+        .populate({ path: 'userCards'})
+        .populate({ path: 'traderCards'})
         .exec();
     } catch (error) {
       throw new HttpException('Database error', 520);
@@ -75,7 +69,10 @@ export class TradeService {
           { _id: tradeId },
           { $set: { ...updateTradeDto }},
           { new: true },
-        );
+        )
+        .populate({ path: 'userCards'})
+        .populate({ path: 'traderCards'})
+        .exec();;
     } catch (error) {
       throw new HttpException(error.message, 520);
     }
