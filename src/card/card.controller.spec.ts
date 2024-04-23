@@ -63,6 +63,7 @@ const cardMock = {
   collector_number: 1,
   colors: [],
   color_identity: [],
+  availability: 'available',
 }
 
 describe('CardController', () => {

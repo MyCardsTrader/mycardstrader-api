@@ -8,11 +8,16 @@ import { TradeService } from './trade.service';
 import { TradeSchema } from './schema/trade.schema';
 import { UpdateTradeDto, CreateTradeDto } from './dto';
 import { CardLang } from '../card/interfaces/lang.enum';
+import { CardSchema } from '../card/schema/card.schema';
 import { Grading } from '../card/interfaces/grading.enum';
 
 const tradeModel = getModelToken('Trade');
 
 const TradeTestModel = mongoose.model('Trade', TradeSchema);
+
+const cardModel = getModelToken('Card');
+
+const CardTestModel = mongoose.model('Card', CardSchema);
 
 const userId = 'userId';
 
@@ -68,6 +73,10 @@ describe('TradeService', () => {
         {
           provide: tradeModel,
           useValue: TradeTestModel,
+        },
+        {
+          provide: cardModel,
+          useValue: CardTestModel,
         }
       ],
     }).compile();
@@ -135,6 +144,34 @@ describe('TradeService', () => {
       // When
       // Then
       await expect(service.getAllTrades())
+        .rejects.toThrowError(HttpException);
+    });
+  });
+
+  describe('getTradesByUser', () => {
+
+    beforeEach(() => {
+      Mock.resetAll();
+    });
+
+    it('Should get all trades', async() => {
+      // Given
+      Mock(TradeTestModel).toReturn([tradeDoc], 'find');
+
+      // When
+      const result = await service.findTradesByUser('userId');
+
+      // Then
+      expect(formatMongo(result)).toEqual([tradeDoc]);
+    });
+
+    it('Should throw HttpException', async () => {
+      // Given
+      Mock(TradeTestModel).toReturn(new Error('Cannot find trades'), 'find');
+
+      // When
+      // Then
+      await expect(service.findTradesByUser('userId'))
         .rejects.toThrowError(HttpException);
     });
   });

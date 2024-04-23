@@ -21,6 +21,7 @@ const tradeServiceProviderMock = {
   getTradeById: jest.fn(),
   deleteTrade: jest.fn(),
   updateTrade: jest.fn(),
+  findTradesByUser: jest.fn(),
 }
 
 describe('TradeController', () => {
@@ -127,7 +128,7 @@ describe('TradeController', () => {
     // tradeServiceProviderMock.getTradeById.mockReturnValueOnce(tradeMock);
 
     // When
-    await controller.updateTrade(tradeIdMock, updateTradeDtoMock, reqMock);
+    await controller.updateTrade(tradeIdMock, updateTradeDtoMock);
 
     // Then
     // expect(tradeServiceProviderMock.getTradeById)
@@ -142,5 +143,19 @@ describe('TradeController', () => {
       .toHaveBeenCalledTimes(1);
     expect(tradeServiceProviderMock.updateTrade)
       .toHaveBeenCalledWith(tradeIdMock, updateTradeDtoMock);
+  });
+
+  it('Should call getTradeByUser()', async () => {
+    // Given
+    const userIdMock = Symbol('userId');
+    
+    // When
+    await controller.findTradeByUser(userIdMock);
+
+    // Then
+    expect(tradeServiceProviderMock.findTradesByUser)
+      .toHaveBeenCalledTimes(1);
+    expect(tradeServiceProviderMock.findTradesByUser)
+      .toHaveBeenCalledWith(userIdMock);
   });
 });

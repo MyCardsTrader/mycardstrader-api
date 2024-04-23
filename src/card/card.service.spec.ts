@@ -45,6 +45,7 @@ const cardDoc = {
   colors: [],
   color_identity: [],
   user: '61aff9b226d0e050c18bfcae',
+  availability: 'available',
 }
 
 const cardDeleteDoc = {

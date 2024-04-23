@@ -79,7 +79,7 @@ export class SearchService {
             from: 'cards', 
             localField: 'userId', 
             foreignField: 'user', 
-            as: 'cards'
+            as: 'cards',
           }
         }, {
           $unwind: {
@@ -88,7 +88,8 @@ export class SearchService {
         }, {
           $match: {
             distance: { $gt: 0},
-            userId: { $ne: userId }
+            userId: { $ne: userId },
+            'cards.availability': 'available'
           }
         }, {
           $project: {

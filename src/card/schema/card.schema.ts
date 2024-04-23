@@ -84,6 +84,12 @@ export class Card {
   })
   color_identity: string[];
 
+  @Prop({
+    required: true,
+    default: 'available',
+  })
+  availability: 'available' | 'traded';
+
 }
 
 export const CardSchema = SchemaFactory.createForClass(Card);

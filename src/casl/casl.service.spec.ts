@@ -7,6 +7,7 @@ import { CardLang } from '../card/interfaces/lang.enum';
 import { Grading } from '../card/interfaces/grading.enum';
 import { CaslAbilityFactory } from './casl-ability.factory';
 import { Message } from 'src/message/schema/message.schema';
+import { Card } from 'src/card/schema/card.schema';
 
 const userIdMock = 'userId';
 const traderIdMock = 'traderId';
@@ -153,7 +154,8 @@ describe('CaslService', () => {
       collector_number: 1,
       colors: [],
       color_identity: [],
-    };;
+      availability: 'available',
+    } as Card;
 
     it('Should return true if user own the card', async() => {
       // Given

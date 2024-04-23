@@ -38,7 +38,7 @@ export class CardService {
 
   async findCardByUser( userId: string): Promise<Card[]> {
     try {
-      return await this.cardModel.find({ user: userId }).exec();
+      return await this.cardModel.find({ user: userId, availability: 'available' }).exec();
     } catch (error) {
       throw new HttpException(error.message, 520)
     }
