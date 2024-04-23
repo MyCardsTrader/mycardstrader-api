@@ -1,7 +1,7 @@
 import * as Mock from 'mockingoose';
 import * as mongoose from 'mongoose';
 import { UserService } from './user.service';
-import { HttpException } from '@nestjs/common';
+import { HttpException, NotFoundException } from '@nestjs/common';
 import { getModelToken } from '@nestjs/mongoose';
 import { UserSchema } from './schema/user.schema';
 import { Test, TestingModule } from '@nestjs/testing';

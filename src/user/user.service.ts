@@ -1,4 +1,4 @@
-import { HttpException, Injectable } from '@nestjs/common';
+import { HttpException, Injectable, NotFoundException } from '@nestjs/common';
 import { InjectModel } from '@nestjs/mongoose';
 import { randomBytes, scryptSync } from 'crypto';
 import { Model } from 'mongoose';
@@ -59,4 +59,27 @@ export class UserService {
       throw new HttpException('Database error', 520);
     }
   }
+
+  // async findOneById(id: string): Promise<User> {
+  //   try {
+  //     const user: User = await this.userModel
+  //       .findById(
+  //         id,
+  //         { 
+  //           password: 0,
+  //           salt: 0,
+  //           availableTreasures: 0,
+  //           holdTreasures: 0,
+  //           location: 0,
+  //         }
+  //       );
+  //     if (!user) {
+  //       throw new NotFoundException('User not found');
+  //     }
+  //     return user;
+  //   } catch (error) {
+  //     console.log('error: ', error);
+  //     throw new HttpException('Database error', 520);
+  //   }
+  // }
 }

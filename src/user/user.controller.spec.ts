@@ -7,6 +7,7 @@ import { DeleteUserDto } from './dto/delete-user.dto';
 
 const userServiceProviderMock = {
   findAll: jest.fn(),
+  findOneById: jest.fn(),
   createUser: jest.fn(),
   deleteUser: jest.fn(),
 }
@@ -75,4 +76,15 @@ describe('UserController', () => {
     expect(userServiceProviderMock.deleteUser).toHaveBeenCalledTimes(1);
     expect(userServiceProviderMock.deleteUser).toHaveBeenLastCalledWith(deleteUserDto);
   });
+
+  // it('should call service findOneById()', () => {
+  //   // Given
+  //   const userId = 'userId';
+  //   // When
+  //   controller.getUserById(userId);
+
+  //   // Then
+  //   expect(userServiceProviderMock.findOneById).toHaveBeenCalledTimes(1);
+  //   expect(userServiceProviderMock.findOneById).toHaveBeenLastCalledWith(userId);
+  // });
 });
