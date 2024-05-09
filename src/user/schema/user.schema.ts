@@ -1,5 +1,5 @@
 import { Document, Schema as SchemaNative } from 'mongoose';
-import { Prop, Schema, SchemaFactory, raw } from '@nestjs/mongoose';
+import { Prop, Schema, SchemaFactory } from '@nestjs/mongoose';
 
 export type Location = {
   type: 'Point';

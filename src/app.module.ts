@@ -12,6 +12,7 @@ import { MongooseModule } from '@nestjs/mongoose';
 import { TradeModule } from './trade/trade.module';
 import { MessageModule } from './message/message.module';
 import { SearchModule } from './search/search.module';
+import { SetModule } from './set/set.module';
 @Module({
   imports: [
     MongooseModule.forRootAsync({
@@ -32,6 +33,7 @@ import { SearchModule } from './search/search.module';
     TradeModule,
     MessageModule,
     SearchModule,
+    SetModule,
   ],
   controllers: [AppController],
   providers: [AppService],
