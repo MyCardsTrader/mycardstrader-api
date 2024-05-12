@@ -1,3 +1,5 @@
+/* istanbul ignore file */
+
 import { MongooseModule } from '@nestjs/mongoose';
 import { HttpModule, Module } from '@nestjs/common';
 

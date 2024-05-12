@@ -25,7 +25,6 @@ export class SetService {
     const sets = await this.findAll();
     const scryfallSets = await lastValueFrom(this.httpService.get('https://api.scryfall.com/sets'));
     const newSets = scryfallSets.data.data.map( set => {
-      console.log("[SET:]", set);
       return {
         name: set.name,
         code: set.code,

@@ -1,3 +1,5 @@
+/* istanbul ignore file */
+
 import { Document, Schema as SchemaNative } from 'mongoose';
 import { Prop, Schema, SchemaFactory, raw } from '@nestjs/mongoose';
 
