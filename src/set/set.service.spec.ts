@@ -1,12 +1,12 @@
+import { of } from 'rxjs';
+import mongoose from 'mongoose';
 import * as Mock from 'mockingoose';
-import { HttpException, HttpService } from "@nestjs/common";
 import { getModelToken } from "@nestjs/mongoose";
 import { Test, TestingModule } from "@nestjs/testing";
+import { HttpException, HttpService } from "@nestjs/common";
 
 import { SetService } from "./set.service";
 import { SetSchema } from './schema/set.schema';
-import mongoose from 'mongoose';
-import { of } from 'rxjs';
 
 const setModel = getModelToken('Set');
 

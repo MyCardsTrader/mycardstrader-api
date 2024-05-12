@@ -2,17 +2,20 @@
 
 import { Module } from '@nestjs/common';
 import { AppService } from './app.service';
+import { SetModule } from './set/set.module';
 import { ConfigModule } from '@nestjs/config';
 import { UserModule } from './user/user.module';
 import { AuthModule } from './auth/auth.module';
 import { CardModule } from './card/card.module';
 import { CaslModule } from './casl/casl.module';
+import { FoilModule } from './foil/foil.module';
 import { AppController } from './app.controller';
+import { FoilService } from './foil/foil.service';
 import { MongooseModule } from '@nestjs/mongoose';
 import { TradeModule } from './trade/trade.module';
-import { MessageModule } from './message/message.module';
 import { SearchModule } from './search/search.module';
-import { SetModule } from './set/set.module';
+import { MessageModule } from './message/message.module';
+import { FoilController } from './foil/foil.controller';
 @Module({
   imports: [
     MongooseModule.forRootAsync({
@@ -34,6 +37,7 @@ import { SetModule } from './set/set.module';
     MessageModule,
     SearchModule,
     SetModule,
+    FoilModule,
   ],
   controllers: [AppController],
   providers: [AppService],
