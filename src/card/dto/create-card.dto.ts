@@ -72,7 +72,7 @@ export class CreateCardDto {
     required: true,
   })
   @IsNotEmpty()
-  collector_number: number;
+  collector_number: string;
 
   @ApiProperty({
     required: false,
@@ -87,7 +87,7 @@ export class CreateCardDto {
   @ApiProperty({
     required: false,
   })
-  foil_treatment: string;
+  foil_treatment?: string;
 }
 
 function AllowNull() {

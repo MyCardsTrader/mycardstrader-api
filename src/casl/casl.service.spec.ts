@@ -151,7 +151,7 @@ describe('CaslService', () => {
       type_line: 'Artifact',
       set: '2x2',
       set_svg: 'https://svgs.scryfall.io/sets/2x2.svg?1713758400',
-      collector_number: 1,
+      collector_number: '1',
       colors: [],
       color_identity: [],
       availability: 'available',

@@ -70,7 +70,7 @@ export class Card {
   @Prop({
     required: true,
   })
-  collector_number: number;
+  collector_number: string;
 
   @Prop({
     required: false,
@@ -94,7 +94,7 @@ export class Card {
     required: false,
     default: null,
   })
-  foil_treatment: string;
+  foil_treatment?: string;
 
 }
 
