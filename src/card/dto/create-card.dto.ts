@@ -83,6 +83,11 @@ export class CreateCardDto {
     required: false,
   })
   color_identity: string[];
+
+  @ApiProperty({
+    required: false,
+  })
+  foil_treatment: string;
 }
 
 function AllowNull() {

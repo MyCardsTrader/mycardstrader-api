@@ -3,7 +3,7 @@
 import { ApiProperty } from '@nestjs/swagger';
 import { CardLang } from '../interfaces/lang.enum';
 import { Grading } from '../interfaces/grading.enum';
-import { IsEnum, IsOptional } from 'class-validator';
+import { IsEnum, IsOptional, IsString } from 'class-validator';
 
 export class UpdateCardDto {
   @ApiProperty()
@@ -18,4 +18,7 @@ export class UpdateCardDto {
   @IsEnum(Grading)
   @IsOptional()
   grading?: Grading;
+
+  @ApiProperty()
+  foil_treatments?: string;
 }

@@ -90,6 +90,12 @@ export class Card {
   })
   availability: 'available' | 'traded';
 
+  @Prop({
+    required: false,
+    default: null,
+  })
+  foil_treatment: string;
+
 }
 
 export const CardSchema = SchemaFactory.createForClass(Card);
