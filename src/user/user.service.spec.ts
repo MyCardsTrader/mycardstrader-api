@@ -3,7 +3,7 @@ import * as mongoose from 'mongoose';
 import { UserService } from './user.service';
 import { HttpException, NotFoundException } from '@nestjs/common';
 import { getModelToken } from '@nestjs/mongoose';
-import { UserSchema } from './schema/user.schema';
+import { CountryEnum, UserSchema } from './schema/user.schema';
 import { Test, TestingModule } from '@nestjs/testing';
 import { CreateUserDto } from './dto/create-user.dto';
 
@@ -59,7 +59,7 @@ describe('UserService', () => {
         type: 'Point',
         coordinates: [-123.1264691, 49.2290631],
       },
-      country: 'fr',
+      country: CountryEnum.FR,
     };
 
     beforeEach(() => {

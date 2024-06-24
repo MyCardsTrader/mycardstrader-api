@@ -4,6 +4,7 @@ import { UserController } from './user.controller';
 import { Test, TestingModule } from '@nestjs/testing';
 import { CreateUserDto } from './dto/create-user.dto';
 import { DeleteUserDto } from './dto/delete-user.dto';
+import { CountryEnum } from './schema/user.schema';
 
 const userServiceProviderMock = {
   findAll: jest.fn(),
@@ -54,7 +55,7 @@ describe('UserController', () => {
         type: 'Point',
         coordinates: [-123.1264691, 49.2290631],
       },
-      country: 'fr',
+      country: CountryEnum.FR,
     };
     // When
     controller.createUser(userDto);

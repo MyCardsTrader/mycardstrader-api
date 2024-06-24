@@ -66,7 +66,7 @@ export class CreateCardDto {
     },
   })
   @IsNotEmpty()
-  image_uri: ImageUris;
+  image_uris: ImageUris;
 
   @ApiProperty({
     required: true,

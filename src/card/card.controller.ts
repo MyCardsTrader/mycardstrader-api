@@ -42,6 +42,18 @@ export class CardController {
 
   @ApiBearerAuth()
   @UseGuards(JwtAuthGuard, PoliciesGuard)
+  @CheckPolicies(new ReadCardPolicyHandler())
+  @ApiParam({
+    name: 'cardId',
+    required: true,
+  })
+  @Get('/:cardId')
+  async findCard(@Param('cardId') cardId): Promise<Card> {
+    return await this.cardService.findCardById(cardId);
+  }
+
+  @ApiBearerAuth()
+  @UseGuards(JwtAuthGuard, PoliciesGuard)
   @CheckPolicies(new CreateCardPolicyHandler)
   @Post()
   async createCard(

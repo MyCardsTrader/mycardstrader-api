@@ -29,7 +29,7 @@ const cardDoc = {
   name:'Phyrexian Altar',
   lang: CardLang.EN,
   grading: Grading.M,
-  image_uri: {
+  image_uris: {
     small: 'https://c1.scryfall.com/file/scryfall-cards/small/front/2/5/25158cd5-749b-408c-9ab1-0f83e38730f7.jpg?1562902485',
     normal: 'https://c1.scryfall.com/file/scryfall-cards/normal/front/2/5/25158cd5-749b-408c-9ab1-0f83e38730f7.jpg?1562902485',
     large: 'https://c1.scryfall.com/file/scryfall-cards/large/front/2/5/25158cd5-749b-408c-9ab1-0f83e38730f7.jpg?1562902485',
@@ -41,7 +41,7 @@ const cardDoc = {
   type_line: 'Artifact',
   set: '2x2',
   set_svg: "https://svgs.scryfall.io/sets/mh2.svg?1713153600",
-  collector_number: '1',
+  collector_number: 1,
   colors: [],
   color_identity: [],
   user: '61aff9b226d0e050c18bfcae',
@@ -81,7 +81,7 @@ describe('CardService', () => {
       name:'Phyrexian Altar',
       lang: CardLang.EN,
       grading: Grading.M,
-      image_uri: {
+      image_uris: {
         small: 'https://c1.scryfall.com/file/scryfall-cards/small/front/2/5/25158cd5-749b-408c-9ab1-0f83e38730f7.jpg?1562902485',
         normal: 'https://c1.scryfall.com/file/scryfall-cards/normal/front/2/5/25158cd5-749b-408c-9ab1-0f83e38730f7.jpg?1562902485',
         large: 'https://c1.scryfall.com/file/scryfall-cards/large/front/2/5/25158cd5-749b-408c-9ab1-0f83e38730f7.jpg?1562902485',
@@ -93,7 +93,7 @@ describe('CardService', () => {
       type_line: 'Artifact',
       set: '2x2',
       set_svg: "https://svgs.scryfall.io/sets/mh2.svg?1713153600",
-      collector_number: '1',
+      collector_number: 1,
       colors: [],
       color_identity: [],
       foil_treatment: null,

@@ -32,7 +32,7 @@ export class Card {
     required: true,
     type: SchemaNative.Types.Mixed,
   })
-  image_uri: ImageUris | ImageUris[];
+  image_uris: ImageUris | ImageUris[];
 
   @Prop({
     required: true,
@@ -70,7 +70,7 @@ export class Card {
   @Prop({
     required: true,
   })
-  collector_number: string;
+  collector_number: number;
 
   @Prop({
     required: false,
