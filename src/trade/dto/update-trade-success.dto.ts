@@ -2,7 +2,11 @@
 import { ApiProperty } from "@nestjs/swagger";
 
 export class UpdateTradeSuccessDto {
-  @ApiProperty()
+  @ApiProperty({
+    type: Boolean,
+    description: 'Accept the trade',
+    example: true,
+  })
   accept: boolean;
 }
 

@@ -1,9 +1,39 @@
 import { Document, Schema as SchemaNative } from 'mongoose';
 import { Prop, Schema, SchemaFactory } from '@nestjs/mongoose';
 
-export type Location = {
+export type UserLocation = {
   type: 'Point';
   coordinates: [Number, Number];
+}
+
+export enum CountryEnum {
+  DE = 'DE',
+  AT = 'AT',
+  BE = 'BE',
+  BG = 'BG',
+  CY = 'CY',
+  HR = 'HR',
+  DK = 'DK',
+  ES = 'ES',
+  EE = 'EE',
+  FI = 'FI',
+  FR = 'FR',
+  GR = 'GR',
+  HU = 'HU',
+  IE = 'IE',
+  IT = 'IT',
+  LV = 'LV',
+  LT = 'LT',
+  LU = 'LU',
+  MT = 'MT',
+  NL = 'NL',
+  PL = 'PL',
+  PT = 'PT',
+  CZ = 'CZ',
+  RO = 'RO',
+  SK = 'SK',
+  SI = 'SI',
+  SE = 'SE',
 }
 
 export type UserDocument = User & Document;
@@ -39,7 +69,7 @@ export class User {
     type: SchemaNative.Types.Mixed,
     index: '2dsphere',
   })
-  location: Location;
+  location: UserLocation;
 
   @Prop({
     required: false,
