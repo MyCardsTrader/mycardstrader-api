@@ -98,7 +98,7 @@ export class SearchService {
             email: 1, 
             distance: 1, 
             cardName: '$cards.name', 
-            image_uri: '$cards.image_uri', 
+            image_uris: '$cards.image_uris', 
             grading: '$cards.grading', 
             cardId: {
               $toString: '$cards._id'
@@ -150,7 +150,7 @@ export class SearchService {
             email: 0, 
             distance: 1, 
             cardName: '$cards.name', 
-            image_uri: '$cards.image_uri', 
+            image_uris: '$cards.image_uris', 
             grading: '$cards.grading', 
             cardId: {
               $toString: '$cards._id'
