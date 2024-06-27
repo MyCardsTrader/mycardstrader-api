@@ -9,9 +9,11 @@ import { Test, TestingModule } from '@nestjs/testing';
 import { CreateCardDto } from './dto/create-card.dto';
 import { PoliciesGuard } from '../casl/policies.guard';
 import { CaslAbilityFactory } from '../casl/casl-ability.factory';
+import { BulkImportDto } from './dto/bulk-import.dto';
 
 const cardServiceProviderMock = {
   createCard: jest.fn(),
+  importCards: jest.fn(),
   deleteCard: jest.fn(),
   findCardByUser: jest.fn(),
   findCardById: jest.fn(),
@@ -118,7 +120,7 @@ describe('CardController', () => {
       type_line: 'Artifact',
       set: '2x2',
       set_svg: "https://svgs.scryfall.io/sets/mh2.svg?1713153600",
-      collector_number: 1,
+      collector_number: "1",
       colors: [],
       color_identity: [],
     }
@@ -129,6 +131,41 @@ describe('CardController', () => {
     // Then
     expect(cardServiceProviderMock.createCard).toHaveBeenCalledTimes(1);
     expect(cardServiceProviderMock.createCard).toHaveBeenLastCalledWith(createCardDto, reqMock.user.userId);
+  });
+
+  it('should call card service importCards()', () => {
+    // Given
+    const importDto: BulkImportDto = {
+      cards: [{
+        oracle_id: '8d02b297-97c4-4379-9862-0a462400f66f',
+        cardmarket_id: 3574,
+        name: "Phyrexian Altar",
+        lang: CardLang.EN,
+        grading: Grading.M,
+        image_uris: {
+          small: 'https://c1.scryfall.com/file/scryfall-cards/small/front/2/5/25158cd5-749b-408c-9ab1-0f83e38730f7.jpg?1562902485',
+          normal: 'https://c1.scryfall.com/file/scryfall-cards/normal/front/2/5/25158cd5-749b-408c-9ab1-0f83e38730f7.jpg?1562902485',
+          large: 'https://c1.scryfall.com/file/scryfall-cards/large/front/2/5/25158cd5-749b-408c-9ab1-0f83e38730f7.jpg?1562902485',
+          png: 'https://c1.scryfall.com/file/scryfall-cards/png/front/2/5/25158cd5-749b-408c-9ab1-0f83e38730f7.png?1562902485',
+          art_crop: 'https://c1.scryfall.com/file/scryfall-cards/art_crop/front/2/5/25158cd5-749b-408c-9ab1-0f83e38730f7.jpg?1562902485',
+          border_crop: 'https://c1.scryfall.com/file/scryfall-cards/border_crop/front/2/5/25158cd5-749b-408c-9ab1-0f83e38730f7.jpg?1562902485',
+        },
+        cmc: '3.0',
+        type_line: 'Artifact',
+        set: '2x2',
+        set_svg: "https://svgs.scryfall.io/sets/mh2.svg?1713153600",
+        collector_number: "1",
+        colors: [],
+        color_identity: [],
+      }]
+    }
+
+    // When
+    controller.importCards(importDto, reqMock);
+
+    // Then
+    expect(cardServiceProviderMock.importCards).toHaveBeenCalledTimes(1);
+    expect(cardServiceProviderMock.importCards).toHaveBeenLastCalledWith(importDto, reqMock.user.userId);
   });
 
   it('should call card service deleteCard()', async () => {

@@ -3,6 +3,7 @@ import { InjectModel } from '@nestjs/mongoose';
 import { CreateCardDto } from './dto/create-card.dto';
 import { Card, CardDocument } from './schema/card.schema';
 import { HttpException, Injectable, NotFoundException } from '@nestjs/common';
+import { BulkImportDto } from './dto/bulk-import.dto';
 
 @Injectable()
 export class CardService {
@@ -20,6 +21,20 @@ export class CardService {
         user: userId,
       });
       return await newCard.save();
+    } catch (error) {
+      throw new HttpException(error.message, 520);
+    }
+  }
+
+  async importCards(bulkImportDto: BulkImportDto, userId: string): Promise<Card[]> {
+    const cards = bulkImportDto.cards.map((card) => {
+      return {
+       ...card,
+        user: userId,
+      };
+    });
+    try {
+      return await this.cardModel.insertMany(cards);
     } catch (error) {
       throw new HttpException(error.message, 520);
     }

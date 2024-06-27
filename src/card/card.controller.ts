@@ -19,6 +19,8 @@ import { PoliciesGuard } from '../casl/policies.guard';
 import { CheckPolicies } from '../casl/check-policy.decorator';
 import { ApiBearerAuth, ApiParam, ApiTags } from '@nestjs/swagger';
 import { ReadCardPolicyHandler, CreateCardPolicyHandler } from '../casl/policies';
+import { User } from 'src/user/schema/user.schema';
+import { BulkImportDto } from './dto/bulk-import.dto';
 
 @ApiTags('card')
 @Controller('card')
@@ -62,6 +64,17 @@ export class CardController {
   ): Promise<Card> {
     return await this.cardService.createCard(createCardDto, req.user.userId);
   }
+
+  @ApiBearerAuth()
+  @UseGuards(JwtAuthGuard)
+  @Post('/import')
+  async importCards(
+    @Body() bulkImportDto: BulkImportDto,
+    @Request() req,
+  ): Promise<any> {
+    return await this.cardService.importCards(bulkImportDto, req.user.userId);
+  }
+
 
   @ApiBearerAuth()
   @UseGuards(JwtAuthGuard)

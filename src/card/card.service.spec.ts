@@ -9,6 +9,7 @@ import { Test, TestingModule } from '@nestjs/testing';
 import { CreateCardDto } from './dto/create-card.dto';
 import { UpdateCardDto } from './dto/update-card.dto';
 import { HttpException, NotFoundException } from '@nestjs/common';
+import { BulkImportDto } from './dto/bulk-import.dto';
 
 const cardModel = getModelToken('Card');
 
@@ -41,7 +42,7 @@ const cardDoc = {
   type_line: 'Artifact',
   set: '2x2',
   set_svg: "https://svgs.scryfall.io/sets/mh2.svg?1713153600",
-  collector_number: 1,
+  collector_number: "1",
   colors: [],
   color_identity: [],
   user: '61aff9b226d0e050c18bfcae',
@@ -93,7 +94,7 @@ describe('CardService', () => {
       type_line: 'Artifact',
       set: '2x2',
       set_svg: "https://svgs.scryfall.io/sets/mh2.svg?1713153600",
-      collector_number: 1,
+      collector_number: "1",
       colors: [],
       color_identity: [],
       foil_treatment: null,
@@ -121,6 +122,55 @@ describe('CardService', () => {
       //Then
       await expect(service.createCard(cardDto, userId)).rejects.toThrow(HttpException);
     });
+  });
+
+  describe('Import cards', () => {
+    const cardsDto: BulkImportDto = {
+      cards: [
+        {
+          oracle_id: '8d02b297-97c4-4379-9862-0a462400f66f',
+          cardmarket_id: 3574,
+          name:'Phyrexian Altar',
+          lang: CardLang.EN,
+          grading: Grading.M,
+          image_uris: {
+            small: 'https://c1.scryfall.com/file/scryfall-cards/small/front/2/5/25158cd5-749b-408c-9ab1-0f83e38730f7.jpg?1562902485',
+            normal: 'https://c1.scryfall.com/file/scryfall-cards/normal/front/2/5/25158cd5-749b-408c-9ab1-0f83e38730f7.jpg?1562902485',
+            large: 'https://c1.scryfall.com/file/scryfall-cards/large/front/2/5/25158cd5-749b-408c-9ab1-0f83e38730f7.jpg?1562902485',
+            png: 'https://c1.scryfall.com/file/scryfall-cards/png/front/2/5/25158cd5-749b-408c-9ab1-0f83e38730f7.png?1562902485',
+            art_crop: 'https://c1.scryfall.com/file/scryfall-cards/art_crop/front/2/5/25158cd5-749b-408c-9ab1-0f83e38730f7.jpg?1562902485',
+            border_crop: 'https://c1.scryfall.com/file/scryfall-cards/border_crop/front/2/5/25158cd5-749b-408c-9ab1-0f83e38730f7.jpg?1562902485',
+          },
+          cmc: '3.0',
+          type_line: 'Artifact',
+          set: '2x2',
+          set_svg: "https://svgs.scryfall.io/sets/mh2.svg?1713153600",
+          collector_number: "1",
+          colors: [],
+          color_identity: [],
+          foil_treatment: null,
+        }
+      ],
+    };
+
+    it('Should import cards', async() => {
+      // Given
+      Mock(CardTestModel).toReturn([cardDoc], 'insertMany');
+
+      // When
+      const result = await service.importCards(cardsDto, userId);
+      // Then
+      expect(formatMongo(result)).toEqual([cardDoc]);
+    });
+
+    it('Should throw an HttpException', async() => {
+      // Given
+      Mock(CardTestModel).toReturn(new Error('Cannot save'), 'insertMany');
+      // When
+      //Then
+      await expect(service.importCards(cardsDto, userId)).rejects.toThrow(HttpException);
+    });
+
   });
 
   describe('Delete a card', () => {

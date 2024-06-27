@@ -105,12 +105,12 @@ export class CreateCardDto {
 
   @ApiProperty({
     required: true,
-    type: Number,
+    type: String,
     description: 'Collector number of the card',
-    example: 361
+    example: "361"
   })
   @IsNotEmpty()
-  collector_number: number;
+  collector_number: string;
 
   @ApiProperty({
     required: false,
