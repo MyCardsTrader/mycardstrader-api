@@ -1,11 +1,15 @@
 import * as Mock from 'mockingoose';
 import * as mongoose from 'mongoose';
-import { UserService } from './user.service';
 import { HttpException, NotFoundException } from '@nestjs/common';
 import { getModelToken } from '@nestjs/mongoose';
-import { CountryEnum, UserSchema } from './schema/user.schema';
 import { Test, TestingModule } from '@nestjs/testing';
+import { MailerService } from '@nestjs-modules/mailer';
+
+import { UserService } from './user.service';
 import { CreateUserDto } from './dto/create-user.dto';
+import { CountryEnum, UserSchema } from './schema/user.schema';
+import { verify } from 'crypto';
+import { NotFoundError } from 'rxjs';
 
 const userModel = getModelToken('User');
 
@@ -22,6 +26,11 @@ const userDoc = {
   availableTreasures: 0,
   holdTreasures: 0,
   country: 'fr',
+  verify: 'verify',
+}
+
+const mailerServiceMock = {
+  sendMail: jest.fn(),
 }
 
 const userDeleteDoc = {
@@ -39,6 +48,10 @@ describe('UserService', () => {
         {
           provide: userModel,
           useValue: UserTestModel,
+        },
+        {
+          provide: MailerService,
+          useValue: mailerServiceMock,
         }
       ],
     }).compile();
@@ -74,6 +87,7 @@ describe('UserService', () => {
       const result = await service.createUser(userDto);
   
       // Then
+      expect(mailerServiceMock.sendMail).toHaveBeenCalled();
       expect(formatMongo(result)).toEqual(userDoc);
     });
 
@@ -159,6 +173,39 @@ describe('UserService', () => {
       // When
       // Then
       await expect(service.deleteUser(userDeleteDoc)).rejects.toThrow(HttpException);
+    });
+  });
+
+  describe('verify user', () => {
+    it('should verify user', async() => {
+      // Given
+      const userVerified = {
+       ...userDoc,
+        verify: null
+      }
+      Mock(UserTestModel).toReturn({ userDoc }, 'findOne');
+      Mock(UserTestModel).toReturn(userVerified, 'findOneAndUpdate');
+
+      // When
+      const result = await service.verifyUser('verify');
+      // Then
+      expect(result.verify).toEqual(userVerified.verify);
+    });
+
+    it('should find no user on verify', async() => {
+      // Given
+      Mock(UserTestModel).toReturn(null, 'findOne');
+      // When
+      // Then
+      await expect(service.verifyUser('nemo')).rejects.toThrow(NotFoundException);
+    });
+
+    it('should throw HttpException on findOne', async() => {
+      // Given
+      Mock(UserTestModel).toReturn(new Error('cannot findOne'), 'findOne');
+      // When
+      // Then
+      await expect(service.verifyUser('nemo')).rejects.toThrow(HttpException);
     });
   });
 });

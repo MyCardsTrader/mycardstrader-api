@@ -1,7 +1,7 @@
 import { mocked } from 'ts-jest/utils';
 import { JwtService } from '@nestjs/jwt';
 import { AuthService } from './auth.service';
-import { scryptSync, randomBytes } from 'crypto';
+import { scryptSync, randomBytes, verify } from 'crypto';
 import { UserService } from '../user/user.service';
 import { Test, TestingModule } from '@nestjs/testing';
 import { UnauthorizedException } from '@nestjs/common';
@@ -104,6 +104,21 @@ describe('AuthService', () => {
       // GIVEN
       userServiceMock.findOneByEmail.mockResolvedValueOnce(user);
       service['verifyPassword'] = jest.fn().mockReturnValueOnce(false);
+
+      // WHEN
+      const result = await service['validateUser'](email, pass);
+
+      // THEN
+      expect(result).toEqual(null);
+    });
+
+    it("should return null if the user is not verified", async () => {
+      // GIVEN
+      userServiceMock.findOneByEmail.mockResolvedValueOnce({
+        ...user,
+        verify: 'noYetVerified',
+      });
+      service['verifyPassword'] = jest.fn().mockReturnValueOnce(true);
 
       // WHEN
       const result = await service['validateUser'](email, pass);

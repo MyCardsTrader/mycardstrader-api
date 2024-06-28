@@ -5,12 +5,14 @@ import { Test, TestingModule } from '@nestjs/testing';
 import { CreateUserDto } from './dto/create-user.dto';
 import { DeleteUserDto } from './dto/delete-user.dto';
 import { CountryEnum } from './schema/user.schema';
+import { verify } from 'crypto';
 
 const userServiceProviderMock = {
   findAll: jest.fn(),
   findOneById: jest.fn(),
   createUser: jest.fn(),
   deleteUser: jest.fn(),
+  verifyUser: jest.fn(),
 }
 
 const jwtAuthGuardMock = {
@@ -76,6 +78,18 @@ describe('UserController', () => {
     // Then
     expect(userServiceProviderMock.deleteUser).toHaveBeenCalledTimes(1);
     expect(userServiceProviderMock.deleteUser).toHaveBeenLastCalledWith(deleteUserDto);
+  });
+
+  it('should call service verifyUser()', () => {
+    // Given
+    const verify = 'verify';
+
+    // When
+    controller.verifyUser(verify);
+
+    // Then
+    expect(userServiceProviderMock.verifyUser).toHaveBeenCalledTimes(1);
+    expect(userServiceProviderMock.verifyUser).toHaveBeenLastCalledWith(verify);
   });
 
   // it('should call service findOneById()', () => {

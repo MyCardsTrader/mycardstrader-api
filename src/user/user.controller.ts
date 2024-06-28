@@ -42,4 +42,9 @@ export class UserController {
   ): Promise<User> {
     return await this.userService.deleteUser(deleteUserDto);
   }
+
+  @Get('/verify/:verify')
+  async verifyUser(@Param('verify') verify: string): Promise<User> {
+    return await this.userService.verifyUser(verify);
+  }
 }

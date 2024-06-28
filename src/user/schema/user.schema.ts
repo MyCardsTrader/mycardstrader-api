@@ -81,6 +81,11 @@ export class User {
     default: 0,
   })
   holdTreasures?: number;
+
+  @Prop({
+    required: false,
+  })
+  verify?: string | null;
 }
 
 export const UserSchema = SchemaFactory.createForClass(User);
