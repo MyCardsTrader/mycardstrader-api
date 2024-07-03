@@ -86,6 +86,11 @@ export class User {
     required: false,
   })
   verify?: string | null;
+
+  @Prop({
+    required: false,
+  })
+  resetToken?: string;
 }
 
 export const UserSchema = SchemaFactory.createForClass(User);

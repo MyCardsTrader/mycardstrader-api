@@ -208,4 +208,63 @@ describe('UserService', () => {
       await expect(service.verifyUser('nemo')).rejects.toThrow(HttpException);
     });
   });
+
+  describe('reset password', () => {
+    it('should reset password', async() => {
+      // Given
+      Mock(UserTestModel).toReturn(userDoc, 'findOne');
+      // When
+      const result = await service.resetPassword(userDoc.email);
+      // Then
+      expect(result).toBeTruthy();
+    });
+
+    it('should find no user on reset password', async() => {
+      // Given
+      Mock(UserTestModel).toReturn(null, 'findOne');
+      // When
+      // Then
+      await expect(service.resetPassword(userDoc.email)).rejects.toThrow(NotFoundException);
+    });
+
+    it('should throw HttpException on reset password', async() => {
+      // Given
+      Mock(UserTestModel).toReturn(new Error('cannot findOne'), 'findOne');
+      // When
+      // Then
+      await expect(service.resetPassword(userDoc.email)).rejects.toThrow(HttpException);
+    });
+  });
+
+  describe('change password', () => {
+    it('should change password', async() => {
+      // Given
+      const user = {
+        ...userDoc,
+        password: 'newPassword'
+      }
+      Mock(UserTestModel).toReturn({...userDoc, resetToken: 'resetToken'}, 'findOne');
+      Mock(UserTestModel).toReturn(user, 'findOneAndUpdate');
+      // When
+      const result = await service.changePassword('resetToken', 'newPassword');
+      // Then
+      expect(result.password).toEqual(user.password);
+    });
+
+    it('should find no user on change password', async() => {
+      // Given
+      Mock(UserTestModel).toReturn(null, 'findOne');
+      // When
+      // Then
+      await expect(service.changePassword(userDoc.email, 'newPassword')).rejects.toThrow(NotFoundException);
+    });
+
+    it('should throw HttpException on change password', async() => {
+      // Given
+      Mock(UserTestModel).toReturn(new Error('Cannot findOne'), 'findOne');
+      // When
+      // Then
+      await expect(service.changePassword(userDoc.email, 'newPassword')).rejects.toThrow(HttpException);
+    });
+  });
 });

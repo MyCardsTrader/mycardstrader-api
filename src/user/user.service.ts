@@ -101,6 +101,71 @@ export class UserService {
     }
   }
 
+  async resetPassword(email: string): Promise<boolean> {
+    try {
+      const user: User = await this.userModel.findOne({ email });
+      if (!user) {
+        throw new Error('User not found');
+      }
+      const resetToken = randomUUID();
+      await this.userModel.findOneAndUpdate(
+        { email: user.email},
+        {
+          $set: {
+            resetToken: resetToken,
+          },
+        },
+      );
+      await this.mailerService.sendMail({
+        to: email,
+        from: process.env.EMAIL_FROM,
+        subject: 'Reset your password NearbyCardTrader.com',
+        template: 'reset-password',
+        context: {
+          email: email,
+          resetToken: resetToken,
+          frontUrl: process.env.FRONT_URL,
+        },
+      });
+      return true;
+    } catch (error) {
+      if (error.message === 'User not found') {
+        throw new NotFoundException('User not found');
+      } else {
+        throw new HttpException('Database error', 520);
+      }
+    }
+  }
+
+  async changePassword(resetToken: string, password: string): Promise<User> {
+    try {
+      const user: User = await this.userModel.findOne({ resetToken });
+      if (!user) {
+        throw new Error('User not found');
+      }
+      const salt = randomBytes(16).toString('hex');
+      const newPassword = scryptSync(password, salt, 64).toString('hex');
+      const newUser = await this.userModel.findOneAndUpdate(
+        { email: user.email },
+        {
+          $set: {
+            password: newPassword,
+            salt: salt,
+            resetToken: null,
+          },
+        },
+      );
+      return newUser;
+    } catch (error) {
+      if (error.message === 'User not found') {
+        throw new NotFoundException('User not found');
+      } else {
+        throw new HttpException('Database error', 520);
+      }
+    }
+  };
+
+
   // async findOneById(id: string): Promise<User> {
   //   try {
   //     const user: User = await this.userModel

@@ -13,6 +13,8 @@ const userServiceProviderMock = {
   createUser: jest.fn(),
   deleteUser: jest.fn(),
   verifyUser: jest.fn(),
+  resetPassword: jest.fn(),
+  changePassword: jest.fn(),
 }
 
 const jwtAuthGuardMock = {
@@ -90,6 +92,34 @@ describe('UserController', () => {
     // Then
     expect(userServiceProviderMock.verifyUser).toHaveBeenCalledTimes(1);
     expect(userServiceProviderMock.verifyUser).toHaveBeenLastCalledWith(verify);
+  });
+
+  it('should call service resetPassword()', () => {
+    // Given
+    const resetPasswordDto = { email: 'email' };
+
+    // When
+    controller.resetPassword(resetPasswordDto);
+
+    // Then
+    expect(userServiceProviderMock.resetPassword).toHaveBeenCalledTimes(1);
+    expect(userServiceProviderMock.resetPassword).toHaveBeenLastCalledWith(resetPasswordDto.email);
+  });
+
+  it('should call service changePassword()', () => {
+    // Given
+    const changePasswordDto = { resetToken: 'resetToken', password: 'password' };
+
+    // When
+    controller.changePassword(changePasswordDto);
+
+    // Then
+    expect(userServiceProviderMock.changePassword).toHaveBeenCalledTimes(1);
+    expect(userServiceProviderMock.changePassword).toHaveBeenLastCalledWith(
+      changePasswordDto.resetToken,
+      changePasswordDto.password,
+
+    );
   });
 
   // it('should call service findOneById()', () => {

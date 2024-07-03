@@ -47,4 +47,14 @@ export class UserController {
   async verifyUser(@Param('verify') verify: string): Promise<User> {
     return await this.userService.verifyUser(verify);
   }
+
+  @Post('/reset-password')
+  async resetPassword(@Body() resetPasswordDto: { email: string }): Promise<boolean> {
+    return await this.userService.resetPassword(resetPasswordDto.email);
+  }
+
+  @Post('/change-password')
+  async changePassword(@Body() changePasswordDto: { resetToken: string, password: string }): Promise<User> {
+    return await this.userService.changePassword(changePasswordDto.resetToken, changePasswordDto.password);
+  }
 }
