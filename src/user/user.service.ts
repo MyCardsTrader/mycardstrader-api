@@ -23,11 +23,18 @@ export class UserService {
     const password = scryptSync(createUserDto.password, salt, 64).toString('hex');
     const verify = randomUUID();
 
+    const promocode = createUserDto.promocode;
+
+    if (promocode) {
+      delete createUserDto.promocode;
+    }
+
     const newUserInfo = {
       ...createUserDto,
       password,
       salt,
       verify,
+      usedPromocode: promocode? [promocode] : [],
     };
 
     try {

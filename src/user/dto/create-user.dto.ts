@@ -1,6 +1,6 @@
 /* istanbul ignore file */
 
-import { ApiProperty } from '@nestjs/swagger';
+import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
 import { CountryEnum } from '../schema/user.schema';
 import { UserLocation } from '../schema/user.schema';
 import { IsEmail, IsNotEmpty, IsString } from 'class-validator';
@@ -46,4 +46,12 @@ export class CreateUserDto {
   })
   @IsNotEmpty()
   country: CountryEnum;
+
+  @ApiPropertyOptional({
+    required: false,
+    type: String,
+    description: 'Promocode for the new user',
+    example: 'PROMO',
+  })
+  promocode?: string
 }

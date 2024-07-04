@@ -57,40 +57,57 @@ export class User {
     required: false,
   })
   salt?: string;
-
-  @Prop({
-    required: true,
-    default: 0,
-  })
-  availableTreasures?: number;
-
+  
   @Prop({
     required: true,
     type: SchemaNative.Types.Mixed,
     index: '2dsphere',
   })
   location: UserLocation;
-
+  
   @Prop({
-    required: false,
+    required: true,
+    type: String,
   })
   country: string;
 
   @Prop({
     required: true,
+    type: Number,
     default: 0,
   })
-  holdTreasures?: number;
+  spentCoins?: number;
+
+  @Prop({
+    required: true,
+    default: 0,
+  })
+  availableCoins?: number;
+  
+  @Prop({
+    required: true,
+    type: Number,
+    default: 0,
+  })
+  holdCoins?: number;
 
   @Prop({
     required: false,
+    type: String,
   })
   verify?: string | null;
 
   @Prop({
     required: false,
+    type: String,
   })
   resetToken?: string;
+
+  @Prop({
+    required: false,
+    type: [String],
+  })
+  usedPromocode?: string[];
 }
 
 export const UserSchema = SchemaFactory.createForClass(User);

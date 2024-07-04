@@ -23,9 +23,11 @@ const userDoc = {
   _id: '507f191e810c19729de860ea',
   email: 'captain.nemo@nautilus.sub',
   password: 'aronnax',
-  availableTreasures: 0,
-  holdTreasures: 0,
+  availableCoins: 0,
+  holdCoins: 0,
+  spentCoins: 0,
   country: 'fr',
+  usedPromocode: [],
   verify: 'verify',
 }
 
@@ -89,6 +91,24 @@ describe('UserService', () => {
       // Then
       expect(mailerServiceMock.sendMail).toHaveBeenCalled();
       expect(formatMongo(result)).toEqual(userDoc);
+    });
+
+    it('should create user with promocode', async() => {
+      // Given
+      const userDocWithPromocode = {
+       ...userDoc,
+        usedPromocode: ['PROMO'],
+      };
+      const promocode = 'promocode';
+      userDto.promocode = promocode;
+      Mock(UserTestModel).toReturn(userDocWithPromocode, 'save');
+
+      // When
+      const result = await service.createUser(userDto);
+
+      // Then
+      expect(mailerServiceMock.sendMail).toHaveBeenCalled();
+      expect(formatMongo(result)).toEqual(userDocWithPromocode);
     });
 
     it('should throw an HttpException', async() => {

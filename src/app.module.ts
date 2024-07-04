@@ -6,17 +6,19 @@ import { MongooseModule } from '@nestjs/mongoose';
 import { MailerModule } from '@nestjs-modules/mailer';
 import { HandlebarsAdapter } from '@nestjs-modules/mailer/dist/adapters/handlebars.adapter';
 
-import { AppService } from './app.service';
 import { SetModule } from './set/set.module';
 import { UserModule } from './user/user.module';
 import { AuthModule } from './auth/auth.module';
 import { CardModule } from './card/card.module';
 import { CaslModule } from './casl/casl.module';
 import { FoilModule } from './foil/foil.module';
-import { AppController } from './app.controller';
 import { TradeModule } from './trade/trade.module';
 import { SearchModule } from './search/search.module';
 import { MessageModule } from './message/message.module';
+import { PromocodeModule } from './promocode/promocode.module';
+
+import { AppService } from './app.service';
+import { AppController } from './app.controller';
 @Module({
   imports: [
     MongooseModule.forRootAsync({
@@ -54,6 +56,7 @@ import { MessageModule } from './message/message.module';
     SearchModule,
     SetModule,
     FoilModule,
+    PromocodeModule,
   ],
   controllers: [AppController],
   providers: [AppService],

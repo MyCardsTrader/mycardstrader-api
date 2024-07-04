@@ -1,11 +1,11 @@
 import mongoose from 'mongoose';
 import * as Mock from 'mockingoose';
+import { HttpException } from '@nestjs/common';
 import { getModelToken } from '@nestjs/mongoose';
 import { Test, TestingModule } from '@nestjs/testing';
 
 import { FoilService } from './foil.service';
-import { Foil, FoilSchema } from './schema/foil.schema';
-import { HttpException } from '@nestjs/common';
+import { FoilSchema } from './schema/foil.schema';
 
 const foilModel = getModelToken('Foil');
 
