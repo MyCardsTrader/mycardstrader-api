@@ -1,7 +1,7 @@
 export enum Grading {
   M = 'mint',
   NM = 'near mint',
-  EX = 'excelent',
+  EX = 'excellent',
   GD = 'good',
   LP = 'light played',
   PL = 'played',
