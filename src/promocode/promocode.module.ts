@@ -13,5 +13,6 @@ import { PromocodeController } from './promocode.controller';
     ],
     controllers: [PromocodeController],
     providers: [PromocodeService],
+    exports: [PromocodeService],
 })
 export class PromocodeModule {}

@@ -8,12 +8,14 @@ import { HttpException, Injectable, NotFoundException } from '@nestjs/common';
 import { CreateUserDto } from './dto/create-user.dto';
 import { DeleteUserDto } from './dto/delete-user.dto';
 import { User, UserDocument } from './schema/user.schema';
+import { PromocodeService } from '../promocode/promocode.service';
 
 @Injectable()
 export class UserService {
   constructor(
-    @InjectModel(User.name) private readonly userModel: Model<UserDocument>,
     private readonly mailerService: MailerService,
+    private readonly promocodeService: PromocodeService,
+    @InjectModel(User.name) private readonly userModel: Model<UserDocument>,
   ) { }
 
   async createUser(
@@ -23,7 +25,7 @@ export class UserService {
     const password = scryptSync(createUserDto.password, salt, 64).toString('hex');
     const verify = randomUUID();
 
-    const promocode = createUserDto.promocode;
+    const promocode = await this.promocodeService.getPromocode(createUserDto.promocode);
 
     if (promocode) {
       delete createUserDto.promocode;
@@ -34,7 +36,8 @@ export class UserService {
       password,
       salt,
       verify,
-      usedPromocode: promocode? [promocode] : [],
+      usedPromocode: promocode? [promocode.code] : [],
+      availableCoins: promocode ? promocode.value : 0,
     };
 
     try {

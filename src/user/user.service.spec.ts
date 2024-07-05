@@ -8,8 +8,7 @@ import { MailerService } from '@nestjs-modules/mailer';
 import { UserService } from './user.service';
 import { CreateUserDto } from './dto/create-user.dto';
 import { CountryEnum, UserSchema } from './schema/user.schema';
-import { verify } from 'crypto';
-import { NotFoundError } from 'rxjs';
+import { PromocodeService } from '../promocode/promocode.service';
 
 const userModel = getModelToken('User');
 
@@ -35,6 +34,10 @@ const mailerServiceMock = {
   sendMail: jest.fn(),
 }
 
+const promocodeServiceMock = {
+  getPromocode: jest.fn(),
+}
+
 const userDeleteDoc = {
   id: '507f191e810c19729de860ea',
 }
@@ -54,6 +57,10 @@ describe('UserService', () => {
         {
           provide: MailerService,
           useValue: mailerServiceMock,
+        },
+        {
+          provide: PromocodeService,
+          useValue: promocodeServiceMock,
         }
       ],
     }).compile();
@@ -90,6 +97,7 @@ describe('UserService', () => {
   
       // Then
       expect(mailerServiceMock.sendMail).toHaveBeenCalled();
+      expect(promocodeServiceMock.getPromocode).toHaveBeenCalled();
       expect(formatMongo(result)).toEqual(userDoc);
     });
 
@@ -98,9 +106,11 @@ describe('UserService', () => {
       const userDocWithPromocode = {
        ...userDoc,
         usedPromocode: ['PROMO'],
+        availableCoins: 10,
       };
       const promocode = 'promocode';
       userDto.promocode = promocode;
+      jest.spyOn(promocodeServiceMock, 'getPromocode').mockResolvedValue({ code: 'PROMO', value: 10 });
       Mock(UserTestModel).toReturn(userDocWithPromocode, 'save');
 
       // When
