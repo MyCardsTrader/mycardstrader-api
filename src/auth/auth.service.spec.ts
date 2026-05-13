@@ -1,11 +1,10 @@
-import { mocked } from 'ts-jest/utils';
 import { JwtService } from '@nestjs/jwt';
 import { AuthService } from './auth.service';
 import { scryptSync, randomBytes, verify } from 'crypto';
 import { UserService } from '../user/user.service';
 import { Test, TestingModule } from '@nestjs/testing';
 import { UnauthorizedException } from '@nestjs/common';
-import * as moment from 'moment';
+import moment from 'moment';
 
 jest.mock('crypto', () => ({
   ...(jest.requireActual('crypto') as any),
@@ -137,7 +136,7 @@ describe('AuthService', () => {
     beforeEach(() => {
       jest.resetAllMocks();
       jest.restoreAllMocks();
-      scryptSyncMock = mocked(scryptSync);
+      scryptSyncMock = jest.mocked(scryptSync);
     })
 
     it('should call scryptSync', () => {
@@ -215,7 +214,7 @@ describe('AuthService', () => {
 
       // THEN
       expect(jwtServiceMock.sign).toHaveBeenCalledTimes(1);
-      expect(jwtServiceMock.sign).toHaveBeenCalledWith({ sub: 123456}, { expiresIn: '60m'});
+      expect(jwtServiceMock.sign).toHaveBeenCalledWith({ sub: 123456}, { expiresIn: 3600 });
     });
 
     it('should return an object with an access token', async () => {
@@ -224,7 +223,7 @@ describe('AuthService', () => {
       jwtServiceMock.sign.mockReturnValueOnce('eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiIxMjM0NTY3ODkwIiwibmFtZSI6IkpvaG4gRG9lIiwiaWF0IjoxNTE2MjM5MDIyfQ.SflKxwRJSMeKKF2QT4fwpMeJf36POk6yJV_adQssw5c');
 
       // WHEN
-      const expireDate = moment().add('60m');
+      const expireDate = moment().add(60, 'm');
       const result = await service.login(userDoc);
 
       // THEN

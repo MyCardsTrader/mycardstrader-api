@@ -1,7 +1,8 @@
+import { HttpService } from '@nestjs/axios';
 import { Model } from 'mongoose';
 import { Cron, CronExpression } from '@nestjs/schedule';
 import { InjectModel } from '@nestjs/mongoose';
-import { HttpException, HttpService, Injectable } from '@nestjs/common';
+import { HttpException, Injectable } from '@nestjs/common';
 
 import { SetDocument } from './schema/set.schema';
 import { lastValueFrom } from 'rxjs';
@@ -23,15 +24,15 @@ export class SetService {
   @Cron(CronExpression.EVERY_DAY_AT_MIDNIGHT)
   async getSets(): Promise<void> {
     const sets = await this.findAll();
-    const scryfallSets = await lastValueFrom(this.httpService.get('https://api.scryfall.com/sets'));
-    const newSets = scryfallSets.data.data.map( set => {
+    const scryfallSets: any = await lastValueFrom(this.httpService.get('https://api.scryfall.com/sets'));
+    const newSets = scryfallSets.data.data.map((set) => {
       return {
         name: set.name,
         code: set.code,
         icon_svg_uri: set.icon_svg_uri,
       };
     });
-    const newSetsToAdd = newSets.filter( set => sets.map(set => set.code).indexOf(set.code) === -1);
+    const newSetsToAdd = newSets.filter((set) => sets.map((existingSet) => existingSet.code).indexOf(set.code) === -1);
     try {
       if (newSetsToAdd.length > 0) {
         this.setModel.insertMany(newSetsToAdd);

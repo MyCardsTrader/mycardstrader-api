@@ -1,8 +1,14 @@
-import * as moment from 'moment';
+import moment from 'moment';
 import { scryptSync } from 'crypto';
 import { JwtService } from '@nestjs/jwt';
+import { SignOptions } from 'jsonwebtoken';
 import { UserService } from '../user/user.service';
 import { Injectable, UnauthorizedException } from '@nestjs/common';
+
+const getJwtExpiresIn = (): SignOptions['expiresIn'] => {
+  const expiresIn = Number.parseInt(process.env.JWT_EXPIRE ?? '60', 10);
+  return Number.isNaN(expiresIn) ? 60 * 60 : expiresIn * 60;
+};
 
 @Injectable()
 export class AuthService {
@@ -35,8 +41,8 @@ export class AuthService {
 
     const payload = { sub: validatedUser._id };
     return {
-      access_token: this.jwtService.sign(payload, { expiresIn: `${process.env.JWT_EXPIRE || '60'}m` }),
-      expires_in: moment().add(process.env.JWT_EXPIRE, 'm'),
+      access_token: this.jwtService.sign(payload, { expiresIn: getJwtExpiresIn() }),
+      expires_in: moment().add(Number.parseInt(process.env.JWT_EXPIRE ?? '60', 10), 'm'),
     }
   }
 }

@@ -11,13 +11,10 @@ import { JwtStrategy } from "./jwt.strategy";
 describe('Jwt Strategy', () => {
   let jwtStrategy;
   const JWT_SECRET = 'JWT_SECRET_VALUE';
-  const JWT_EXPIRE_VALUE = 'JWT_EXPIRE_VALUE';
-
   beforeEach(() => {
     jest.resetAllMocks();
     jest.resetAllMocks();
     process.env.JWT_SECRET = JWT_SECRET;
-    process.env.JWT_EXPIRE = JWT_EXPIRE_VALUE;
 
     // extractJwtMock = jest.spyOn(ExtractJwt, 'fromAuthHeaderAsBearerToken');
     // extractJwtMock.mockReturnValueOnce(() => null);
@@ -37,7 +34,6 @@ describe('Jwt Strategy', () => {
         jwtFromRequest: expect.any(Function),
         ignoreExpiration: false,
         secretOrKey: JWT_SECRET,
-        expiresIn: JWT_EXPIRE_VALUE,
       })
     });
   });

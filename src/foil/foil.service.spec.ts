@@ -1,5 +1,5 @@
 import mongoose from 'mongoose';
-import * as Mock from 'mockingoose';
+import Mock from 'mockingoose';
 import { HttpException } from '@nestjs/common';
 import { getModelToken } from '@nestjs/mongoose';
 import { Test, TestingModule } from '@nestjs/testing';

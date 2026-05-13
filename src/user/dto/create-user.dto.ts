@@ -28,7 +28,7 @@ export class CreateUserDto {
 
   @ApiProperty({
     required: true,
-    type: 'object',
+    type: Object,
     description: 'Location of the user',
     example: {
       type: 'Point',

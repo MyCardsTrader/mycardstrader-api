@@ -1,4 +1,4 @@
-import * as Mock from 'mockingoose';
+import Mock from 'mockingoose';
 import * as mongoose from "mongoose";
 import { getModelToken } from '@nestjs/mongoose';
 import { Test, TestingModule } from '@nestjs/testing';
@@ -144,7 +144,7 @@ describe('TradeService', () => {
       // When
       // Then
       await expect(service.getAllTrades())
-        .rejects.toThrowError(HttpException);
+        .rejects.toThrow(HttpException);
     });
   });
 
@@ -172,7 +172,7 @@ describe('TradeService', () => {
       // When
       // Then
       await expect(service.findTradesByUser('userId'))
-        .rejects.toThrowError(HttpException);
+        .rejects.toThrow(HttpException);
     });
   });
 
@@ -212,7 +212,7 @@ describe('TradeService', () => {
       // When
       // Then
       await expect(service.getTradeById(tradeId))
-        .rejects.toThrowError(HttpException);
+        .rejects.toThrow(HttpException);
     });
   });
 

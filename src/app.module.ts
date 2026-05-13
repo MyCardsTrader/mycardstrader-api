@@ -4,7 +4,8 @@ import { Module } from '@nestjs/common';
 import { ConfigModule } from '@nestjs/config';
 import { MongooseModule } from '@nestjs/mongoose';
 import { MailerModule } from '@nestjs-modules/mailer';
-import { HandlebarsAdapter } from '@nestjs-modules/mailer/dist/adapters/handlebars.adapter';
+
+const { HandlebarsAdapter } = require('@nestjs-modules/mailer/adapters/handlebars.adapter');
 
 import { SetModule } from './set/set.module';
 import { UserModule } from './user/user.module';
@@ -21,11 +22,13 @@ import { AppService } from './app.service';
 import { AppController } from './app.controller';
 @Module({
   imports: [
+    ConfigModule.forRoot({
+      isGlobal: true,
+      envFilePath: `${process.env.NODE_ENV}.env`,
+    }),
     MongooseModule.forRootAsync({
       useFactory: async () => ({
         uri: process.env.DATABASE_URI,
-        useNewUrlParser: true,
-        useUnifiedTopology: true,
       }),
     }),
     MailerModule.forRootAsync({
@@ -42,10 +45,6 @@ import { AppController } from './app.controller';
           },
         },
       }),
-    }),
-    ConfigModule.forRoot({
-      isGlobal: true,
-      envFilePath: `${process.env.NODE_ENV}.env`,
     }),
     UserModule,
     AuthModule,
