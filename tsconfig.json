@@ -20,6 +20,6 @@
     "strictNullChecks": false,
     "strictPropertyInitialization": false,
     "useUnknownInCatchVariables": false,
-    "types": ["node", "jest"]
+    "types": ["node"]
   }
 }
