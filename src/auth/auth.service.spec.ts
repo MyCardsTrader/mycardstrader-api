@@ -125,6 +125,14 @@ describe('AuthService', () => {
       // THEN
       expect(result).toEqual(null);
     });
+
+    it("should return null if the user does not exist", async () => {
+      userServiceMock.findOneByEmail.mockResolvedValueOnce(null);
+
+      const result = await service['validateUser'](email, pass);
+
+      expect(result).toEqual(null);
+    });
   });
 
   describe('verifyPassword', () => {
@@ -228,6 +236,25 @@ describe('AuthService', () => {
 
       // THEN
       expect(result.access_token).toEqual('eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiIxMjM0NTY3ODkwIiwibmFtZSI6IkpvaG4gRG9lIiwiaWF0IjoxNTE2MjM5MDIyfQ.SflKxwRJSMeKKF2QT4fwpMeJf36POk6yJV_adQssw5c');
+    });
+
+    it('should fallback to 60 minutes when JWT_EXPIRE is invalid', async () => {
+      process.env.JWT_EXPIRE = 'invalid';
+      service['validateUser'] = jest.fn().mockResolvedValueOnce(user);
+
+      await service.login(userDoc);
+
+      expect(jwtServiceMock.sign).toHaveBeenCalledWith({ sub: 123456 }, { expiresIn: 3600 });
+    });
+
+    it('should fallback to 60 minutes when JWT_EXPIRE is missing', async () => {
+      delete process.env.JWT_EXPIRE;
+      service['validateUser'] = jest.fn().mockResolvedValueOnce(user);
+
+      const result = await service.login(userDoc);
+
+      expect(jwtServiceMock.sign).toHaveBeenCalledWith({ sub: 123456 }, { expiresIn: 3600 });
+      expect(moment.isMoment(result.expires_in)).toBe(true);
     });
   });
 });

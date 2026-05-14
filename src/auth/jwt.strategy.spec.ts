@@ -36,6 +36,14 @@ describe('Jwt Strategy', () => {
         secretOrKey: JWT_SECRET,
       })
     });
+
+    it('Should fallback to default secret', () => {
+      delete process.env.JWT_SECRET;
+
+      const result = JwtStrategy['getStrategy']();
+
+      expect(result.secretOrKey).toBe('change-me');
+    });
   });
 
   it('Should validate', async () => {

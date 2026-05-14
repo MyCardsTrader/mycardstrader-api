@@ -4,6 +4,8 @@ import { CaslService } from '../casl/casl.service';
 import { TradeController } from './trade.controller';
 import { Test, TestingModule } from '@nestjs/testing';
 import { UpdateTradeDto, CreateTradeDto } from './dto';
+import { UpdateTradeSuccessDto } from './dto/update-trade-success.dto';
+import { UpdateTradeDeclineDto } from './dto/update-trade-declined.dto';
 
 const userIdMock = 'userId';
 
@@ -22,6 +24,8 @@ const tradeServiceProviderMock = {
   deleteTrade: jest.fn(),
   updateTrade: jest.fn(),
   findTradesByUser: jest.fn(),
+  acceptTrade: jest.fn(),
+  declineTrade: jest.fn(),
 }
 
 describe('TradeController', () => {
@@ -157,5 +161,30 @@ describe('TradeController', () => {
       .toHaveBeenCalledTimes(1);
     expect(tradeServiceProviderMock.findTradesByUser)
       .toHaveBeenCalledWith(userIdMock);
+  });
+
+  it('Should call acceptTrade()', async () => {
+    const tradeIdMock = Symbol('tradeId');
+    const updateTradeSuccessDto: UpdateTradeSuccessDto = { accept: true };
+
+    await controller.updateTradeSuccess(tradeIdMock, updateTradeSuccessDto, reqMock);
+
+    expect(tradeServiceProviderMock.acceptTrade).toHaveBeenCalledTimes(1);
+    expect(tradeServiceProviderMock.acceptTrade)
+      .toHaveBeenCalledWith(userIdMock, tradeIdMock, updateTradeSuccessDto);
+  });
+
+  it('Should call declineTrade()', async () => {
+    const logSpy = jest.spyOn(console, 'log').mockImplementation();
+    const tradeIdMock = Symbol('tradeId');
+    const updateTradeDeclineDto: UpdateTradeDeclineDto = { decline: true };
+
+    await controller.updateTradeDecline(tradeIdMock, updateTradeDeclineDto, reqMock);
+
+    expect(tradeServiceProviderMock.declineTrade).toHaveBeenCalledTimes(1);
+    expect(tradeServiceProviderMock.declineTrade)
+      .toHaveBeenCalledWith(userIdMock, tradeIdMock, updateTradeDeclineDto);
+
+    logSpy.mockRestore();
   });
 });
