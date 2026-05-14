@@ -175,7 +175,6 @@ export class TradeController {
     @Request() req,
   ): Promise<Trade> {
     const userId = req.user.userId;
-    console.log('User Id', userId);
     return await this.tradeService.declineTrade(userId, tradeId, updateTradeDeclineDto);
   }
 

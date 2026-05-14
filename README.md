@@ -152,6 +152,22 @@ npm run test:cov
 npm run test:e2e
 ```
 
+Pour lancer une stack Mongo isolée dédiée aux e2e :
+
+```bash
+npm run test:e2e:deps:up
+npm run test:e2e
+npm run test:e2e:deps:down
+```
+
+Ou en une seule commande pour le démarrage + exécution :
+
+```bash
+npm run test:e2e:local
+```
+
+La stack e2e utilise [docker-compose.e2e.yml](./docker-compose.e2e.yml) et expose Mongo sur `localhost:27018`, ce qui évite les collisions avec la base de développement locale sur `27017`.
+
 ## Qualité
 
 ### Lint

@@ -12,6 +12,8 @@
     "start": "NODE_ENV=development nest start",
     "docker:dev:up": "docker compose up -d mongo",
     "docker:dev:down": "docker compose down",
+    "test:e2e:deps:up": "docker compose -f docker-compose.e2e.yml up -d mongo",
+    "test:e2e:deps:down": "docker compose -f docker-compose.e2e.yml down",
     "start:dev": "npm run docker:dev:up && NODE_ENV=development nest start --watch",
     "start:debug": "npm run docker:dev:up && NODE_ENV=development nest start --debug --watch",
     "start:prod": "node dist/main",
@@ -20,7 +22,8 @@
     "test:watch": "jest --watch",
     "test:cov": "jest --coverage",
     "test:debug": "node --inspect-brk -r tsconfig-paths/register -r ts-node/register node_modules/.bin/jest --runInBand",
-    "test:e2e": "NODE_ENV=test jest --config ./test/jest-e2e.json"
+    "test:e2e": "NODE_ENV=test jest --config ./test/jest-e2e.json",
+    "test:e2e:local": "npm run test:e2e:deps:up && npm run test:e2e"
   },
   "dependencies": {
     "@casl/ability": "^6.8.1",
