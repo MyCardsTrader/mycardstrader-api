@@ -1,5 +1,6 @@
 import { Model } from 'mongoose';
 import { randomUUID } from 'crypto';
+import { ConfigService } from '@nestjs/config';
 import { InjectModel } from '@nestjs/mongoose';
 import { randomBytes, scryptSync } from 'crypto';
 import { MailerService } from '@nestjs-modules/mailer';
@@ -15,6 +16,7 @@ export class UserService {
   constructor(
     private readonly mailerService: MailerService,
     private readonly promocodeService: PromocodeService,
+    private readonly configService: ConfigService,
     @InjectModel(User.name) private readonly userModel: Model<UserDocument>,
   ) { }
 
@@ -44,14 +46,14 @@ export class UserService {
       const newUser = new this.userModel(newUserInfo);
       await this.mailerService.sendMail({
         to: createUserDto.email,
-        from: process.env.EMAIL_FROM,
+        from: this.configService.getOrThrow<string>('mailer.emailFrom'),
         subject: 'Welcome to NearbyCardTrader.com',
         template: 'welcome',
         context: {
           email: newUser.email,
           verify: newUser.verify,
           year: new Date().getFullYear(),
-          frontUrl: process.env.FRONT_URL,
+          frontUrl: this.configService.getOrThrow<string>('mailer.frontUrl'),
         },
       });
       return await newUser.save();
@@ -128,13 +130,13 @@ export class UserService {
       );
       await this.mailerService.sendMail({
         to: email,
-        from: process.env.EMAIL_FROM,
+        from: this.configService.getOrThrow<string>('mailer.emailFrom'),
         subject: 'Reset your password NearbyCardTrader.com',
         template: 'reset-password',
         context: {
           email: email,
           resetToken: resetToken,
-          frontUrl: process.env.FRONT_URL,
+          frontUrl: this.configService.getOrThrow<string>('mailer.frontUrl'),
         },
       });
       return true;

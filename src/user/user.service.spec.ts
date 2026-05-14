@@ -1,6 +1,7 @@
 import Mock from 'mockingoose';
 import * as mongoose from 'mongoose';
 import { HttpException, NotFoundException } from '@nestjs/common';
+import { ConfigService } from '@nestjs/config';
 import { getModelToken } from '@nestjs/mongoose';
 import { Test, TestingModule } from '@nestjs/testing';
 import { MailerService } from '@nestjs-modules/mailer';
@@ -38,6 +39,10 @@ const promocodeServiceMock = {
   getPromocode: jest.fn(),
 }
 
+const configServiceMock = {
+  getOrThrow: jest.fn(),
+}
+
 const userDeleteDoc = {
   id: '507f191e810c19729de860ea',
 }
@@ -47,6 +52,17 @@ describe('UserService', () => {
 
   beforeEach(async () => {
     Mock.resetAll();
+    jest.resetAllMocks();
+    configServiceMock.getOrThrow.mockImplementation((key: string) => {
+      if (key === 'mailer.emailFrom') {
+        return 'noreply@mycardstrader.local';
+      }
+      if (key === 'mailer.frontUrl') {
+        return 'http://localhost:4200';
+      }
+      throw new Error(`Unexpected config key ${key}`);
+    });
+
     const module: TestingModule = await Test.createTestingModule({
       providers: [
         UserService,
@@ -61,6 +77,10 @@ describe('UserService', () => {
         {
           provide: PromocodeService,
           useValue: promocodeServiceMock,
+        },
+        {
+          provide: ConfigService,
+          useValue: configServiceMock,
         }
       ],
     }).compile();
@@ -97,6 +117,12 @@ describe('UserService', () => {
   
       // Then
       expect(mailerServiceMock.sendMail).toHaveBeenCalled();
+      expect(mailerServiceMock.sendMail).toHaveBeenCalledWith(expect.objectContaining({
+        from: 'noreply@mycardstrader.local',
+        context: expect.objectContaining({
+          frontUrl: 'http://localhost:4200',
+        }),
+      }));
       expect(promocodeServiceMock.getPromocode).toHaveBeenCalled();
       expect(formatMongo(result)).toEqual(userDoc);
     });
@@ -247,6 +273,12 @@ describe('UserService', () => {
       const result = await service.resetPassword(userDoc.email);
       // Then
       expect(result).toBeTruthy();
+      expect(mailerServiceMock.sendMail).toHaveBeenCalledWith(expect.objectContaining({
+        from: 'noreply@mycardstrader.local',
+        context: expect.objectContaining({
+          frontUrl: 'http://localhost:4200',
+        }),
+      }));
     });
 
     it('should find no user on reset password', async() => {

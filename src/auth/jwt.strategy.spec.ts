@@ -1,49 +1,21 @@
-import { ExtractJwt } from "passport-jwt";
-import { JwtStrategy } from "./jwt.strategy";
-
-// jest.mock('passport-jwt', () => ({
-//   ...jest.requireActual('passport-jwt') as any,
-//   ExtractJwt: {
-//     fromAuthHeaderAsBearerToken: jest.fn(),
-//   },
-// }))
+import { ConfigService } from '@nestjs/config';
+import { JwtStrategy } from './jwt.strategy';
 
 describe('Jwt Strategy', () => {
-  let jwtStrategy;
-  const JWT_SECRET = 'JWT_SECRET_VALUE';
+  let jwtStrategy: JwtStrategy;
+  const configServiceMock = {
+    getOrThrow: jest.fn(),
+  };
+
   beforeEach(() => {
     jest.resetAllMocks();
-    jest.resetAllMocks();
-    process.env.JWT_SECRET = JWT_SECRET;
-
-    // extractJwtMock = jest.spyOn(ExtractJwt, 'fromAuthHeaderAsBearerToken');
-    // extractJwtMock.mockReturnValueOnce(() => null);
-
-    jwtStrategy = new JwtStrategy();
+    configServiceMock.getOrThrow.mockReturnValue('JWT_SECRET_VALUE');
+    jwtStrategy = new JwtStrategy(configServiceMock as unknown as ConfigService);
   });
 
   it('Should be defined', () => {
     expect(jwtStrategy).toBeDefined();
-  });
-
-  describe('getStrategy', () => {
-    it('Should return stategy params', () => {
-      const result = JwtStrategy['getStrategy']();
-
-      expect(result).toStrictEqual({
-        jwtFromRequest: expect.any(Function),
-        ignoreExpiration: false,
-        secretOrKey: JWT_SECRET,
-      })
-    });
-
-    it('Should fallback to default secret', () => {
-      delete process.env.JWT_SECRET;
-
-      const result = JwtStrategy['getStrategy']();
-
-      expect(result.secretOrKey).toBe('change-me');
-    });
+    expect(configServiceMock.getOrThrow).toHaveBeenCalledWith('auth.jwtSecret');
   });
 
   it('Should validate', async () => {
@@ -69,4 +41,4 @@ describe('Jwt Strategy', () => {
   it('Should not validate', async () => {
     expect(jwtStrategy.validate(null)).rejects.toThrow();
   });
-})
+});
