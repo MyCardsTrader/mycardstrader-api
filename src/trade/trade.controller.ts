@@ -14,7 +14,19 @@ import { TradeService } from './trade.service';
 import { JwtAuthGuard } from '../auth/jwt.guard';
 import { CaslService } from '../casl/casl.service';
 import { CreateTradeDto, UpdateTradeDto } from './dto';
-import { ApiBearerAuth, ApiParam, ApiTags } from '@nestjs/swagger';
+import {
+  ApiBadRequestResponse,
+  ApiBearerAuth,
+  ApiBody,
+  ApiForbiddenResponse,
+  ApiInternalServerErrorResponse,
+  ApiNotFoundResponse,
+  ApiOkResponse,
+  ApiOperation,
+  ApiParam,
+  ApiTags,
+  ApiUnauthorizedResponse,
+} from '@nestjs/swagger';
 import { UpdateTradeSuccessDto } from './dto/update-trade-success.dto';
 import { UpdateTradeDeclineDto } from './dto/update-trade-declined.dto';
 
@@ -28,6 +40,12 @@ export class TradeController {
 
   @ApiBearerAuth()
   @UseGuards(JwtAuthGuard)
+  @ApiOperation({ summary: 'Create a trade' })
+  @ApiBody({ type: CreateTradeDto })
+  @ApiOkResponse({ description: 'Trade created successfully.' })
+  @ApiBadRequestResponse({ description: 'Trade payload is invalid.' })
+  @ApiUnauthorizedResponse({ description: 'Authentication is required.' })
+  @ApiInternalServerErrorResponse({ description: 'Unexpected trade creation error.' })
   @Post()
   async createTrade(
     @Body() createTradeDto: CreateTradeDto,
@@ -38,6 +56,10 @@ export class TradeController {
 
   @ApiBearerAuth()
   @UseGuards(JwtAuthGuard)
+  @ApiOperation({ summary: 'List all trades visible to the authenticated user context' })
+  @ApiOkResponse({ description: 'Trades returned successfully.' })
+  @ApiUnauthorizedResponse({ description: 'Authentication is required.' })
+  @ApiInternalServerErrorResponse({ description: 'Unexpected trade lookup error.' })
   @Get()
   async getAllTrades(): Promise<Trade[]> {
     return await this.tradeService.getAllTrades();
@@ -49,6 +71,12 @@ export class TradeController {
     name: 'tradeId',
     required: true,
   })
+  @ApiOperation({ summary: 'Get a trade by id' })
+  @ApiOkResponse({ description: 'Trade returned successfully.' })
+  @ApiUnauthorizedResponse({ description: 'Authentication is required.' })
+  @ApiForbiddenResponse({ description: 'Current user cannot read this trade.' })
+  @ApiNotFoundResponse({ description: 'Trade was not found.' })
+  @ApiInternalServerErrorResponse({ description: 'Unexpected trade lookup error.' })
   @Get(':tradeId')
   async findTradeById(
     @Param('tradeId') tradeId,
@@ -65,6 +93,12 @@ export class TradeController {
     name: 'tradeId',
     required: true,
   })
+  @ApiOperation({ summary: 'Delete a trade by id' })
+  @ApiOkResponse({ description: 'Trade deleted successfully.' })
+  @ApiUnauthorizedResponse({ description: 'Authentication is required.' })
+  @ApiForbiddenResponse({ description: 'Current user cannot delete this trade.' })
+  @ApiNotFoundResponse({ description: 'Trade was not found.' })
+  @ApiInternalServerErrorResponse({ description: 'Unexpected trade deletion error.' })
   @Delete(':tradeId')
   async deleteTrade(
     @Param('tradeId') tradeId,
@@ -81,6 +115,13 @@ export class TradeController {
     name: 'tradeId',
     required: true,
   })
+  @ApiOperation({ summary: 'Update a trade by id' })
+  @ApiBody({ type: UpdateTradeDto })
+  @ApiOkResponse({ description: 'Trade updated successfully.' })
+  @ApiBadRequestResponse({ description: 'Trade update payload is invalid.' })
+  @ApiUnauthorizedResponse({ description: 'Authentication is required.' })
+  @ApiNotFoundResponse({ description: 'Trade was not found.' })
+  @ApiInternalServerErrorResponse({ description: 'Unexpected trade update error.' })
   @Put(':tradeId')
   async updateTrade(
     @Param('tradeId') tradeId,
@@ -96,6 +137,13 @@ export class TradeController {
     name: 'tradeId',
     required: true,
   })
+  @ApiOperation({ summary: 'Accept a trade as one of its participants' })
+  @ApiBody({ type: UpdateTradeSuccessDto })
+  @ApiOkResponse({ description: 'Trade acceptance processed successfully.' })
+  @ApiBadRequestResponse({ description: 'Acceptance payload is invalid.' })
+  @ApiUnauthorizedResponse({ description: 'Authentication is required or user cannot accept this trade.' })
+  @ApiNotFoundResponse({ description: 'Trade was not found.' })
+  @ApiInternalServerErrorResponse({ description: 'Unexpected trade acceptance error.' })
   @Put(':tradeId/accept')
   async updateTradeSuccess(
     @Param('tradeId') tradeId,
@@ -113,6 +161,13 @@ export class TradeController {
     name: 'tradeId',
     required: true,
   })
+  @ApiOperation({ summary: 'Decline a trade as one of its participants' })
+  @ApiBody({ type: UpdateTradeDeclineDto })
+  @ApiOkResponse({ description: 'Trade decline processed successfully.' })
+  @ApiBadRequestResponse({ description: 'Decline payload is invalid.' })
+  @ApiUnauthorizedResponse({ description: 'Authentication is required or user cannot decline this trade.' })
+  @ApiNotFoundResponse({ description: 'Trade was not found.' })
+  @ApiInternalServerErrorResponse({ description: 'Unexpected trade decline error.' })
   @Put(':tradeId/decline')
   async updateTradeDecline(
     @Param('tradeId') tradeId,
@@ -120,7 +175,6 @@ export class TradeController {
     @Request() req,
   ): Promise<Trade> {
     const userId = req.user.userId;
-    console.log('User Id', userId);
     return await this.tradeService.declineTrade(userId, tradeId, updateTradeDeclineDto);
   }
 
@@ -130,6 +184,10 @@ export class TradeController {
     name: 'userId',
     required: true,
   })
+  @ApiOperation({ summary: 'List trades by user id' })
+  @ApiOkResponse({ description: 'Trades returned successfully.' })
+  @ApiUnauthorizedResponse({ description: 'Authentication is required.' })
+  @ApiInternalServerErrorResponse({ description: 'Unexpected trade lookup error.' })
   @Get('/user/:userId')
   async findTradeByUser(@Param('userId') userId): Promise<Trade[]> {
     return await this.tradeService.findTradesByUser(userId);

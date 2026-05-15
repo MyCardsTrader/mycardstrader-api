@@ -1,10 +1,11 @@
 /* istanbul ignore file */
 
 import { Module } from '@nestjs/common';
-import { ConfigModule } from '@nestjs/config';
+import { ConfigModule, ConfigService } from '@nestjs/config';
 import { MongooseModule } from '@nestjs/mongoose';
 import { MailerModule } from '@nestjs-modules/mailer';
-import { HandlebarsAdapter } from '@nestjs-modules/mailer/dist/adapters/handlebars.adapter';
+
+const { HandlebarsAdapter } = require('@nestjs-modules/mailer/adapters/handlebars.adapter');
 
 import { SetModule } from './set/set.module';
 import { UserModule } from './user/user.module';
@@ -16,23 +17,37 @@ import { TradeModule } from './trade/trade.module';
 import { SearchModule } from './search/search.module';
 import { MessageModule } from './message/message.module';
 import { PromocodeModule } from './promocode/promocode.module';
+import {
+  appConfig,
+  authConfig,
+  databaseConfig,
+  getEnvFilePath,
+  mailerConfig,
+  validateEnv,
+} from './config';
 
 import { AppService } from './app.service';
 import { AppController } from './app.controller';
 @Module({
   imports: [
+    ConfigModule.forRoot({
+      isGlobal: true,
+      envFilePath: getEnvFilePath(),
+      load: [appConfig, authConfig, databaseConfig, mailerConfig],
+      validate: validateEnv,
+    }),
     MongooseModule.forRootAsync({
-      useFactory: async () => ({
-        uri: process.env.DATABASE_URI,
-        useNewUrlParser: true,
-        useUnifiedTopology: true,
+      inject: [ConfigService],
+      useFactory: async (configService: ConfigService) => ({
+        uri: configService.getOrThrow<string>('database.uri'),
       }),
     }),
     MailerModule.forRootAsync({
-      useFactory: () => ({
-        transport: process.env.SMTP_URI,
+      inject: [ConfigService],
+      useFactory: (configService: ConfigService) => ({
+        transport: configService.getOrThrow<string>('mailer.smtpUri'),
         defaults: {
-          from: '"nest-modules" <modules@nestjs.com>',
+          from: configService.getOrThrow<string>('mailer.emailFrom'),
         },
         template: {
           dir: __dirname + '/templates',
@@ -42,10 +57,6 @@ import { AppController } from './app.controller';
           },
         },
       }),
-    }),
-    ConfigModule.forRoot({
-      isGlobal: true,
-      envFilePath: `${process.env.NODE_ENV}.env`,
     }),
     UserModule,
     AuthModule,

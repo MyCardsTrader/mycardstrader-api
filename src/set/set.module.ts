@@ -1,7 +1,8 @@
 /* istanbul ignore file */
 
+import { HttpModule } from '@nestjs/axios';
 import { MongooseModule } from '@nestjs/mongoose';
-import { HttpModule, Module } from '@nestjs/common';
+import { Module } from '@nestjs/common';
 
 import { SetService } from './set.service';
 import { SetSchema } from './schema/set.schema';

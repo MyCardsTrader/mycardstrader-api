@@ -1,11 +1,10 @@
-import { mocked } from 'ts-jest/utils';
 import { JwtService } from '@nestjs/jwt';
+import { ConfigService } from '@nestjs/config';
 import { AuthService } from './auth.service';
-import { scryptSync, randomBytes, verify } from 'crypto';
+import { scryptSync, randomBytes } from 'crypto';
 import { UserService } from '../user/user.service';
 import { Test, TestingModule } from '@nestjs/testing';
 import { UnauthorizedException } from '@nestjs/common';
-import * as moment from 'moment';
 
 jest.mock('crypto', () => ({
   ...(jest.requireActual('crypto') as any),
@@ -31,15 +30,32 @@ describe('AuthService', () => {
     sign: jest.fn(),
   }
 
+  const configServiceMock = {
+    getOrThrow: jest.fn(),
+  };
+
   beforeEach(async () => {
+    jest.resetAllMocks();
+    configServiceMock.getOrThrow.mockImplementation((key: string) => {
+      if (key === 'auth.jwtExpiresInSeconds') {
+        return 3600;
+      }
+      if (key === 'auth.jwtExpireMinutes') {
+        return 60;
+      }
+      throw new Error(`Unexpected config key ${key}`);
+    });
+
     const module: TestingModule = await Test.createTestingModule({
-      providers: [AuthService, UserService, JwtService],
+      providers: [AuthService, UserService, JwtService, ConfigService],
     
     })
     .overrideProvider(UserService)
     .useValue(userServiceMock)
     .overrideProvider(JwtService)
     .useValue(jwtServiceMock)
+    .overrideProvider(ConfigService)
+    .useValue(configServiceMock)
     .compile();
 
     service = module.get<AuthService>(AuthService);
@@ -60,7 +76,6 @@ describe('AuthService', () => {
     }; 
 
     beforeEach(() => {
-      jest.resetAllMocks();
       jest.restoreAllMocks();
     });
     it('should call uservice findOneByEmail', async () => {
@@ -126,6 +141,14 @@ describe('AuthService', () => {
       // THEN
       expect(result).toEqual(null);
     });
+
+    it("should return null if the user does not exist", async () => {
+      userServiceMock.findOneByEmail.mockResolvedValueOnce(null);
+
+      const result = await service['validateUser'](email, pass);
+
+      expect(result).toEqual(null);
+    });
   });
 
   describe('verifyPassword', () => {
@@ -135,9 +158,8 @@ describe('AuthService', () => {
     let scryptSyncMock;
 
     beforeEach(() => {
-      jest.resetAllMocks();
       jest.restoreAllMocks();
-      scryptSyncMock = mocked(scryptSync);
+      scryptSyncMock = jest.mocked(scryptSync);
     })
 
     it('should call scryptSync', () => {
@@ -181,7 +203,6 @@ describe('AuthService', () => {
     };
 
     beforeEach(() => {
-      jest.resetAllMocks();
       jest.restoreAllMocks();
     });
 
@@ -215,7 +236,8 @@ describe('AuthService', () => {
 
       // THEN
       expect(jwtServiceMock.sign).toHaveBeenCalledTimes(1);
-      expect(jwtServiceMock.sign).toHaveBeenCalledWith({ sub: 123456}, { expiresIn: '60m'});
+      expect(jwtServiceMock.sign).toHaveBeenCalledWith({ sub: 123456}, { expiresIn: 3600 });
+      expect(configServiceMock.getOrThrow).toHaveBeenCalledWith('auth.jwtExpiresInSeconds');
     });
 
     it('should return an object with an access token', async () => {
@@ -224,11 +246,19 @@ describe('AuthService', () => {
       jwtServiceMock.sign.mockReturnValueOnce('eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiIxMjM0NTY3ODkwIiwibmFtZSI6IkpvaG4gRG9lIiwiaWF0IjoxNTE2MjM5MDIyfQ.SflKxwRJSMeKKF2QT4fwpMeJf36POk6yJV_adQssw5c');
 
       // WHEN
-      const expireDate = moment().add('60m');
       const result = await service.login(userDoc);
 
       // THEN
       expect(result.access_token).toEqual('eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiIxMjM0NTY3ODkwIiwibmFtZSI6IkpvaG4gRG9lIiwiaWF0IjoxNTE2MjM5MDIyfQ.SflKxwRJSMeKKF2QT4fwpMeJf36POk6yJV_adQssw5c');
+      expect(configServiceMock.getOrThrow).toHaveBeenCalledWith('auth.jwtExpireMinutes');
+    });
+
+    it('should return a moment expiration date from config', async () => {
+      service['validateUser'] = jest.fn().mockResolvedValueOnce(user);
+
+      const result = await service.login(userDoc);
+
+      expect(result.expires_in.toISOString).toBeDefined();
     });
   });
 });

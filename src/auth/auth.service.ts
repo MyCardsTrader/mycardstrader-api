@@ -1,6 +1,7 @@
-import * as moment from 'moment';
+import moment from 'moment';
 import { scryptSync } from 'crypto';
 import { JwtService } from '@nestjs/jwt';
+import { ConfigService } from '@nestjs/config';
 import { UserService } from '../user/user.service';
 import { Injectable, UnauthorizedException } from '@nestjs/common';
 
@@ -9,6 +10,7 @@ export class AuthService {
   constructor(
     private readonly userService: UserService,
     private readonly jwtService: JwtService,
+    private readonly configService: ConfigService,
   ) {}
 
   private async validateUser(email: string, pass: string): Promise<any> {
@@ -34,9 +36,12 @@ export class AuthService {
     }
 
     const payload = { sub: validatedUser._id };
+    const jwtExpiresInSeconds = this.configService.getOrThrow<number>('auth.jwtExpiresInSeconds');
+    const jwtExpireMinutes = this.configService.getOrThrow<number>('auth.jwtExpireMinutes');
+
     return {
-      access_token: this.jwtService.sign(payload, { expiresIn: `${process.env.JWT_EXPIRE || '60'}m` }),
-      expires_in: moment().add(process.env.JWT_EXPIRE, 'm'),
+      access_token: this.jwtService.sign(payload, { expiresIn: jwtExpiresInSeconds }),
+      expires_in: moment().add(jwtExpireMinutes, 'm'),
     }
   }
 }

@@ -1,9 +1,10 @@
 import { of } from 'rxjs';
 import mongoose from 'mongoose';
-import * as Mock from 'mockingoose';
+import Mock from 'mockingoose';
+import { HttpService } from '@nestjs/axios';
 import { getModelToken } from "@nestjs/mongoose";
 import { Test, TestingModule } from "@nestjs/testing";
-import { HttpException, HttpService } from "@nestjs/common";
+import { HttpException } from "@nestjs/common";
 
 import { SetService } from "./set.service";
 import { SetSchema } from './schema/set.schema';
@@ -91,6 +92,7 @@ describe('SetService', () => {
         },
       ];
       Mock(SetTestModel).toReturn(mongoReturnedMock, 'find');
+      const insertManySpy = jest.spyOn(SetTestModel, 'insertMany').mockResolvedValueOnce([] as any);
       jest.spyOn(mockedHttpService, 'get').mockImplementationOnce(() => of({
         data: {
           data: expectedResultFromScryfallApi,
@@ -102,8 +104,8 @@ describe('SetService', () => {
       // Then
       expect(mockedHttpService.get).toHaveBeenCalledTimes(1);
       expect(mockedHttpService.get).toHaveBeenCalledWith('https://api.scryfall.com/sets');
-      expect(SetTestModel.insertMany).toHaveBeenCalledTimes(1);
-      expect(SetTestModel.insertMany).toHaveBeenCalledWith([
+      expect(insertManySpy).toHaveBeenCalledTimes(1);
+      expect(insertManySpy).toHaveBeenCalledWith([
         {
           name: 'nameMock2',
           code: 'codeMock2',

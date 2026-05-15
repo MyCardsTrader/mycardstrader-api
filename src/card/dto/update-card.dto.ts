@@ -16,8 +16,8 @@ export class UpdateCardDto {
   lang?: CardLang;
 
   @ApiProperty({
-    type: Grading,
     enum: Grading,
+    enumName: 'Grading',
     description: 'Grading of the card',
     example: Grading.NM,
   })

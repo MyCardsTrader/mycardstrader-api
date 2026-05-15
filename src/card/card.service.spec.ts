@@ -1,4 +1,4 @@
-import * as Mock from 'mockingoose';
+import Mock from 'mockingoose';
 import * as mongoose from 'mongoose';
 import { CardService } from './card.service';
 import { getModelToken } from '@nestjs/mongoose';

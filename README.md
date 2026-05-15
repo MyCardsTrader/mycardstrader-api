@@ -1,81 +1,219 @@
-<p align="center">
-  <a href="http://nestjs.com/" target="blank"><img src="https://nestjs.com/img/logo_text.svg" width="320" alt="Nest Logo" /></a>
-</p>
+# mycardstrader-api
 
-[circleci-image]: https://img.shields.io/circleci/build/github/nestjs/nest/master?token=abc123def456
-[circleci-url]: https://circleci.com/gh/nestjs/nest
+API NestJS pour l’application MyCardsTrader.
 
-  <p align="center">A progressive <a href="http://nodejs.org" target="_blank">Node.js</a> framework for building efficient and scalable server-side applications.</p>
-    <p align="center">
-<a href="https://www.npmjs.com/~nestjscore" target="_blank"><img src="https://img.shields.io/npm/v/@nestjs/core.svg" alt="NPM Version" /></a>
-<a href="https://www.npmjs.com/~nestjscore" target="_blank"><img src="https://img.shields.io/npm/l/@nestjs/core.svg" alt="Package License" /></a>
-<a href="https://www.npmjs.com/~nestjscore" target="_blank"><img src="https://img.shields.io/npm/dm/@nestjs/common.svg" alt="NPM Downloads" /></a>
-<a href="https://circleci.com/gh/nestjs/nest" target="_blank"><img src="https://img.shields.io/circleci/build/github/nestjs/nest/master" alt="CircleCI" /></a>
-<a href="https://coveralls.io/github/nestjs/nest?branch=master" target="_blank"><img src="https://coveralls.io/repos/github/nestjs/nest/badge.svg?branch=master#9" alt="Coverage" /></a>
-<a href="https://discord.gg/G7Qnnhy" target="_blank"><img src="https://img.shields.io/badge/discord-online-brightgreen.svg" alt="Discord"/></a>
-<a href="https://opencollective.com/nest#backer" target="_blank"><img src="https://opencollective.com/nest/backers/badge.svg" alt="Backers on Open Collective" /></a>
-<a href="https://opencollective.com/nest#sponsor" target="_blank"><img src="https://opencollective.com/nest/sponsors/badge.svg" alt="Sponsors on Open Collective" /></a>
-  <a href="https://paypal.me/kamilmysliwiec" target="_blank"><img src="https://img.shields.io/badge/Donate-PayPal-ff3f59.svg"/></a>
-    <a href="https://opencollective.com/nest#sponsor"  target="_blank"><img src="https://img.shields.io/badge/Support%20us-Open%20Collective-41B883.svg" alt="Support us"></a>
-  <a href="https://twitter.com/nestframework" target="_blank"><img src="https://img.shields.io/twitter/follow/nestframework.svg?style=social&label=Follow"></a>
-</p>
-  <!--[![Backers on Open Collective](https://opencollective.com/nest/backers/badge.svg)](https://opencollective.com/nest#backer)
-  [![Sponsors on Open Collective](https://opencollective.com/nest/sponsors/badge.svg)](https://opencollective.com/nest#sponsor)-->
+Ce dépôt expose les endpoints backend du projet, s’appuie sur MongoDB, et publie une documentation Swagger au démarrage.
 
-## Description
+## Stack
 
-Api
-[Nest](https://github.com/nestjs/nest) framework TypeScript starter repository.
+- Node.js
+- NestJS
+- MongoDB
+- Mongoose
+- Jest
+- Swagger / OpenAPI
+
+## Prérequis
+
+- Node.js 22 ou supérieur
+- npm
+- Docker et Docker Compose
 
 ## Installation
 
-```bash
-$ npm install
-```
-
-## Running the app
-
-Before runing the application you need to start a mongodb docker container :
-
-```
-docker run -d -p 27017:27017 -v /your/local/path:/data/db mongo:latest
-```
-Replace `/your/locale/path` by an absolute path where you want to persist the mongodb data.
+Utiliser la version Node du projet :
 
 ```bash
-# development
-$ npm run start
-
-# watch mode
-$ npm run start:dev
-
-# production mode
-$ npm run start:prod
+nvm use
 ```
 
-## Test
+Puis installer les dépendances :
 
 ```bash
-# unit tests
-$ npm run test
-
-# e2e tests
-$ npm run test:e2e
-
-# test coverage
-$ npm run test:cov
+npm install
 ```
 
-## Support
+## Configuration
 
-Nest is an MIT-licensed open source project. It can grow thanks to the sponsors and support by the amazing backers. If you'd like to join them, please [read more here](https://docs.nestjs.com/support).
+L’application charge son fichier d’environnement en fonction de `NODE_ENV`.
 
-## Stay in touch
+- `NODE_ENV=development` charge `development.env`
+- `NODE_ENV=test` charge `test.env`
 
-- Author - [Kamil Myśliwiec](https://kamilmysliwiec.com)
-- Website - [https://nestjs.com](https://nestjs.com/)
-- Twitter - [@nestframework](https://twitter.com/nestframework)
+### Développement
 
-## License
+Le fichier `development.env` contient actuellement une configuration MongoDB Atlas active, et une configuration locale commentée.
 
-Nest is [MIT licensed](LICENSE).
+Si tu veux utiliser MongoDB local avec Docker :
+
+```env
+# Online DB
+# DATABASE_URI=mongodb+srv://...
+# Locale
+DATABASE_URI=mongodb://localhost/mycardstrader
+```
+
+Si tu veux utiliser Atlas, laisse l’URI Atlas active.
+
+Variables utilisées en développement :
+
+- `DATABASE_URI`
+- `SMTP_URI`
+- `EMAIL_FROM`
+- `FRONT_URL`
+- `JWT_SECRET`
+- `JWT_EXPIRE`
+- `PORT`
+
+### Test
+
+Les tests e2e utilisent `test.env`.
+
+Variables actuellement attendues :
+
+- `DATABASE_URI`
+- `JWT_SECRET`
+- `JWT_EXPIRE`
+- `PORT`
+
+## Lancer MongoDB localement
+
+Le repo contient un [docker-compose.yml](./docker-compose.yml) qui démarre une instance MongoDB locale avec volume persistant.
+
+Démarrer MongoDB :
+
+```bash
+npm run docker:dev:up
+```
+
+Arrêter MongoDB :
+
+```bash
+npm run docker:dev:down
+```
+
+Le service expose Mongo sur `localhost:27017` et persiste les données dans le volume Docker `mongo_data`.
+
+## Lancer l’application
+
+### Mode développement
+
+Cette commande démarre MongoDB local via Docker Compose puis lance Nest en watch mode :
+
+```bash
+npm run start:dev
+```
+
+### Mode debug
+
+```bash
+npm run start:debug
+```
+
+### Mode build
+
+```bash
+npm run build
+```
+
+### Mode production
+
+```bash
+npm run start:prod
+```
+
+## Endpoints utiles au démarrage
+
+- Health check : `GET /health-check`
+- Login : `POST /auth/login`
+- Swagger UI : `/api`
+
+Par défaut, avec `PORT=3000`, Swagger est accessible sur :
+
+```text
+http://localhost:3000/api
+```
+
+## Tests
+
+### Tests unitaires
+
+```bash
+npm test
+```
+
+### Watch mode
+
+```bash
+npm run test:watch
+```
+
+### Couverture
+
+```bash
+npm run test:cov
+```
+
+### Tests end-to-end
+
+```bash
+npm run test:e2e
+```
+
+Pour lancer une stack Mongo isolée dédiée aux e2e :
+
+```bash
+npm run test:e2e:deps:up
+npm run test:e2e
+npm run test:e2e:deps:down
+```
+
+Ou en une seule commande pour le démarrage + exécution :
+
+```bash
+npm run test:e2e:local
+```
+
+La stack e2e utilise [docker-compose.e2e.yml](./docker-compose.e2e.yml) et expose Mongo sur `localhost:27018`, ce qui évite les collisions avec la base de développement locale sur `27017`.
+
+## Qualité
+
+Le projet utilise Husky pour installer un hook `pre-commit` via le script `prepare`.
+
+Avant chaque commit, le hook :
+
+- bloque les commits directs sur la branche `main`,
+- lance Prettier sur les fichiers stagés,
+- lance `eslint --fix` sur les fichiers TypeScript stagés,
+- remet en stage les fichiers automatiquement corrigés.
+
+### Lint
+
+```bash
+npm run lint
+```
+
+### Format
+
+```bash
+npm run format
+```
+
+### Validation complète
+
+Avant de considérer une modification comme prête :
+
+```bash
+npm run lint
+npm test
+npm run test:cov
+npm run test:e2e
+npm audit --omit-dev
+```
+
+## Notes de fonctionnement
+
+- `start:dev` et `start:debug` démarrent Mongo local avant Nest.
+- Si `development.env` pointe sur Atlas, Docker Mongo local ne sera pas utilisé par l’application.
+- La documentation Swagger est générée au boot dans `src/main.ts`.
+- Le health check est exposé par `AppController`.

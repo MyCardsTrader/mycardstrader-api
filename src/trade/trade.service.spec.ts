@@ -1,4 +1,4 @@
-import * as Mock from 'mockingoose';
+import Mock from 'mockingoose';
 import * as mongoose from "mongoose";
 import { getModelToken } from '@nestjs/mongoose';
 import { Test, TestingModule } from '@nestjs/testing';
@@ -65,8 +65,10 @@ const tradeDoc = {
 
 describe('TradeService', () => {
   let service: TradeService;
+  let logSpy: jest.SpyInstance;
 
   beforeEach(async () => {
+    logSpy = jest.spyOn(console, 'log').mockImplementation();
     const module: TestingModule = await Test.createTestingModule({
       providers: [
         TradeService,
@@ -82,6 +84,10 @@ describe('TradeService', () => {
     }).compile();
 
     service = module.get<TradeService>(TradeService);
+  });
+
+  afterEach(() => {
+    logSpy.mockRestore();
   });
 
   it('should be defined', () => {
@@ -144,7 +150,7 @@ describe('TradeService', () => {
       // When
       // Then
       await expect(service.getAllTrades())
-        .rejects.toThrowError(HttpException);
+        .rejects.toThrow(HttpException);
     });
   });
 
@@ -172,7 +178,7 @@ describe('TradeService', () => {
       // When
       // Then
       await expect(service.findTradesByUser('userId'))
-        .rejects.toThrowError(HttpException);
+        .rejects.toThrow(HttpException);
     });
   });
 
@@ -212,7 +218,7 @@ describe('TradeService', () => {
       // When
       // Then
       await expect(service.getTradeById(tradeId))
-        .rejects.toThrowError(HttpException);
+        .rejects.toThrow(HttpException);
     });
   });
 
@@ -300,6 +306,127 @@ describe('TradeService', () => {
       // Then
       await expect(service.updateTrade(tradeIdMock, updateTradeDtoMock))
         .rejects.toThrow(NotFoundException);
+    });
+  });
+
+  describe('acceptTrade', () => {
+    const tradeIdMock = '507f191e810c19729de860ea';
+
+    beforeEach(() => {
+      Mock.resetAll();
+    });
+
+    it('Should accept a trade as the owner', async () => {
+      const updatedTrade = {
+        ...tradeDoc,
+        userAccept: true,
+      };
+      const cardUpdateSpy = jest.spyOn(CardTestModel, 'updateMany');
+      cardUpdateSpy.mockResolvedValueOnce({ acknowledged: true } as any);
+      Mock(TradeTestModel).toReturn(tradeDoc, 'findOne');
+      Mock(TradeTestModel).toReturn(updatedTrade, 'findOneAndUpdate');
+
+      const result = await service.acceptTrade('userId', tradeIdMock, { accept: true });
+
+      expect(formatMongo(result)).toEqual(updatedTrade);
+      expect(cardUpdateSpy).not.toHaveBeenCalled();
+      cardUpdateSpy.mockRestore();
+    });
+
+    it('Should complete a trade and update cards when both users accepted', async () => {
+      const acceptedTrade = {
+        ...tradeDoc,
+        userAccept: true,
+        traderAccept: true,
+      };
+      const updatedTrade = {
+        ...acceptedTrade,
+        tradeStatus: 'success',
+      };
+      const cardUpdateSpy = jest.spyOn(CardTestModel, 'updateMany');
+      cardUpdateSpy.mockResolvedValueOnce({ acknowledged: true } as any);
+      Mock(TradeTestModel).toReturn(acceptedTrade, 'findOne');
+      Mock(TradeTestModel).toReturn(updatedTrade, 'findOneAndUpdate');
+
+      const result = await service.acceptTrade('traderId', tradeIdMock, { accept: true });
+
+      expect(formatMongo(result)).toEqual(updatedTrade);
+      expect(cardUpdateSpy).toHaveBeenCalledTimes(1);
+      expect(cardUpdateSpy).toHaveBeenCalledWith(
+        expect.objectContaining({
+          _id: expect.objectContaining({
+            $in: expect.arrayContaining([expect.anything()]),
+          }),
+        }),
+        { $set: { availability: 'traded' } },
+      );
+      cardUpdateSpy.mockRestore();
+    });
+
+    it('Should throw HttpException for unauthorized user', async () => {
+      Mock(TradeTestModel).toReturn(tradeDoc, 'findOne');
+
+      await expect(
+        service.acceptTrade('outsider', tradeIdMock, { accept: true }),
+      ).rejects.toThrow(HttpException);
+    });
+
+    it('Should throw HttpException when database access fails', async () => {
+      Mock(TradeTestModel).toReturn(new Error('Cannot find trade'), 'findOne');
+
+      await expect(
+        service.acceptTrade('userId', tradeIdMock, { accept: true }),
+      ).rejects.toThrow(HttpException);
+    });
+  });
+
+  describe('declineTrade', () => {
+    const tradeIdMock = '507f191e810c19729de860ea';
+
+    beforeEach(() => {
+      Mock.resetAll();
+    });
+
+    it('Should decline a trade as the owner', async () => {
+      const updatedTrade = {
+        ...tradeDoc,
+        tradeStatus: 'rejected',
+      };
+      Mock(TradeTestModel).toReturn(tradeDoc, 'findOne');
+      Mock(TradeTestModel).toReturn(updatedTrade, 'findOneAndUpdate');
+
+      const result = await service.declineTrade('userId', tradeIdMock, { decline: true });
+
+      expect(formatMongo(result)).toEqual(updatedTrade);
+    });
+
+    it('Should decline a trade as the trader', async () => {
+      const updatedTrade = {
+        ...tradeDoc,
+        tradeStatus: 'rejected',
+      };
+      Mock(TradeTestModel).toReturn(tradeDoc, 'findOne');
+      Mock(TradeTestModel).toReturn(updatedTrade, 'findOneAndUpdate');
+
+      const result = await service.declineTrade('traderId', tradeIdMock, { decline: true });
+
+      expect(formatMongo(result)).toEqual(updatedTrade);
+    });
+
+    it('Should throw HttpException for unauthorized user', async () => {
+      Mock(TradeTestModel).toReturn(tradeDoc, 'findOne');
+
+      await expect(
+        service.declineTrade('outsider', tradeIdMock, { decline: true }),
+      ).rejects.toThrow(HttpException);
+    });
+
+    it('Should throw HttpException when database access fails', async () => {
+      Mock(TradeTestModel).toReturn(new Error('Cannot find trade'), 'findOne');
+
+      await expect(
+        service.declineTrade('userId', tradeIdMock, { decline: true }),
+      ).rejects.toThrow(HttpException);
     });
   });
 });
