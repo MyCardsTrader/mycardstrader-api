@@ -23,7 +23,8 @@
     "test:cov": "jest --coverage",
     "test:debug": "node --inspect-brk -r tsconfig-paths/register -r ts-node/register node_modules/.bin/jest --runInBand",
     "test:e2e": "NODE_ENV=test jest --config ./test/jest-e2e.json",
-    "test:e2e:local": "npm run test:e2e:deps:up && npm run test:e2e"
+    "test:e2e:local": "npm run test:e2e:deps:up && npm run test:e2e",
+    "prepare": "husky"
   },
   "dependencies": {
     "@casl/ability": "^6.8.1",
@@ -70,6 +71,7 @@
     "eslint": "^10.3.0",
     "eslint-config-prettier": "^10.1.8",
     "eslint-plugin-prettier": "^5.5.5",
+    "husky": "^9.1.7",
     "jest": "^30.4.2",
     "mockingoose": "^3.0.0",
     "prettier": "^3.8.3",

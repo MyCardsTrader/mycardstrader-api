@@ -21,6 +21,14 @@ Ce dépôt expose les endpoints backend du projet, s’appuie sur MongoDB, et pu
 
 ## Installation
 
+Utiliser la version Node du projet :
+
+```bash
+nvm use
+```
+
+Puis installer les dépendances :
+
 ```bash
 npm install
 ```
@@ -170,6 +178,15 @@ La stack e2e utilise [docker-compose.e2e.yml](./docker-compose.e2e.yml) et expos
 
 ## Qualité
 
+Le projet utilise Husky pour installer un hook `pre-commit` via le script `prepare`.
+
+Avant chaque commit, le hook :
+
+- bloque les commits directs sur la branche `main`,
+- lance Prettier sur les fichiers stagés,
+- lance `eslint --fix` sur les fichiers TypeScript stagés,
+- remet en stage les fichiers automatiquement corrigés.
+
 ### Lint
 
 ```bash
@@ -180,6 +197,18 @@ npm run lint
 
 ```bash
 npm run format
+```
+
+### Validation complète
+
+Avant de considérer une modification comme prête :
+
+```bash
+npm run lint
+npm test
+npm run test:cov
+npm run test:e2e
+npm audit --omit-dev
 ```
 
 ## Notes de fonctionnement
