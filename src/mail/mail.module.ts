@@ -1,0 +1,22 @@
+/* istanbul ignore file */
+
+import { Module } from "@nestjs/common";
+import { ConfigService } from "@nestjs/config";
+import { Resend } from "resend";
+
+import { RESEND_CLIENT } from "./mail.constants";
+import { MailService } from "./mail.service";
+
+@Module({
+  providers: [
+    {
+      provide: RESEND_CLIENT,
+      inject: [ConfigService],
+      useFactory: (configService: ConfigService) =>
+        new Resend(configService.getOrThrow<string>("mail.resendApiKey")),
+    },
+    MailService,
+  ],
+  exports: [MailService],
+})
+export class MailModule {}

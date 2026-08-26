@@ -1,64 +1,61 @@
-import Mock from 'mockingoose';
-import * as mongoose from 'mongoose';
-import { HttpException, NotFoundException } from '@nestjs/common';
-import { ConfigService } from '@nestjs/config';
-import { getModelToken } from '@nestjs/mongoose';
-import { Test, TestingModule } from '@nestjs/testing';
-import { MailerService } from '@nestjs-modules/mailer';
+import Mock from "mockingoose";
+import * as mongoose from "mongoose";
+import { HttpException, NotFoundException } from "@nestjs/common";
+import { ConfigService } from "@nestjs/config";
+import { getModelToken } from "@nestjs/mongoose";
+import { Test, TestingModule } from "@nestjs/testing";
 
-import { UserService } from './user.service';
-import { CreateUserDto } from './dto/create-user.dto';
-import { CountryEnum, UserSchema } from './schema/user.schema';
-import { PromocodeService } from '../promocode/promocode.service';
+import { UserService } from "./user.service";
+import { CreateUserDto } from "./dto/create-user.dto";
+import { CountryEnum, UserSchema } from "./schema/user.schema";
+import { PromocodeService } from "../promocode/promocode.service";
+import { MailService } from "../mail";
 
-const userModel = getModelToken('User');
+const userModel = getModelToken("User");
 
-const UserTestModel = mongoose.model('User', UserSchema);
+const UserTestModel = mongoose.model("User", UserSchema);
 
 const formatMongo = (doc) => {
   return JSON.parse(JSON.stringify(doc));
-}
+};
 
 const userDoc = {
-  _id: '507f191e810c19729de860ea',
-  email: 'captain.nemo@nautilus.sub',
-  password: 'aronnax',
+  _id: "507f191e810c19729de860ea",
+  email: "captain.nemo@nautilus.sub",
+  password: "aronnax",
   availableCoins: 0,
   holdCoins: 0,
   spentCoins: 0,
-  country: 'fr',
+  country: "fr",
   usedPromocode: [],
-  verify: 'verify',
-}
+  verify: "verify",
+};
 
-const mailerServiceMock = {
-  sendMail: jest.fn(),
-}
+const mailServiceMock = {
+  sendTemplate: jest.fn(),
+};
 
 const promocodeServiceMock = {
   getPromocode: jest.fn(),
-}
+};
 
 const configServiceMock = {
   getOrThrow: jest.fn(),
-}
+};
 
 const userDeleteDoc = {
-  id: '507f191e810c19729de860ea',
-}
+  id: "507f191e810c19729de860ea",
+};
 
-describe('UserService', () => {
+describe("UserService", () => {
   let service: UserService;
 
   beforeEach(async () => {
     Mock.resetAll();
     jest.resetAllMocks();
     configServiceMock.getOrThrow.mockImplementation((key: string) => {
-      if (key === 'mailer.emailFrom') {
-        return 'noreply@mycardstrader.local';
-      }
-      if (key === 'mailer.frontUrl') {
-        return 'http://localhost:4200';
+      if (key === "mail.frontUrl") {
+        return "http://localhost:4200";
       }
       throw new Error(`Unexpected config key ${key}`);
     });
@@ -71,8 +68,8 @@ describe('UserService', () => {
           useValue: UserTestModel,
         },
         {
-          provide: MailerService,
-          useValue: mailerServiceMock,
+          provide: MailService,
+          useValue: mailServiceMock,
         },
         {
           provide: PromocodeService,
@@ -81,24 +78,23 @@ describe('UserService', () => {
         {
           provide: ConfigService,
           useValue: configServiceMock,
-        }
+        },
       ],
     }).compile();
 
     service = module.get<UserService>(UserService);
   });
 
-  it('should be defined', () => {
+  it("should be defined", () => {
     expect(service).toBeDefined();
   });
 
-  describe('Create user', () => {
-    
+  describe("Create user", () => {
     const userDto: CreateUserDto = {
-      email: 'captain.nemo@nautilus.sub',
-      password: 'aronnax',
+      email: "captain.nemo@nautilus.sub",
+      password: "aronnax",
       location: {
-        type: 'Point',
+        type: "Point",
         coordinates: [-123.1264691, 49.2290631],
       },
       country: CountryEnum.FR,
@@ -108,225 +104,249 @@ describe('UserService', () => {
       Mock.resetAll();
     });
 
-    it('should create a user', async() => {
+    it("should create a user", async () => {
       // Given
-      Mock(UserTestModel).toReturn(userDoc, 'save');
-      
+      Mock(UserTestModel).toReturn(userDoc, "save");
+
       // When
       const result = await service.createUser(userDto);
-  
+
       // Then
-      expect(mailerServiceMock.sendMail).toHaveBeenCalled();
-      expect(mailerServiceMock.sendMail).toHaveBeenCalledWith(expect.objectContaining({
-        from: 'noreply@mycardstrader.local',
-        context: expect.objectContaining({
-          frontUrl: 'http://localhost:4200',
+      expect(mailServiceMock.sendTemplate).toHaveBeenCalled();
+      expect(mailServiceMock.sendTemplate).toHaveBeenCalledWith(
+        expect.objectContaining({
+          context: expect.objectContaining({
+            frontUrl: "http://localhost:4200",
+          }),
         }),
-      }));
+      );
       expect(promocodeServiceMock.getPromocode).toHaveBeenCalled();
       expect(formatMongo(result)).toEqual(userDoc);
     });
 
-    it('should create user with promocode', async() => {
+    it("should create user with promocode", async () => {
       // Given
       const userDocWithPromocode = {
-       ...userDoc,
-        usedPromocode: ['PROMO'],
+        ...userDoc,
+        usedPromocode: ["PROMO"],
         availableCoins: 10,
       };
-      const promocode = 'promocode';
+      const promocode = "promocode";
       userDto.promocode = promocode;
-      jest.spyOn(promocodeServiceMock, 'getPromocode').mockResolvedValue({ code: 'PROMO', value: 10 });
-      Mock(UserTestModel).toReturn(userDocWithPromocode, 'save');
+      jest
+        .spyOn(promocodeServiceMock, "getPromocode")
+        .mockResolvedValue({ code: "PROMO", value: 10 });
+      Mock(UserTestModel).toReturn(userDocWithPromocode, "save");
 
       // When
       const result = await service.createUser(userDto);
 
       // Then
-      expect(mailerServiceMock.sendMail).toHaveBeenCalled();
+      expect(mailServiceMock.sendTemplate).toHaveBeenCalled();
       expect(formatMongo(result)).toEqual(userDocWithPromocode);
     });
 
-    it('should throw an HttpException', async() => {
+    it("should throw an HttpException", async () => {
       // Given
-      Mock(UserTestModel).toReturn(new Error('Cannot save'), 'save');
+      Mock(UserTestModel).toReturn(new Error("Cannot save"), "save");
       // When
       // Then
-      await expect(service.createUser(userDto)).rejects.toThrow(HttpException); 
-    })
-  })
+      await expect(service.createUser(userDto)).rejects.toThrow(HttpException);
+    });
+  });
 
-  describe('Find all user', () => {
-    it('should find all user', async() => {
+  describe("Find all user", () => {
+    it("should find all user", async () => {
       // Given
       const valueReturn = [userDoc];
-      Mock(UserTestModel).toReturn(valueReturn, 'find');
-  
+      Mock(UserTestModel).toReturn(valueReturn, "find");
+
       // When
       const result = await service.findAll();
-  
+
       // Then
       expect(formatMongo(result)).toEqual(valueReturn);
     });
 
-    it('should throw an HttpException on find all user', async() => {
+    it("should throw an HttpException on find all user", async () => {
       // Given
-      Mock(UserTestModel).toReturn(new Error('Cannot find all'), 'find');
-  
+      Mock(UserTestModel).toReturn(new Error("Cannot find all"), "find");
+
       // When
       // Then
       await expect(service.findAll()).rejects.toThrow(HttpException);
     });
-  })
+  });
 
-  describe('findOne user', ()=> {
-    it('should findOne user', async() => {
+  describe("findOne user", () => {
+    it("should findOne user", async () => {
       // Given
-      Mock(UserTestModel).toReturn(userDoc, 'findOne');
-  
+      Mock(UserTestModel).toReturn(userDoc, "findOne");
+
       // When
-      const result = await service.findOneByEmail('captain.nemo@nautilus.sub');
-  
+      const result = await service.findOneByEmail("captain.nemo@nautilus.sub");
+
       //then
       expect(formatMongo(result)).toEqual(userDoc);
     });
 
-    it('should throw HttpException on findOne user', async() => {
+    it("should throw HttpException on findOne user", async () => {
       // Given
-      Mock(UserTestModel).toReturn(new Error('Cannot findOne user'), 'findOne');
+      Mock(UserTestModel).toReturn(new Error("Cannot findOne user"), "findOne");
 
       // When
       // Then
-      await expect(service.findOneByEmail('nemo@nautilus.sub')).rejects.toThrow(HttpException);
+      await expect(service.findOneByEmail("nemo@nautilus.sub")).rejects.toThrow(
+        HttpException,
+      );
     });
 
-    it('should find no user on findOne user', async() => {
+    it("should find no user on findOne user", async () => {
       // Given
-      Mock(UserTestModel).toReturn(null, 'findOne');
+      Mock(UserTestModel).toReturn(null, "findOne");
 
       // When
       // Then
-      expect(await service.findOneByEmail('nemo@nautilus.sub')).toBeNull();
+      expect(await service.findOneByEmail("nemo@nautilus.sub")).toBeNull();
     });
-  })
+  });
 
-  describe('findOneAndDelete user', () => {
-    it('should findOneAndDelete user', async() => {
+  describe("findOneAndDelete user", () => {
+    it("should findOneAndDelete user", async () => {
       // Given
-      Mock(UserTestModel).toReturn(userDoc, 'findOneAndDelete');
-  
+      Mock(UserTestModel).toReturn(userDoc, "findOneAndDelete");
+
       // When
-      const result = await service.deleteUser({ id: 'userId' });
-  
+      const result = await service.deleteUser({ id: "userId" });
+
       // Then
       expect(formatMongo(result)).toEqual(userDoc);
     });
 
-    it('should throw HttpException on findOneAndDelete user', async() => {
+    it("should throw HttpException on findOneAndDelete user", async () => {
       // Given
-      Mock(UserTestModel).toReturn(new Error('Cannot findOneAndDelete'), 'findOneAndDelete');
+      Mock(UserTestModel).toReturn(
+        new Error("Cannot findOneAndDelete"),
+        "findOneAndDelete",
+      );
 
       // When
       // Then
-      await expect(service.deleteUser(userDeleteDoc)).rejects.toThrow(HttpException);
+      await expect(service.deleteUser(userDeleteDoc)).rejects.toThrow(
+        HttpException,
+      );
     });
   });
 
-  describe('verify user', () => {
-    it('should verify user', async() => {
+  describe("verify user", () => {
+    it("should verify user", async () => {
       // Given
       const userVerified = {
-       ...userDoc,
-        verify: null
-      }
-      Mock(UserTestModel).toReturn({ userDoc }, 'findOne');
-      Mock(UserTestModel).toReturn(userVerified, 'findOneAndUpdate');
+        ...userDoc,
+        verify: null,
+      };
+      Mock(UserTestModel).toReturn({ userDoc }, "findOne");
+      Mock(UserTestModel).toReturn(userVerified, "findOneAndUpdate");
 
       // When
-      const result = await service.verifyUser('verify');
+      const result = await service.verifyUser("verify");
       // Then
       expect(result.verify).toEqual(userVerified.verify);
     });
 
-    it('should find no user on verify', async() => {
+    it("should find no user on verify", async () => {
       // Given
-      Mock(UserTestModel).toReturn(null, 'findOne');
+      Mock(UserTestModel).toReturn(null, "findOne");
       // When
       // Then
-      await expect(service.verifyUser('nemo')).rejects.toThrow(NotFoundException);
+      await expect(service.verifyUser("nemo")).rejects.toThrow(
+        NotFoundException,
+      );
     });
 
-    it('should throw HttpException on findOne', async() => {
+    it("should throw HttpException on findOne", async () => {
       // Given
-      Mock(UserTestModel).toReturn(new Error('cannot findOne'), 'findOne');
+      Mock(UserTestModel).toReturn(new Error("cannot findOne"), "findOne");
       // When
       // Then
-      await expect(service.verifyUser('nemo')).rejects.toThrow(HttpException);
+      await expect(service.verifyUser("nemo")).rejects.toThrow(HttpException);
     });
   });
 
-  describe('reset password', () => {
-    it('should reset password', async() => {
+  describe("reset password", () => {
+    it("should reset password", async () => {
       // Given
-      Mock(UserTestModel).toReturn(userDoc, 'findOne');
+      Mock(UserTestModel).toReturn(userDoc, "findOne");
       // When
       const result = await service.resetPassword(userDoc.email);
       // Then
       expect(result).toBeTruthy();
-      expect(mailerServiceMock.sendMail).toHaveBeenCalledWith(expect.objectContaining({
-        from: 'noreply@mycardstrader.local',
-        context: expect.objectContaining({
-          frontUrl: 'http://localhost:4200',
+      expect(mailServiceMock.sendTemplate).toHaveBeenCalledWith(
+        expect.objectContaining({
+          context: expect.objectContaining({
+            frontUrl: "http://localhost:4200",
+          }),
         }),
-      }));
+      );
     });
 
-    it('should find no user on reset password', async() => {
+    it("should find no user on reset password", async () => {
       // Given
-      Mock(UserTestModel).toReturn(null, 'findOne');
+      Mock(UserTestModel).toReturn(null, "findOne");
       // When
       // Then
-      await expect(service.resetPassword(userDoc.email)).rejects.toThrow(NotFoundException);
+      await expect(service.resetPassword(userDoc.email)).rejects.toThrow(
+        NotFoundException,
+      );
     });
 
-    it('should throw HttpException on reset password', async() => {
+    it("should throw HttpException on reset password", async () => {
       // Given
-      Mock(UserTestModel).toReturn(new Error('cannot findOne'), 'findOne');
+      Mock(UserTestModel).toReturn(new Error("cannot findOne"), "findOne");
       // When
       // Then
-      await expect(service.resetPassword(userDoc.email)).rejects.toThrow(HttpException);
+      await expect(service.resetPassword(userDoc.email)).rejects.toThrow(
+        HttpException,
+      );
     });
   });
 
-  describe('change password', () => {
-    it('should change password', async() => {
+  describe("change password", () => {
+    it("should change password", async () => {
       // Given
       const user = {
         ...userDoc,
-        password: 'newPassword'
-      }
-      Mock(UserTestModel).toReturn({...userDoc, resetToken: 'resetToken'}, 'findOne');
-      Mock(UserTestModel).toReturn(user, 'findOneAndUpdate');
+        password: "newPassword",
+      };
+      Mock(UserTestModel).toReturn(
+        { ...userDoc, resetToken: "resetToken" },
+        "findOne",
+      );
+      Mock(UserTestModel).toReturn(user, "findOneAndUpdate");
       // When
-      const result = await service.changePassword('resetToken', 'newPassword');
+      const result = await service.changePassword("resetToken", "newPassword");
       // Then
       expect(result.password).toEqual(user.password);
     });
 
-    it('should find no user on change password', async() => {
+    it("should find no user on change password", async () => {
       // Given
-      Mock(UserTestModel).toReturn(null, 'findOne');
+      Mock(UserTestModel).toReturn(null, "findOne");
       // When
       // Then
-      await expect(service.changePassword(userDoc.email, 'newPassword')).rejects.toThrow(NotFoundException);
+      await expect(
+        service.changePassword(userDoc.email, "newPassword"),
+      ).rejects.toThrow(NotFoundException);
     });
 
-    it('should throw HttpException on change password', async() => {
+    it("should throw HttpException on change password", async () => {
       // Given
-      Mock(UserTestModel).toReturn(new Error('Cannot findOne'), 'findOne');
+      Mock(UserTestModel).toReturn(new Error("Cannot findOne"), "findOne");
       // When
       // Then
-      await expect(service.changePassword(userDoc.email, 'newPassword')).rejects.toThrow(HttpException);
+      await expect(
+        service.changePassword(userDoc.email, "newPassword"),
+      ).rejects.toThrow(HttpException);
     });
   });
 });

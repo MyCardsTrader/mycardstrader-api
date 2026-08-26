@@ -58,12 +58,21 @@ Si tu veux utiliser Atlas, laisse l’URI Atlas active.
 Variables utilisées en développement :
 
 - `DATABASE_URI`
-- `SMTP_URI`
+- `RESEND_API_KEY`
 - `EMAIL_FROM`
 - `FRONT_URL`
 - `JWT_SECRET`
 - `JWT_EXPIRE`
 - `PORT`
+
+Transactional emails are sent with [Resend](https://resend.com). `EMAIL_FROM` must use a sender address on a domain verified in Resend, for example:
+
+```env
+RESEND_API_KEY=re_...
+EMAIL_FROM=NearbyCardTrader <noreply@nearbycardtrader.com>
+```
+
+Never commit a real Resend API key. Configure production values as Heroku config vars.
 
 ### Test
 
