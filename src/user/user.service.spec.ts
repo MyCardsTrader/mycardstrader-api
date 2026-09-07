@@ -1,6 +1,11 @@
 import Mock from "mockingoose";
 import * as mongoose from "mongoose";
-import { HttpException, NotFoundException } from "@nestjs/common";
+import { scryptSync } from "crypto";
+import {
+  HttpException,
+  NotFoundException,
+  UnauthorizedException,
+} from "@nestjs/common";
 import { ConfigService } from "@nestjs/config";
 import { getModelToken } from "@nestjs/mongoose";
 import { Test, TestingModule } from "@nestjs/testing";
@@ -175,6 +180,262 @@ describe("UserService", () => {
       // When
       // Then
       await expect(service.findAll()).rejects.toThrow(HttpException);
+    });
+  });
+
+  describe("get profile", () => {
+    it("returns only profile-safe fields for the authenticated user", async () => {
+      Mock(UserTestModel).toReturn(
+        {
+          ...userDoc,
+          salt: "secret-salt",
+          location: { type: "Point", coordinates: [2.35, 48.85] },
+        },
+        "findOne",
+      );
+
+      const result = await service.getProfile(userDoc._id);
+
+      expect(result).toEqual({
+        email: userDoc.email,
+        country: userDoc.country,
+        location: { type: "Point", coordinates: [2.35, 48.85] },
+        availableCoins: 0,
+        holdCoins: 0,
+        spentCoins: 0,
+      });
+      expect(result).not.toHaveProperty("password");
+      expect(result).not.toHaveProperty("salt");
+    });
+
+    it("defaults missing treasure counters to zero", async () => {
+      Mock(UserTestModel).toReturn(
+        {
+          email: userDoc.email,
+          country: userDoc.country,
+          location: { type: "Point", coordinates: [2.35, 48.85] },
+          availableCoins: null,
+          holdCoins: null,
+          spentCoins: null,
+        },
+        "findOne",
+      );
+
+      const result = await service.getProfile(userDoc._id);
+
+      expect(result.availableCoins).toBe(0);
+      expect(result.holdCoins).toBe(0);
+      expect(result.spentCoins).toBe(0);
+    });
+
+    it("normalizes legacy latitude/longitude profiles", async () => {
+      Mock(UserTestModel).toReturn(
+        {
+          ...userDoc,
+          location: { lat: 48.85, lng: 2.35 },
+        },
+        "findOne",
+      );
+
+      const result = await service.getProfile(userDoc._id);
+
+      expect(result.location).toEqual({
+        type: "Point",
+        coordinates: [2.35, 48.85],
+      });
+    });
+
+    it("throws NotFoundException when the authenticated user no longer exists", async () => {
+      Mock(UserTestModel).toReturn(null, "findOne");
+
+      await expect(service.getProfile(userDoc._id)).rejects.toThrow(
+        NotFoundException,
+      );
+    });
+
+    it("wraps database errors when loading the profile", async () => {
+      Mock(UserTestModel).toReturn(new Error("Cannot find profile"), "findOne");
+
+      await expect(service.getProfile(userDoc._id)).rejects.toMatchObject({
+        status: 500,
+      });
+    });
+  });
+
+  describe("update location", () => {
+    const locationDto = { latitude: 48.85, longitude: 2.35 };
+
+    it("stores the authenticated user location as GeoJSON", async () => {
+      Mock(UserTestModel).toReturn(
+        {
+          ...userDoc,
+          location: { type: "Point", coordinates: [2.35, 48.85] },
+        },
+        "findOneAndUpdate",
+      );
+
+      const result = await service.updateLocation(userDoc._id, locationDto);
+
+      expect(result.location).toEqual({
+        type: "Point",
+        coordinates: [2.35, 48.85],
+      });
+      expect(result).not.toHaveProperty("password");
+    });
+
+    it("throws NotFoundException when updating a missing user", async () => {
+      Mock(UserTestModel).toReturn(null, "findOneAndUpdate");
+
+      await expect(
+        service.updateLocation(userDoc._id, locationDto),
+      ).rejects.toThrow(NotFoundException);
+    });
+
+    it("wraps database errors when updating location", async () => {
+      Mock(UserTestModel).toReturn(
+        new Error("Cannot update location"),
+        "findOneAndUpdate",
+      );
+
+      await expect(
+        service.updateLocation(userDoc._id, locationDto),
+      ).rejects.toMatchObject({ status: 500 });
+    });
+  });
+
+  describe("change authenticated password", () => {
+    const passwordDto = {
+      currentPassword: "old-password",
+      newPassword: "new-password",
+    };
+    const salt = "0123456789abcdef0123456789abcdef";
+
+    it("changes the password after verifying the current password", async () => {
+      const currentPasswordHash = scryptSync(
+        passwordDto.currentPassword,
+        salt,
+        64,
+      ).toString("hex");
+      let updateFilter;
+      let updatePayload;
+      Mock(UserTestModel).toReturn(
+        {
+          ...userDoc,
+          salt,
+          password: currentPasswordHash,
+        },
+        "findOne",
+      );
+      Mock(UserTestModel).toReturn((query) => {
+        updateFilter = (query as any).getQuery();
+        updatePayload = (query as any).getUpdate();
+        return userDoc;
+      }, "findOneAndUpdate");
+
+      await expect(
+        service.changeAuthenticatedPassword(userDoc._id, passwordDto),
+      ).resolves.toBeUndefined();
+      expect(updateFilter).toMatchObject({
+        _id: userDoc._id,
+        password: currentPasswordHash,
+        salt,
+      });
+      expect(updatePayload.$unset).toEqual({ resetToken: 1 });
+      expect(updatePayload.$set.salt).not.toBe(salt);
+      expect(updatePayload.$set.password).not.toBe(currentPasswordHash);
+    });
+
+    it("rejects an incorrect current password", async () => {
+      Mock(UserTestModel).toReturn(
+        {
+          ...userDoc,
+          salt,
+          password: scryptSync("another-password", salt, 64).toString("hex"),
+        },
+        "findOne",
+      );
+
+      await expect(
+        service.changeAuthenticatedPassword(userDoc._id, passwordDto),
+      ).rejects.toThrow(UnauthorizedException);
+    });
+
+    it.each([
+      { password: null, salt },
+      {
+        password: scryptSync(passwordDto.currentPassword, salt, 64).toString(
+          "hex",
+        ),
+        salt: null,
+      },
+      { password: "00", salt },
+    ])(
+      "rejects missing or malformed stored credentials",
+      async (credentials) => {
+        Mock(UserTestModel).toReturn({ ...userDoc, ...credentials }, "findOne");
+
+        await expect(
+          service.changeAuthenticatedPassword(userDoc._id, passwordDto),
+        ).rejects.toThrow(UnauthorizedException);
+      },
+    );
+
+    it("throws NotFoundException when the authenticated user is missing", async () => {
+      Mock(UserTestModel).toReturn(null, "findOne");
+
+      await expect(
+        service.changeAuthenticatedPassword(userDoc._id, passwordDto),
+      ).rejects.toThrow(NotFoundException);
+    });
+
+    it("wraps database errors while reading credentials", async () => {
+      Mock(UserTestModel).toReturn(
+        new Error("Cannot read credentials"),
+        "findOne",
+      );
+
+      await expect(
+        service.changeAuthenticatedPassword(userDoc._id, passwordDto),
+      ).rejects.toMatchObject({ status: 500 });
+    });
+
+    it("rejects a stale current password if credentials change concurrently", async () => {
+      Mock(UserTestModel).toReturn(
+        {
+          ...userDoc,
+          salt,
+          password: scryptSync(passwordDto.currentPassword, salt, 64).toString(
+            "hex",
+          ),
+        },
+        "findOne",
+      );
+      Mock(UserTestModel).toReturn(null, "findOneAndUpdate");
+
+      await expect(
+        service.changeAuthenticatedPassword(userDoc._id, passwordDto),
+      ).rejects.toThrow(UnauthorizedException);
+    });
+
+    it("wraps database errors while saving the new password", async () => {
+      Mock(UserTestModel).toReturn(
+        {
+          ...userDoc,
+          salt,
+          password: scryptSync(passwordDto.currentPassword, salt, 64).toString(
+            "hex",
+          ),
+        },
+        "findOne",
+      );
+      Mock(UserTestModel).toReturn(
+        new Error("Cannot save credentials"),
+        "findOneAndUpdate",
+      );
+
+      await expect(
+        service.changeAuthenticatedPassword(userDoc._id, passwordDto),
+      ).rejects.toMatchObject({ status: 500 });
     });
   });
 

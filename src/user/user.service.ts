@@ -2,11 +2,20 @@ import { Model } from "mongoose";
 import { randomUUID } from "crypto";
 import { ConfigService } from "@nestjs/config";
 import { InjectModel } from "@nestjs/mongoose";
-import { randomBytes, scryptSync } from "crypto";
-import { HttpException, Injectable, NotFoundException } from "@nestjs/common";
+import { randomBytes, scryptSync, timingSafeEqual } from "crypto";
+import {
+  HttpException,
+  Injectable,
+  InternalServerErrorException,
+  NotFoundException,
+  UnauthorizedException,
+} from "@nestjs/common";
 
 import { CreateUserDto } from "./dto/create-user.dto";
 import { DeleteUserDto } from "./dto/delete-user.dto";
+import { ProfileResponseDto } from "./dto/profile-response.dto";
+import { UpdateLocationDto } from "./dto/update-location.dto";
+import { ChangeAuthenticatedPasswordDto } from "./dto/change-authenticated-password.dto";
 import { User, UserDocument } from "./schema/user.schema";
 import { PromocodeService } from "../promocode/promocode.service";
 import { MailService } from "../mail";
@@ -69,6 +78,130 @@ export class UserService {
     } catch (error) {
       throw new HttpException(error.message, 520);
     }
+  }
+
+  async getProfile(userId: string): Promise<ProfileResponseDto> {
+    let user: User;
+    try {
+      user = await this.userModel.findById(userId).exec();
+    } catch {
+      throw new InternalServerErrorException("Database error");
+    }
+
+    if (!user) {
+      throw new NotFoundException("User not found");
+    }
+
+    return this.toProfile(user);
+  }
+
+  async updateLocation(
+    userId: string,
+    dto: UpdateLocationDto,
+  ): Promise<ProfileResponseDto> {
+    let user: User;
+    try {
+      user = await this.userModel
+        .findByIdAndUpdate(
+          userId,
+          {
+            $set: {
+              location: {
+                type: "Point",
+                coordinates: [dto.longitude, dto.latitude],
+              },
+            },
+          },
+          { new: true },
+        )
+        .exec();
+    } catch {
+      throw new InternalServerErrorException("Database error");
+    }
+
+    if (!user) {
+      throw new NotFoundException("User not found");
+    }
+
+    return this.toProfile(user);
+  }
+
+  async changeAuthenticatedPassword(
+    userId: string,
+    dto: ChangeAuthenticatedPasswordDto,
+  ): Promise<void> {
+    let user: User;
+    try {
+      user = await this.userModel.findById(userId).exec();
+    } catch {
+      throw new InternalServerErrorException("Database error");
+    }
+
+    if (!user) {
+      throw new NotFoundException("User not found");
+    }
+
+    if (!user.password || !user.salt) {
+      throw new UnauthorizedException("Current password is invalid");
+    }
+
+    const currentHash = scryptSync(dto.currentPassword, user.salt, 64);
+    const storedHash = Buffer.from(user.password, "hex");
+    if (
+      storedHash.length !== currentHash.length ||
+      !timingSafeEqual(currentHash, storedHash)
+    ) {
+      throw new UnauthorizedException("Current password is invalid");
+    }
+
+    const salt = randomBytes(16).toString("hex");
+    const password = scryptSync(dto.newPassword, salt, 64).toString("hex");
+    let updatedUser: User;
+    try {
+      updatedUser = await this.userModel
+        .findOneAndUpdate(
+          { _id: userId, password: user.password, salt: user.salt },
+          {
+            $set: { password, salt },
+            $unset: { resetToken: 1 },
+          },
+          { new: true },
+        )
+        .exec();
+    } catch {
+      throw new InternalServerErrorException("Database error");
+    }
+
+    if (!updatedUser) {
+      throw new UnauthorizedException("Current password is no longer valid");
+    }
+  }
+
+  private toProfile(user: User): ProfileResponseDto {
+    const storedLocation = user.location as unknown as {
+      type?: "Point";
+      coordinates?: [number, number];
+      lat?: number;
+      lng?: number;
+    };
+    const location = Array.isArray(storedLocation.coordinates)
+      ? user.location
+      : {
+          type: "Point" as const,
+          coordinates: [storedLocation.lng, storedLocation.lat] as [
+            number,
+            number,
+          ],
+        };
+
+    return {
+      email: user.email,
+      country: user.country,
+      location,
+      availableCoins: user.availableCoins ?? 0,
+      holdCoins: user.holdCoins ?? 0,
+      spentCoins: user.spentCoins ?? 0,
+    };
   }
 
   async deleteUser(deleteUserDto: DeleteUserDto): Promise<User> {
