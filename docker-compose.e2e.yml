@@ -1,18 +1,43 @@
+name: mycardstrader-e2e
 services:
   mongo:
     image: mongo:8
     container_name: mycardstrader-mongo-e2e
     restart: unless-stopped
+    command: ["mongod", "--replSet", "rs0", "--bind_ip_all"]
     ports:
       - "27018:27017"
     volumes:
       - mongo_e2e_data:/data/db
     healthcheck:
-      test: ["CMD", "mongosh", "--quiet", "--eval", "db.adminCommand('ping').ok"]
+      test:
+        [
+          "CMD",
+          "mongosh",
+          "--quiet",
+          "--eval",
+          "try { rs.status() } catch (e) { rs.initiate({_id:'rs0',members:[{_id:0,host:'localhost:27017'}]}) }; if (!db.hello().isWritablePrimary) quit(1)",
+        ]
       interval: 10s
       timeout: 5s
       retries: 5
       start_period: 10s
 
+  runner:
+    image: node:22
+    working_dir: /app
+    volumes:
+      - .:/app
+      - e2e_node_modules:/app/node_modules
+    environment:
+      NODE_ENV: test
+      BATCH_E2E_MONGO_URI: mongodb://mongo:27017/card_batch_e2e?replicaSet=rs0&directConnection=true
+    depends_on:
+      mongo:
+        condition: service_healthy
+    command: ["sh", "-c", "npm ci && npm run test:e2e -- --runInBand"]
+    profiles: ["test"]
+
 volumes:
   mongo_e2e_data:
+  e2e_node_modules:

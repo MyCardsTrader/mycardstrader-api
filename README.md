@@ -150,6 +150,42 @@ http://localhost:3000/api
 
 ## Tests
 
+### Endpoints batch transactionnels
+
+`PATCH /card/batch` et `DELETE /card/batch` utilisent le JWT du compte connecté. Limite : 1 à 100 identifiants Mongo hexadécimaux minuscules, uniques. Tous les champs inconnus, les modifications vides et les valeurs nulles sont rejetés avant écriture.
+
+```json
+{
+  "items": [
+    { "cardId": "507f191e810c19729de860ea", "changes": { "lang": "fr" } },
+    {
+      "cardId": "507f191e810c19729de860eb",
+      "changes": { "grading": "near mint", "foil_treatment": "nonfoil" }
+    }
+  ]
+}
+```
+
+Le PATCH autorise uniquement `lang`, `grading` et `foil_treatment`. Il répond `200 { updatedCount, cards }`, avec les valeurs enregistrées des champs éditables. Le DELETE attend un corps JSON `{ "cardIds": ["507f191e810c19729de860ea"] }` et répond `200 { deletedCount, deletedIds }`.
+
+Une transaction Mongo englobe vérification du propriétaire/disponibilité, `bulkWrite` ou `deleteMany` et lecture du résultat. Un échec connu annule le lot entier. Les appels sont séquentiels dans la transaction, et le navigateur envoie un seul lot sans découpage implicite. Le code utilise [Connection.transaction de Mongoose](https://mongoosejs.com/docs/transactions.html) pour le commit, le rollback et la reprise des conflits transitoires.
+
+| HTTP | Code                                | Comportement frontend                                                                 |
+| ---- | ----------------------------------- | ------------------------------------------------------------------------------------- |
+| 400  | `CARD_BATCH_INVALID`                | Corriger sélection/champs ; aucune écriture                                           |
+| 401  | Réponse standard d’authentification | Se reconnecter                                                                        |
+| 404  | `CARD_BATCH_NOT_FOUND`              | Carte absente ou étrangère au classeur, sans divulgation du propriétaire ; lot annulé |
+| 409  | `CARD_BATCH_CONFLICT`               | Carte indisponible ou sélection modifiée ; lot annulé                                 |
+| 500  | `CARD_BATCH_FAILED`                 | Résultat non confirmé : actualiser avant de réessayer                                 |
+
+Les erreurs batch ont `{ code, message, cardIds? }` ; les 404/409 indiquent les identifiants concernés pour signaler les lignes. Aucun message Mongo interne n’est exposé. Une coupure réseau pendant le commit peut rendre le résultat inconnu côté client : conserver les brouillons et actualiser, sans annoncer à tort que rien n’a été appliqué. Répéter un DELETE contenant une carte déjà supprimée retourne 404 et annule le nouveau lot.
+
+MongoDB doit fonctionner en **replica set** (ou cluster supportant les transactions), en local et en production. Le Compose local est configuré en `rs0` ; son application requiert `docker compose up -d --wait mongo`. Utiliser par exemple `mongodb://localhost:27017/mycardstrader?replicaSet=rs0&directConnection=true` en local. Ne pas utiliser cette configuration mono-nœud comme modèle de haute disponibilité en production. Le conteneur de développement déjà en cours n’est pas redémarré par les tests.
+
+Les e2e batch démarrent une vraie application HTTP avec JWT et Mongo, dans une base aléatoire `card_batch_e2e_*`, supprimée en fin de suite. Aucune base de développement n’est utilisée. Démarrer Mongo dédié avec `docker compose -f docker-compose.e2e.yml up -d --wait mongo`, puis `npm run test:e2e -- --runInBand`. L’URI locale par défaut utilise le port 27018 ; `BATCH_E2E_MONGO_URI` permet l’adresse du service Docker, limitée aux hôtes locaux du dispositif de tests. Le nom de projet Compose e2e est distinct du Compose de développement.
+
+Runner conteneurisé facultatif : `docker compose -f docker-compose.e2e.yml --profile test run --rm runner`. Les tests vérifient cas nominaux, 100/101 cartes, authentification, accès intercomptes, payloads invalides, cartes échangées et rollback après de vraies écritures/suppressions injectant une panne avant commit. Jest impose 100 % sur les quatre métriques de couverture unitaire.
+
 ### Tests unitaires
 
 ```bash
