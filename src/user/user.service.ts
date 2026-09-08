@@ -1,33 +1,35 @@
-import { Model } from 'mongoose';
-import { randomUUID } from 'crypto';
-import { ConfigService } from '@nestjs/config';
-import { InjectModel } from '@nestjs/mongoose';
-import { randomBytes, scryptSync } from 'crypto';
-import { MailerService } from '@nestjs-modules/mailer';
-import { HttpException, Injectable, NotFoundException } from '@nestjs/common';
+import { Model } from "mongoose";
+import { randomUUID } from "crypto";
+import { ConfigService } from "@nestjs/config";
+import { InjectModel } from "@nestjs/mongoose";
+import { randomBytes, scryptSync } from "crypto";
+import { HttpException, Injectable, NotFoundException } from "@nestjs/common";
 
-import { CreateUserDto } from './dto/create-user.dto';
-import { DeleteUserDto } from './dto/delete-user.dto';
-import { User, UserDocument } from './schema/user.schema';
-import { PromocodeService } from '../promocode/promocode.service';
+import { CreateUserDto } from "./dto/create-user.dto";
+import { DeleteUserDto } from "./dto/delete-user.dto";
+import { User, UserDocument } from "./schema/user.schema";
+import { PromocodeService } from "../promocode/promocode.service";
+import { MailService } from "../mail";
 
 @Injectable()
 export class UserService {
   constructor(
-    private readonly mailerService: MailerService,
+    private readonly mailService: MailService,
     private readonly promocodeService: PromocodeService,
     private readonly configService: ConfigService,
     @InjectModel(User.name) private readonly userModel: Model<UserDocument>,
-  ) { }
+  ) {}
 
-  async createUser(
-    createUserDto: CreateUserDto,
-  ): Promise<User> {
-    const salt = randomBytes(16).toString('hex');
-    const password = scryptSync(createUserDto.password, salt, 64).toString('hex');
+  async createUser(createUserDto: CreateUserDto): Promise<User> {
+    const salt = randomBytes(16).toString("hex");
+    const password = scryptSync(createUserDto.password, salt, 64).toString(
+      "hex",
+    );
     const verify = randomUUID();
 
-    const promocode = await this.promocodeService.getPromocode(createUserDto.promocode);
+    const promocode = await this.promocodeService.getPromocode(
+      createUserDto.promocode,
+    );
 
     if (promocode) {
       delete createUserDto.promocode;
@@ -38,22 +40,21 @@ export class UserService {
       password,
       salt,
       verify,
-      usedPromocode: promocode? [promocode.code] : [],
+      usedPromocode: promocode ? [promocode.code] : [],
       availableCoins: promocode ? promocode.value : 0,
     };
 
     try {
       const newUser = new this.userModel(newUserInfo);
-      await this.mailerService.sendMail({
+      await this.mailService.sendTemplate({
         to: createUserDto.email,
-        from: this.configService.getOrThrow<string>('mailer.emailFrom'),
-        subject: 'Welcome to NearbyCardTrader.com',
-        template: 'welcome',
+        subject: "Welcome to NearbyCardTrader.com",
+        template: "welcome",
         context: {
           email: newUser.email,
           verify: newUser.verify,
           year: new Date().getFullYear(),
-          frontUrl: this.configService.getOrThrow<string>('mailer.frontUrl'),
+          frontUrl: this.configService.getOrThrow<string>("mail.frontUrl"),
         },
       });
       return await newUser.save();
@@ -86,7 +87,7 @@ export class UserService {
       }
       return user;
     } catch (error) {
-      throw new HttpException('Database error', 520);
+      throw new HttpException("Database error", 520);
     }
   }
 
@@ -94,10 +95,10 @@ export class UserService {
     try {
       const user: User = await this.userModel.findOne({ verify });
       if (!user) {
-        throw new Error('User not found');
+        throw new Error("User not found");
       }
       return await this.userModel.findOneAndUpdate(
-        { email: user.email},
+        { email: user.email },
         {
           $set: {
             verify: null,
@@ -105,10 +106,10 @@ export class UserService {
         },
       );
     } catch (error) {
-      if (error.message === 'User not found') {
-        throw new NotFoundException('User not found');
+      if (error.message === "User not found") {
+        throw new NotFoundException("User not found");
       } else {
-        throw new HttpException('Database error', 520);
+        throw new HttpException("Database error", 520);
       }
     }
   }
@@ -117,34 +118,33 @@ export class UserService {
     try {
       const user: User = await this.userModel.findOne({ email });
       if (!user) {
-        throw new Error('User not found');
+        throw new Error("User not found");
       }
       const resetToken = randomUUID();
       await this.userModel.findOneAndUpdate(
-        { email: user.email},
+        { email: user.email },
         {
           $set: {
             resetToken: resetToken,
           },
         },
       );
-      await this.mailerService.sendMail({
+      await this.mailService.sendTemplate({
         to: email,
-        from: this.configService.getOrThrow<string>('mailer.emailFrom'),
-        subject: 'Reset your password NearbyCardTrader.com',
-        template: 'reset-password',
+        subject: "Reset your password NearbyCardTrader.com",
+        template: "reset-password",
         context: {
           email: email,
           resetToken: resetToken,
-          frontUrl: this.configService.getOrThrow<string>('mailer.frontUrl'),
+          frontUrl: this.configService.getOrThrow<string>("mail.frontUrl"),
         },
       });
       return true;
     } catch (error) {
-      if (error.message === 'User not found') {
-        throw new NotFoundException('User not found');
+      if (error.message === "User not found") {
+        throw new NotFoundException("User not found");
       } else {
-        throw new HttpException('Database error', 520);
+        throw new HttpException("Database error", 520);
       }
     }
   }
@@ -153,10 +153,10 @@ export class UserService {
     try {
       const user: User = await this.userModel.findOne({ resetToken });
       if (!user) {
-        throw new Error('User not found');
+        throw new Error("User not found");
       }
-      const salt = randomBytes(16).toString('hex');
-      const newPassword = scryptSync(password, salt, 64).toString('hex');
+      const salt = randomBytes(16).toString("hex");
+      const newPassword = scryptSync(password, salt, 64).toString("hex");
       const newUser = await this.userModel.findOneAndUpdate(
         { email: user.email },
         {
@@ -169,21 +169,20 @@ export class UserService {
       );
       return newUser;
     } catch (error) {
-      if (error.message === 'User not found') {
-        throw new NotFoundException('User not found');
+      if (error.message === "User not found") {
+        throw new NotFoundException("User not found");
       } else {
-        throw new HttpException('Database error', 520);
+        throw new HttpException("Database error", 520);
       }
     }
-  };
-
+  }
 
   // async findOneById(id: string): Promise<User> {
   //   try {
   //     const user: User = await this.userModel
   //       .findById(
   //         id,
-  //         { 
+  //         {
   //           password: 0,
   //           salt: 0,
   //           availableTreasures: 0,
