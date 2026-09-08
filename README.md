@@ -135,7 +135,12 @@ npm run start:prod
 
 - Health check : `GET /health-check`
 - Login : `POST /auth/login`
+- Profil authentifié : `GET /user/me`
+- Mise à jour de la géolocalisation : `PATCH /user/me/location`
+- Changement du mot de passe : `PATCH /user/me/password`
 - Swagger UI : `/api`
+
+Les trois routes de profil nécessitent un jeton Bearer valide. Elles utilisent exclusivement l’identifiant contenu dans le JWT : aucun identifiant utilisateur fourni par le client n’est accepté. La réponse du profil exclut le mot de passe, le sel et les jetons techniques.
 
 Par défaut, avec `PORT=3000`, Swagger est accessible sur :
 
