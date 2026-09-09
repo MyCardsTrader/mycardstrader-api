@@ -30,22 +30,19 @@ export class UserService {
   ) {}
 
   async createUser(createUserDto: CreateUserDto): Promise<User> {
+    const { promocode: promocodeCode, ...userInfo } = createUserDto;
     const salt = randomBytes(16).toString("hex");
     const password = scryptSync(createUserDto.password, salt, 64).toString(
       "hex",
     );
     const verify = randomUUID();
 
-    const promocode = await this.promocodeService.getPromocode(
-      createUserDto.promocode,
-    );
-
-    if (promocode) {
-      delete createUserDto.promocode;
-    }
+    const promocode = promocodeCode
+      ? await this.promocodeService.getPromocode(promocodeCode)
+      : null;
 
     const newUserInfo = {
-      ...createUserDto,
+      ...userInfo,
       password,
       salt,
       verify,

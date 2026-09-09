@@ -1,74 +1,79 @@
-import Mock from 'mockingoose';
+import Mock from "mockingoose";
 import * as mongoose from "mongoose";
-import { getModelToken } from '@nestjs/mongoose';
-import { Test, TestingModule } from '@nestjs/testing';
-import { HttpException, NotFoundException } from '@nestjs/common';
+import { getModelToken } from "@nestjs/mongoose";
+import { Test, TestingModule } from "@nestjs/testing";
+import { HttpException, NotFoundException } from "@nestjs/common";
 
-import { TradeService } from './trade.service';
-import { TradeSchema } from './schema/trade.schema';
-import { UpdateTradeDto, CreateTradeDto } from './dto';
-import { CardLang } from '../card/interfaces/lang.enum';
-import { CardSchema } from '../card/schema/card.schema';
-import { Grading } from '../card/interfaces/grading.enum';
+import { TradeService } from "./trade.service";
+import { TradeSchema } from "./schema/trade.schema";
+import { SortOrder, TradeStatus, UpdateTradeDto, CreateTradeDto } from "./dto";
+import { CardLang } from "../card/interfaces/lang.enum";
+import { CardSchema } from "../card/schema/card.schema";
+import { Grading } from "../card/interfaces/grading.enum";
 
-const tradeModel = getModelToken('Trade');
+const tradeModel = getModelToken("Trade");
 
-const TradeTestModel = mongoose.model('Trade', TradeSchema);
+const TradeTestModel = mongoose.model("Trade", TradeSchema);
 
-const cardModel = getModelToken('Card');
+const cardModel = getModelToken("Card");
 
-const CardTestModel = mongoose.model('Card', CardSchema);
+const CardTestModel = mongoose.model("Card", CardSchema);
 
-const userId = 'userId';
+const userId = "userId";
 
 const formatMongo = (doc) => {
   return JSON.parse(JSON.stringify(doc));
-}
+};
 
-const cardId = '507f191e810c19729de860ea';
+const cardId = "507f191e810c19729de860ea";
 
 const cardDoc = {
   _id: cardId,
-  oracle_id: '8d02b297-97c4-4379-9862-0a462400f66f',
+  oracle_id: "8d02b297-97c4-4379-9862-0a462400f66f",
   cardmarket_id: 3574,
-  name:'Phyrexian Altar',
+  name: "Phyrexian Altar",
   lang: CardLang.EN,
   grading: Grading.M,
   image_uri: {
-    small: 'https://c1.scryfall.com/file/scryfall-cards/small/front/2/5/25158cd5-749b-408c-9ab1-0f83e38730f7.jpg?1562902485',
-    normal: 'https://c1.scryfall.com/file/scryfall-cards/normal/front/2/5/25158cd5-749b-408c-9ab1-0f83e38730f7.jpg?1562902485',
-    large: 'https://c1.scryfall.com/file/scryfall-cards/large/front/2/5/25158cd5-749b-408c-9ab1-0f83e38730f7.jpg?1562902485',
-    png: 'https://c1.scryfall.com/file/scryfall-cards/png/front/2/5/25158cd5-749b-408c-9ab1-0f83e38730f7.png?1562902485',
-    art_crop: 'https://c1.scryfall.com/file/scryfall-cards/art_crop/front/2/5/25158cd5-749b-408c-9ab1-0f83e38730f7.jpg?1562902485',
-    border_crop: 'https://c1.scryfall.com/file/scryfall-cards/border_crop/front/2/5/25158cd5-749b-408c-9ab1-0f83e38730f7.jpg?1562902485',
+    small:
+      "https://c1.scryfall.com/file/scryfall-cards/small/front/2/5/25158cd5-749b-408c-9ab1-0f83e38730f7.jpg?1562902485",
+    normal:
+      "https://c1.scryfall.com/file/scryfall-cards/normal/front/2/5/25158cd5-749b-408c-9ab1-0f83e38730f7.jpg?1562902485",
+    large:
+      "https://c1.scryfall.com/file/scryfall-cards/large/front/2/5/25158cd5-749b-408c-9ab1-0f83e38730f7.jpg?1562902485",
+    png: "https://c1.scryfall.com/file/scryfall-cards/png/front/2/5/25158cd5-749b-408c-9ab1-0f83e38730f7.png?1562902485",
+    art_crop:
+      "https://c1.scryfall.com/file/scryfall-cards/art_crop/front/2/5/25158cd5-749b-408c-9ab1-0f83e38730f7.jpg?1562902485",
+    border_crop:
+      "https://c1.scryfall.com/file/scryfall-cards/border_crop/front/2/5/25158cd5-749b-408c-9ab1-0f83e38730f7.jpg?1562902485",
   },
-  cmc: '3.0',
-  type_line: 'Artifact',
-  set: '2x2',
+  cmc: "3.0",
+  type_line: "Artifact",
+  set: "2x2",
   set_svg: "https://svgs.scryfall.io/sets/mh2.svg?1713153600",
   collector_number: 1,
   colors: [],
   color_identity: [],
-  user: '61aff9b226d0e050c18bfcae',
-}
+  user: "61aff9b226d0e050c18bfcae",
+};
 
 const tradeDoc = {
-  _id: '507f191e810c19729de860ea',
-  user: 'userId',
-  trader: 'traderId',
+  _id: "507f191e810c19729de860ea",
+  user: "userId",
+  trader: "traderId",
   userCards: [],
   traderCards: [cardId],
   userAccept: false,
   traderAccept: false,
-  tradeStatus: 'pending',
+  tradeStatus: "pending",
 };
 
-describe('TradeService', () => {
+describe("TradeService", () => {
   let service: TradeService;
   let logSpy: jest.SpyInstance;
 
   beforeEach(async () => {
-    logSpy = jest.spyOn(console, 'log').mockImplementation();
+    logSpy = jest.spyOn(console, "log").mockImplementation();
     const module: TestingModule = await Test.createTestingModule({
       providers: [
         TradeService,
@@ -79,7 +84,7 @@ describe('TradeService', () => {
         {
           provide: cardModel,
           useValue: CardTestModel,
-        }
+        },
       ],
     }).compile();
 
@@ -90,23 +95,58 @@ describe('TradeService', () => {
     logSpy.mockRestore();
   });
 
-  it('should be defined', () => {
+  it("should be defined", () => {
     expect(service).toBeDefined();
   });
 
-  describe('createTrade', () => {
+  describe("findTradesByUser", () => {
+    beforeEach(() => Mock.resetAll());
+
+    it("Should find trades without optional filters", async () => {
+      Mock(TradeTestModel).toReturn([tradeDoc], "find");
+
+      const result = await service.findTradesByUser(userId);
+
+      expect(formatMongo(result)).toEqual([tradeDoc]);
+    });
+
+    it.each([SortOrder.ASC, SortOrder.DESC])(
+      "Should filter, sort and limit trades (%s)",
+      async (order) => {
+        Mock(TradeTestModel).toReturn([tradeDoc], "find");
+
+        const result = await service.findTradesByUser(userId, {
+          limit: "4",
+          order,
+          status: TradeStatus.PENDING,
+        });
+
+        expect(formatMongo(result)).toEqual([tradeDoc]);
+      },
+    );
+
+    it("Should throw an HttpException on lookup failure", async () => {
+      Mock(TradeTestModel).toReturn(new Error("Cannot find trades"), "find");
+
+      await expect(service.findTradesByUser(userId)).rejects.toThrow(
+        HttpException,
+      );
+    });
+  });
+
+  describe("createTrade", () => {
     const tradeDto: CreateTradeDto = {
-      trader: 'tradeId',
+      trader: "tradeId",
       traderCards: [cardId],
-    }
+    };
 
     beforeEach(() => {
       Mock.resetAll();
     });
 
-    it('Should create a trade', async () => {
+    it("Should create a trade", async () => {
       // Given
-      Mock(TradeTestModel).toReturn(tradeDoc, 'save');
+      Mock(TradeTestModel).toReturn(tradeDoc, "save");
 
       // When
       const result = await service.createTrade(tradeDto, userId);
@@ -115,26 +155,26 @@ describe('TradeService', () => {
       expect(formatMongo(result)).toEqual(tradeDoc);
     });
 
-    it('Should throw an HttpException', async () => {
+    it("Should throw an HttpException", async () => {
       // Given
-      Mock(TradeTestModel).toReturn(new Error('Cannot save'), 'save');
+      Mock(TradeTestModel).toReturn(new Error("Cannot save"), "save");
 
       // When
       // Then
-      await expect(service.createTrade(tradeDto, userId))
-        .rejects.toThrow(HttpException);
+      await expect(service.createTrade(tradeDto, userId)).rejects.toThrow(
+        HttpException,
+      );
     });
   });
 
-  describe('getAllTrades', () => {
-
+  describe("getAllTrades", () => {
     beforeEach(() => {
       Mock.resetAll();
     });
 
-    it('Should get all trades', async() => {
+    it("Should get all trades", async () => {
       // Given
-      Mock(TradeTestModel).toReturn([tradeDoc], 'find');
+      Mock(TradeTestModel).toReturn([tradeDoc], "find");
 
       // When
       const result = await service.getAllTrades();
@@ -143,56 +183,55 @@ describe('TradeService', () => {
       expect(formatMongo(result)).toEqual([tradeDoc]);
     });
 
-    it('Should throw HttpException', async () => {
+    it("Should throw HttpException", async () => {
       // Given
-      Mock(TradeTestModel).toReturn(new Error('Cannot find trades'), 'find');
+      Mock(TradeTestModel).toReturn(new Error("Cannot find trades"), "find");
 
       // When
       // Then
-      await expect(service.getAllTrades())
-        .rejects.toThrow(HttpException);
+      await expect(service.getAllTrades()).rejects.toThrow(HttpException);
     });
   });
 
-  describe('getTradesByUser', () => {
-
+  describe("getTradesByUser", () => {
     beforeEach(() => {
       Mock.resetAll();
     });
 
-    it('Should get all trades', async() => {
+    it("Should get all trades", async () => {
       // Given
-      Mock(TradeTestModel).toReturn([tradeDoc], 'find');
+      Mock(TradeTestModel).toReturn([tradeDoc], "find");
 
       // When
-      const result = await service.findTradesByUser('userId');
+      const result = await service.findTradesByUser("userId");
 
       // Then
       expect(formatMongo(result)).toEqual([tradeDoc]);
     });
 
-    it('Should throw HttpException', async () => {
+    it("Should throw HttpException", async () => {
       // Given
-      Mock(TradeTestModel).toReturn(new Error('Cannot find trades'), 'find');
+      Mock(TradeTestModel).toReturn(new Error("Cannot find trades"), "find");
 
       // When
       // Then
-      await expect(service.findTradesByUser('userId'))
-        .rejects.toThrow(HttpException);
+      await expect(service.findTradesByUser("userId")).rejects.toThrow(
+        HttpException,
+      );
     });
   });
 
-  describe('getTradeById', () => {    
-    const tradeId = '507f191e810c19729de860ea';
+  describe("getTradeById", () => {
+    const tradeId = "507f191e810c19729de860ea";
 
     beforeEach(() => {
       Mock.resetAll();
     });
 
-    it('Should get a specific trade', async() => {
+    it("Should get a specific trade", async () => {
       // Given
-      Mock(TradeTestModel).toReturn(tradeDoc, 'findOne');
-      
+      Mock(TradeTestModel).toReturn(tradeDoc, "findOne");
+
       // When
       const result = await service.getTradeById(tradeId);
 
@@ -200,38 +239,39 @@ describe('TradeService', () => {
       expect(formatMongo(result)).toEqual(tradeDoc);
     });
 
-    it('Should throw NotFoundException', async() => {
+    it("Should throw NotFoundException", async () => {
       // Given
-      Mock(TradeTestModel).toReturn(null, 'findOne');
-      
+      Mock(TradeTestModel).toReturn(null, "findOne");
+
       // When
       // Then
-      await expect(service.getTradeById('fakeId'))
-        .rejects.toThrow(NotFoundException);
+      await expect(service.getTradeById("fakeId")).rejects.toThrow(
+        NotFoundException,
+      );
     });
 
-    it('Should throw HttpException', async () => {
+    it("Should throw HttpException", async () => {
       // Given
-      Mock(TradeTestModel)
-        .toReturn(new Error('Cannot find trades'), 'findOne');
+      Mock(TradeTestModel).toReturn(new Error("Cannot find trades"), "findOne");
 
       // When
       // Then
-      await expect(service.getTradeById(tradeId))
-        .rejects.toThrow(HttpException);
+      await expect(service.getTradeById(tradeId)).rejects.toThrow(
+        HttpException,
+      );
     });
   });
 
-  describe('DeleteTrade', () => {
-    const tradeIdMock = '507f191e810c19729de860ea';
+  describe("DeleteTrade", () => {
+    const tradeIdMock = "507f191e810c19729de860ea";
 
     beforeEach(() => {
       Mock.resetAll();
     });
 
-    it('Should delete a specific trade', async() => {
+    it("Should delete a specific trade", async () => {
       // Given
-      Mock(TradeTestModel).toReturn(tradeDoc, 'findOneAndDelete');
+      Mock(TradeTestModel).toReturn(tradeDoc, "findOneAndDelete");
 
       // When
       const result = await service.deleteTrade(tradeIdMock);
@@ -240,100 +280,102 @@ describe('TradeService', () => {
       expect(formatMongo(result)).toEqual(tradeDoc);
     });
 
-    it('Should throw an HttpException', async() => {
+    it("Should throw an HttpException", async () => {
       // Given
-      Mock(TradeTestModel)
-        .toReturn(new Error(), 'findOneAndDelete');
+      Mock(TradeTestModel).toReturn(new Error(), "findOneAndDelete");
 
       // When
       // Then
-      await expect(service.deleteTrade(tradeIdMock))
-        .rejects.toThrow(HttpException);
+      await expect(service.deleteTrade(tradeIdMock)).rejects.toThrow(
+        HttpException,
+      );
     });
 
-    it('Should throw an NotFoundException', async() => {
+    it("Should throw an NotFoundException", async () => {
       // Given
-      Mock(TradeTestModel)
-        .toReturn(undefined, 'findOneAndDelete');
+      Mock(TradeTestModel).toReturn(undefined, "findOneAndDelete");
 
       // When
       // Then
-      await expect(service.deleteTrade(tradeIdMock))
-        .rejects.toThrow(NotFoundException);
+      await expect(service.deleteTrade(tradeIdMock)).rejects.toThrow(
+        NotFoundException,
+      );
     });
   });
 
-  describe('UpdateTrade', () => {
-    const tradeIdMock = '507f191e810c19729de860ea';
+  describe("UpdateTrade", () => {
+    const tradeIdMock = "507f191e810c19729de860ea";
     const updateTradeDtoMock: UpdateTradeDto = {
       userCards: [cardId],
       traderAccept: true,
     };
 
-    it('Should update a specific trade', async() => {
+    it("Should update a specific trade", async () => {
       // Given
       const tradeDocUpdated = {
         ...tradeDoc,
         userCards: [cardId],
         traderAccept: true,
       };
-      Mock(TradeTestModel).toReturn(tradeDocUpdated, 'findOneAndUpdate');
-      
+      Mock(TradeTestModel).toReturn(tradeDocUpdated, "findOneAndUpdate");
+
       // When
       const result = await service.updateTrade(tradeIdMock, updateTradeDtoMock);
-      
+
       // Then
       expect(formatMongo(result)).toEqual(tradeDocUpdated);
     });
 
-    it('Should throw an HttpException', async() => {
+    it("Should throw an HttpException", async () => {
       // Given
-      Mock(TradeTestModel)
-        .toReturn(new Error(), 'findOneAndUpdate');
+      Mock(TradeTestModel).toReturn(new Error(), "findOneAndUpdate");
 
       // When
       // Then
-      await expect(service.updateTrade(tradeIdMock, updateTradeDtoMock))
-        .rejects.toThrow(HttpException);
+      await expect(
+        service.updateTrade(tradeIdMock, updateTradeDtoMock),
+      ).rejects.toThrow(HttpException);
     });
 
-    it('Should throw NotFoundException', async() => {
+    it("Should throw NotFoundException", async () => {
       // Given
-      Mock(TradeTestModel)
-        .toReturn(undefined, 'findOneAndUpdate');
-      
+      Mock(TradeTestModel).toReturn(undefined, "findOneAndUpdate");
+
       // When
       // Then
-      await expect(service.updateTrade(tradeIdMock, updateTradeDtoMock))
-        .rejects.toThrow(NotFoundException);
+      await expect(
+        service.updateTrade(tradeIdMock, updateTradeDtoMock),
+      ).rejects.toThrow(NotFoundException);
     });
   });
 
-  describe('acceptTrade', () => {
-    const tradeIdMock = '507f191e810c19729de860ea';
+  describe("acceptTrade", () => {
+    const tradeIdMock = "507f191e810c19729de860ea";
 
     beforeEach(() => {
       Mock.resetAll();
     });
 
-    it('Should accept a trade as the owner', async () => {
+    it("Should accept a trade as the owner", async () => {
       const updatedTrade = {
         ...tradeDoc,
         userAccept: true,
       };
-      const cardUpdateSpy = jest.spyOn(CardTestModel, 'updateMany');
+      const cardUpdateSpy = jest.spyOn(CardTestModel, "updateMany");
       cardUpdateSpy.mockResolvedValueOnce({ acknowledged: true } as any);
-      Mock(TradeTestModel).toReturn(tradeDoc, 'findOne');
-      Mock(TradeTestModel).toReturn(updatedTrade, 'findOneAndUpdate');
+      Mock(TradeTestModel).toReturn(tradeDoc, "findOne");
+      Mock(TradeTestModel).toReturn(updatedTrade, "findOneAndUpdate");
 
-      const result = await service.acceptTrade('userId', tradeIdMock, { accept: true });
+      const result = await service.acceptTrade("userId", tradeIdMock, {
+        accept: true,
+      });
 
       expect(formatMongo(result)).toEqual(updatedTrade);
       expect(cardUpdateSpy).not.toHaveBeenCalled();
       cardUpdateSpy.mockRestore();
     });
 
-    it('Should complete a trade and update cards when both users accepted', async () => {
+    it("Should complete a trade and update cards when both users accepted", async () => {
       const acceptedTrade = {
         ...tradeDoc,
         userAccept: true,
@@ -341,14 +383,16 @@ describe('TradeService', () => {
       };
       const updatedTrade = {
         ...acceptedTrade,
-        tradeStatus: 'success',
+        tradeStatus: "success",
       };
-      const cardUpdateSpy = jest.spyOn(CardTestModel, 'updateMany');
+      const cardUpdateSpy = jest.spyOn(CardTestModel, "updateMany");
       cardUpdateSpy.mockResolvedValueOnce({ acknowledged: true } as any);
-      Mock(TradeTestModel).toReturn(acceptedTrade, 'findOne');
-      Mock(TradeTestModel).toReturn(updatedTrade, 'findOneAndUpdate');
+      Mock(TradeTestModel).toReturn(acceptedTrade, "findOne");
+      Mock(TradeTestModel).toReturn(updatedTrade, "findOneAndUpdate");
 
-      const result = await service.acceptTrade('traderId', tradeIdMock, { accept: true });
+      const result = await service.acceptTrade("traderId", tradeIdMock, {
+        accept: true,
+      });
 
       expect(formatMongo(result)).toEqual(updatedTrade);
       expect(cardUpdateSpy).toHaveBeenCalledTimes(1);
@@ -358,74 +402,78 @@ describe('TradeService', () => {
             $in: expect.arrayContaining([expect.anything()]),
           }),
         }),
-        { $set: { availability: 'traded' } },
+        { $set: { availability: "traded" } },
       );
       cardUpdateSpy.mockRestore();
     });
 
-    it('Should throw HttpException for unauthorized user', async () => {
-      Mock(TradeTestModel).toReturn(tradeDoc, 'findOne');
+    it("Should throw HttpException for unauthorized user", async () => {
+      Mock(TradeTestModel).toReturn(tradeDoc, "findOne");
 
       await expect(
-        service.acceptTrade('outsider', tradeIdMock, { accept: true }),
+        service.acceptTrade("outsider", tradeIdMock, { accept: true }),
       ).rejects.toThrow(HttpException);
     });
 
-    it('Should throw HttpException when database access fails', async () => {
-      Mock(TradeTestModel).toReturn(new Error('Cannot find trade'), 'findOne');
+    it("Should throw HttpException when database access fails", async () => {
+      Mock(TradeTestModel).toReturn(new Error("Cannot find trade"), "findOne");
 
       await expect(
-        service.acceptTrade('userId', tradeIdMock, { accept: true }),
+        service.acceptTrade("userId", tradeIdMock, { accept: true }),
       ).rejects.toThrow(HttpException);
     });
   });
 
-  describe('declineTrade', () => {
-    const tradeIdMock = '507f191e810c19729de860ea';
+  describe("declineTrade", () => {
+    const tradeIdMock = "507f191e810c19729de860ea";
 
     beforeEach(() => {
       Mock.resetAll();
     });
 
-    it('Should decline a trade as the owner', async () => {
+    it("Should decline a trade as the owner", async () => {
       const updatedTrade = {
         ...tradeDoc,
-        tradeStatus: 'rejected',
+        tradeStatus: "rejected",
       };
-      Mock(TradeTestModel).toReturn(tradeDoc, 'findOne');
-      Mock(TradeTestModel).toReturn(updatedTrade, 'findOneAndUpdate');
+      Mock(TradeTestModel).toReturn(tradeDoc, "findOne");
+      Mock(TradeTestModel).toReturn(updatedTrade, "findOneAndUpdate");
 
-      const result = await service.declineTrade('userId', tradeIdMock, { decline: true });
+      const result = await service.declineTrade("userId", tradeIdMock, {
+        decline: true,
+      });
 
       expect(formatMongo(result)).toEqual(updatedTrade);
     });
 
-    it('Should decline a trade as the trader', async () => {
+    it("Should decline a trade as the trader", async () => {
       const updatedTrade = {
         ...tradeDoc,
-        tradeStatus: 'rejected',
+        tradeStatus: "rejected",
       };
-      Mock(TradeTestModel).toReturn(tradeDoc, 'findOne');
-      Mock(TradeTestModel).toReturn(updatedTrade, 'findOneAndUpdate');
+      Mock(TradeTestModel).toReturn(tradeDoc, "findOne");
+      Mock(TradeTestModel).toReturn(updatedTrade, "findOneAndUpdate");
 
-      const result = await service.declineTrade('traderId', tradeIdMock, { decline: true });
+      const result = await service.declineTrade("traderId", tradeIdMock, {
+        decline: true,
+      });
 
       expect(formatMongo(result)).toEqual(updatedTrade);
     });
 
-    it('Should throw HttpException for unauthorized user', async () => {
-      Mock(TradeTestModel).toReturn(tradeDoc, 'findOne');
+    it("Should throw HttpException for unauthorized user", async () => {
+      Mock(TradeTestModel).toReturn(tradeDoc, "findOne");
 
       await expect(
-        service.declineTrade('outsider', tradeIdMock, { decline: true }),
+        service.declineTrade("outsider", tradeIdMock, { decline: true }),
       ).rejects.toThrow(HttpException);
     });
 
-    it('Should throw HttpException when database access fails', async () => {
-      Mock(TradeTestModel).toReturn(new Error('Cannot find trade'), 'findOne');
+    it("Should throw HttpException when database access fails", async () => {
+      Mock(TradeTestModel).toReturn(new Error("Cannot find trade"), "findOne");
 
       await expect(
-        service.declineTrade('userId', tradeIdMock, { decline: true }),
+        service.declineTrade("userId", tradeIdMock, { decline: true }),
       ).rejects.toThrow(HttpException);
     });
   });

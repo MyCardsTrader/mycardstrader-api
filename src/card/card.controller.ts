@@ -6,17 +6,18 @@ import {
   Param,
   Delete,
   Request,
+  Query,
   UseGuards,
   Controller,
-} from '@nestjs/common';
-import { Card } from './schema/card.schema';
-import { Action } from '../casl/action.enum';
-import { CardService } from './card.service';
-import { JwtAuthGuard } from '../auth/jwt.guard';
-import { CaslService } from '../casl/casl.service';
-import { CreateCardDto, UpdateCardDto } from './dto';
-import { PoliciesGuard } from '../casl/policies.guard';
-import { CheckPolicies } from '../casl/check-policy.decorator';
+} from "@nestjs/common";
+import { Card } from "./schema/card.schema";
+import { Action } from "../casl/action.enum";
+import { CardService } from "./card.service";
+import { JwtAuthGuard } from "../auth/jwt.guard";
+import { CaslService } from "../casl/casl.service";
+import { CreateCardDto, ListCardQueryDto, UpdateCardDto } from "./dto";
+import { PoliciesGuard } from "../casl/policies.guard";
+import { CheckPolicies } from "../casl/check-policy.decorator";
 import {
   ApiBadRequestResponse,
   ApiBearerAuth,
@@ -30,13 +31,16 @@ import {
   ApiParam,
   ApiTags,
   ApiUnauthorizedResponse,
-} from '@nestjs/swagger';
-import { ReadCardPolicyHandler, CreateCardPolicyHandler } from '../casl/policies';
-import { User } from 'src/user/schema/user.schema';
-import { BulkImportDto } from './dto/bulk-import.dto';
+} from "@nestjs/swagger";
+import {
+  ReadCardPolicyHandler,
+  CreateCardPolicyHandler,
+} from "../casl/policies";
+import { User } from "src/user/schema/user.schema";
+import { BulkImportDto } from "./dto/bulk-import.dto";
 
-@ApiTags('card')
-@Controller('card')
+@ApiTags("card")
+@Controller("card")
 export class CardController {
   constructor(
     private readonly cardService: CardService,
@@ -47,47 +51,58 @@ export class CardController {
   @UseGuards(JwtAuthGuard, PoliciesGuard)
   @CheckPolicies(new ReadCardPolicyHandler())
   @ApiParam({
-    name: 'userId',
+    name: "userId",
     required: true,
   })
-  @ApiOperation({ summary: 'List cards owned by a user' })
-  @ApiOkResponse({ description: 'Cards returned successfully.' })
-  @ApiUnauthorizedResponse({ description: 'Authentication is required.' })
-  @ApiForbiddenResponse({ description: 'Current user cannot read these cards.' })
-  @ApiInternalServerErrorResponse({ description: 'Unexpected card lookup error.' })
-  @Get('/user/:userId')
-  async findByUser(@Param('userId') userId): Promise<Card[]> {
-    return await this.cardService.findCardByUser(userId);
+  @ApiOperation({ summary: "List cards owned by a user" })
+  @ApiOkResponse({ description: "Cards returned successfully." })
+  @ApiUnauthorizedResponse({ description: "Authentication is required." })
+  @ApiForbiddenResponse({
+    description: "Current user cannot read these cards.",
+  })
+  @ApiInternalServerErrorResponse({
+    description: "Unexpected card lookup error.",
+  })
+  @Get("/user/:userId")
+  async findByUser(
+    @Param("userId") userId,
+    @Query() query: ListCardQueryDto,
+  ): Promise<Card[]> {
+    return await this.cardService.findCardByUser(userId, query);
   }
 
   @ApiBearerAuth()
   @UseGuards(JwtAuthGuard, PoliciesGuard)
   @CheckPolicies(new ReadCardPolicyHandler())
   @ApiParam({
-    name: 'cardId',
+    name: "cardId",
     required: true,
   })
-  @ApiOperation({ summary: 'Get a card by id' })
-  @ApiOkResponse({ description: 'Card returned successfully.' })
-  @ApiUnauthorizedResponse({ description: 'Authentication is required.' })
-  @ApiForbiddenResponse({ description: 'Current user cannot read this card.' })
-  @ApiNotFoundResponse({ description: 'Card was not found.' })
-  @ApiInternalServerErrorResponse({ description: 'Unexpected card lookup error.' })
-  @Get('/:cardId')
-  async findCard(@Param('cardId') cardId): Promise<Card> {
+  @ApiOperation({ summary: "Get a card by id" })
+  @ApiOkResponse({ description: "Card returned successfully." })
+  @ApiUnauthorizedResponse({ description: "Authentication is required." })
+  @ApiForbiddenResponse({ description: "Current user cannot read this card." })
+  @ApiNotFoundResponse({ description: "Card was not found." })
+  @ApiInternalServerErrorResponse({
+    description: "Unexpected card lookup error.",
+  })
+  @Get("/:cardId")
+  async findCard(@Param("cardId") cardId): Promise<Card> {
     return await this.cardService.findCardById(cardId);
   }
 
   @ApiBearerAuth()
   @UseGuards(JwtAuthGuard, PoliciesGuard)
-  @CheckPolicies(new CreateCardPolicyHandler)
-  @ApiOperation({ summary: 'Create a card for the authenticated user' })
+  @CheckPolicies(new CreateCardPolicyHandler())
+  @ApiOperation({ summary: "Create a card for the authenticated user" })
   @ApiBody({ type: CreateCardDto })
-  @ApiCreatedResponse({ description: 'Card created successfully.' })
-  @ApiBadRequestResponse({ description: 'Card payload is invalid.' })
-  @ApiUnauthorizedResponse({ description: 'Authentication is required.' })
-  @ApiForbiddenResponse({ description: 'Current user cannot create cards.' })
-  @ApiInternalServerErrorResponse({ description: 'Unexpected card creation error.' })
+  @ApiCreatedResponse({ description: "Card created successfully." })
+  @ApiBadRequestResponse({ description: "Card payload is invalid." })
+  @ApiUnauthorizedResponse({ description: "Authentication is required." })
+  @ApiForbiddenResponse({ description: "Current user cannot create cards." })
+  @ApiInternalServerErrorResponse({
+    description: "Unexpected card creation error.",
+  })
   @Post()
   async createCard(
     @Body() createCardDto: CreateCardDto,
@@ -98,13 +113,13 @@ export class CardController {
 
   @ApiBearerAuth()
   @UseGuards(JwtAuthGuard)
-  @ApiOperation({ summary: 'Bulk import cards for the authenticated user' })
+  @ApiOperation({ summary: "Bulk import cards for the authenticated user" })
   @ApiBody({ type: BulkImportDto })
-  @ApiOkResponse({ description: 'Cards imported successfully.' })
-  @ApiBadRequestResponse({ description: 'Bulk import payload is invalid.' })
-  @ApiUnauthorizedResponse({ description: 'Authentication is required.' })
-  @ApiInternalServerErrorResponse({ description: 'Unexpected import error.' })
-  @Post('/import')
+  @ApiOkResponse({ description: "Cards imported successfully." })
+  @ApiBadRequestResponse({ description: "Bulk import payload is invalid." })
+  @ApiUnauthorizedResponse({ description: "Authentication is required." })
+  @ApiInternalServerErrorResponse({ description: "Unexpected import error." })
+  @Post("/import")
   async importCards(
     @Body() bulkImportDto: BulkImportDto,
     @Request() req,
@@ -112,22 +127,23 @@ export class CardController {
     return await this.cardService.importCards(bulkImportDto, req.user.userId);
   }
 
-
   @ApiBearerAuth()
   @UseGuards(JwtAuthGuard)
   @ApiParam({
-    name: 'cardId',
+    name: "cardId",
     required: true,
   })
-  @ApiOperation({ summary: 'Delete a card by id' })
-  @ApiOkResponse({ description: 'Card deleted successfully.' })
-  @ApiUnauthorizedResponse({ description: 'Authentication is required.' })
-  @ApiForbiddenResponse({ description: 'Current user cannot delete this card.' })
-  @ApiNotFoundResponse({ description: 'Card was not found.' })
-  @ApiInternalServerErrorResponse({ description: 'Unexpected delete error.' })
-  @Delete(':cardId')
+  @ApiOperation({ summary: "Delete a card by id" })
+  @ApiOkResponse({ description: "Card deleted successfully." })
+  @ApiUnauthorizedResponse({ description: "Authentication is required." })
+  @ApiForbiddenResponse({
+    description: "Current user cannot delete this card.",
+  })
+  @ApiNotFoundResponse({ description: "Card was not found." })
+  @ApiInternalServerErrorResponse({ description: "Unexpected delete error." })
+  @Delete(":cardId")
   async deleteCard(
-    @Param('cardId') cardId: string,
+    @Param("cardId") cardId: string,
     @Request() req,
   ): Promise<Card> {
     const card = await this.cardService.findCardById(cardId);
@@ -138,20 +154,22 @@ export class CardController {
   @ApiBearerAuth()
   @UseGuards(JwtAuthGuard)
   @ApiParam({
-    name: 'cardId',
+    name: "cardId",
     required: true,
   })
-  @ApiOperation({ summary: 'Update a card by id' })
+  @ApiOperation({ summary: "Update a card by id" })
   @ApiBody({ type: UpdateCardDto })
-  @ApiOkResponse({ description: 'Card updated successfully.' })
-  @ApiBadRequestResponse({ description: 'Update payload is invalid.' })
-  @ApiUnauthorizedResponse({ description: 'Authentication is required.' })
-  @ApiForbiddenResponse({ description: 'Current user cannot update this card.' })
-  @ApiNotFoundResponse({ description: 'Card was not found.' })
-  @ApiInternalServerErrorResponse({ description: 'Unexpected update error.' })
-  @Put(':cardId')
+  @ApiOkResponse({ description: "Card updated successfully." })
+  @ApiBadRequestResponse({ description: "Update payload is invalid." })
+  @ApiUnauthorizedResponse({ description: "Authentication is required." })
+  @ApiForbiddenResponse({
+    description: "Current user cannot update this card.",
+  })
+  @ApiNotFoundResponse({ description: "Card was not found." })
+  @ApiInternalServerErrorResponse({ description: "Unexpected update error." })
+  @Put(":cardId")
   async updateCard(
-    @Param('cardId') cardId: string,
+    @Param("cardId") cardId: string,
     @Body() UpdateCardDto: UpdateCardDto,
     @Request() req,
   ): Promise<Card> {
