@@ -10,7 +10,7 @@
     "build": "nest build",
     "format": "prettier --write \"src/**/*.ts\" \"test/**/*.ts\"",
     "start": "NODE_ENV=development nest start",
-    "docker:dev:up": "docker compose up -d mongo",
+    "docker:dev:up": "docker compose up -d --wait mongo && docker compose run --rm mongo-seed",
     "docker:dev:down": "docker compose down",
     "test:e2e:deps:up": "docker compose -f docker-compose.e2e.yml up -d mongo",
     "test:e2e:deps:down": "docker compose -f docker-compose.e2e.yml down",

@@ -1,0 +1,24 @@
+[
+  {
+    "_id": { "$oid": "664112a5c2f60aec3847508f" },
+    "treatments": [
+      "foil",
+      "pre-modern foil",
+      "etched foil",
+      "ampersand foil",
+      "textured foil",
+      "gold-etched foil",
+      "silver screen foil",
+      "neon-ink foil",
+      "gilded foil",
+      "galaxy foil",
+      "surge foil",
+      "double rainbow foil",
+      "step-and-complete foil",
+      "oil slick raised foil",
+      "halo foil",
+      "confetti foil",
+      "ripple foil"
+    ]
+  }
+]

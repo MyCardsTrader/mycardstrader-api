@@ -89,7 +89,7 @@ Variables actuellement attendues :
 
 Le repo contient un [docker-compose.yml](./docker-compose.yml) qui démarre une instance MongoDB locale avec volume persistant.
 
-Démarrer MongoDB :
+Démarrer MongoDB et charger les données de référence locales :
 
 ```bash
 npm run docker:dev:up
@@ -102,6 +102,8 @@ npm run docker:dev:down
 ```
 
 Le service expose Mongo sur `localhost:27017` et persiste les données dans le volume Docker `mongo_data`.
+
+À chaque `npm run docker:dev:up`, le service `mongo-seed` charge [`docker/mongo/foils.json`](./docker/mongo/foils.json) dans la collection `mycardstrader.foils`. L’import utilise l’identifiant Mongo comme clé d’upsert : il crée le document s’il est absent et le met à jour sans produire de doublon.
 
 ## Lancer l’application
 

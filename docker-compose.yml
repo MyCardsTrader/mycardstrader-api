@@ -22,5 +22,21 @@ services:
       retries: 5
       start_period: 10s
 
+  mongo-seed:
+    image: mongo:8
+    depends_on:
+      mongo:
+        condition: service_healthy
+    volumes:
+      - ./docker/mongo/foils.json:/seed/foils.json:ro
+    command:
+      - mongoimport
+      - --uri=mongodb://mongo:27017/mycardstrader?directConnection=true
+      - --collection=foils
+      - --file=/seed/foils.json
+      - --jsonArray
+      - --mode=upsert
+      - --upsertFields=_id
+
 volumes:
   mongo_data:
