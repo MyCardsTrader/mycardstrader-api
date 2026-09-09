@@ -1,20 +1,21 @@
-import { Model } from 'mongoose';
-import { InjectModel } from '@nestjs/mongoose';
-import { CreateCardDto } from './dto/create-card.dto';
-import { Card, CardDocument } from './schema/card.schema';
-import { HttpException, Injectable, NotFoundException } from '@nestjs/common';
-import { BulkImportDto } from './dto/bulk-import.dto';
+import { Model } from "mongoose";
+import { InjectModel } from "@nestjs/mongoose";
+import { CreateCardDto } from "./dto/create-card.dto";
+import { Card, CardDocument } from "./schema/card.schema";
+import { HttpException, Injectable, NotFoundException } from "@nestjs/common";
+import { BulkImportDto } from "./dto/bulk-import.dto";
+import { ListCardQueryDto } from "./dto";
 
 @Injectable()
 export class CardService {
   constructor(
     @InjectModel(Card.name) private readonly cardModel: Model<CardDocument>,
-  ) { }
+  ) {}
 
   async createCard(
     createCardDto: CreateCardDto,
     userId: string,
-  ): Promise< Card> {
+  ): Promise<Card> {
     try {
       const newCard = new this.cardModel({
         ...createCardDto,
@@ -26,10 +27,13 @@ export class CardService {
     }
   }
 
-  async importCards(bulkImportDto: BulkImportDto, userId: string): Promise<Card[]> {
+  async importCards(
+    bulkImportDto: BulkImportDto,
+    userId: string,
+  ): Promise<Card[]> {
     const cards = bulkImportDto.cards.map((card) => {
       return {
-       ...card,
+        ...card,
         user: userId,
       };
     });
@@ -40,7 +44,7 @@ export class CardService {
     }
   }
 
-  async deleteCard(cardId: string): Promise <Card> {
+  async deleteCard(cardId: string): Promise<Card> {
     let cardDeleted: Card;
     try {
       cardDeleted = await this.cardModel.findOneAndDelete({ _id: cardId });
@@ -51,11 +55,24 @@ export class CardService {
     return cardDeleted;
   }
 
-  async findCardByUser( userId: string): Promise<Card[]> {
+  async findCardByUser(
+    userId: string,
+    options: ListCardQueryDto = {},
+  ): Promise<Card[]> {
     try {
-      return await this.cardModel.find({ user: userId, availability: 'available' }).exec();
+      const query = this.cardModel.find({
+        user: userId,
+        availability: "available",
+      });
+      if (options.order) {
+        query.sort({ createdAt: options.order === "asc" ? 1 : -1 });
+      }
+      if (options.limit) {
+        query.limit(Number(options.limit));
+      }
+      return await query.exec();
     } catch (error) {
-      throw new HttpException(error.message, 520)
+      throw new HttpException(error.message, 520);
     }
   }
 
@@ -72,12 +89,11 @@ export class CardService {
 
   async updateCard(cardId: string, updateCardDto): Promise<Card> {
     try {
-      return await this.cardModel
-        .findOneAndUpdate(
-          { _id: cardId },
-          { $set: { ...updateCardDto }},
-          { new: true },
-        );
+      return await this.cardModel.findOneAndUpdate(
+        { _id: cardId },
+        { $set: { ...updateCardDto } },
+        { new: true },
+      );
     } catch (error) {
       throw new HttpException(error.message, 520);
     }

@@ -125,7 +125,7 @@ describe("UserService", () => {
           }),
         }),
       );
-      expect(promocodeServiceMock.getPromocode).toHaveBeenCalled();
+      expect(promocodeServiceMock.getPromocode).not.toHaveBeenCalled();
       expect(formatMongo(result)).toEqual(userDoc);
     });
 
@@ -148,6 +148,8 @@ describe("UserService", () => {
 
       // Then
       expect(mailServiceMock.sendTemplate).toHaveBeenCalled();
+      expect(promocodeServiceMock.getPromocode).toHaveBeenCalledWith(promocode);
+      expect(userDto.promocode).toBe(promocode);
       expect(formatMongo(result)).toEqual(userDocWithPromocode);
     });
 

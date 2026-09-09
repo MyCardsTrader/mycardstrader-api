@@ -1,13 +1,19 @@
-import { Trade } from './schema/trade.schema';
-import { TradeService } from './trade.service';
-import { CaslService } from '../casl/casl.service';
-import { TradeController } from './trade.controller';
-import { Test, TestingModule } from '@nestjs/testing';
-import { UpdateTradeDto, CreateTradeDto } from './dto';
-import { UpdateTradeSuccessDto } from './dto/update-trade-success.dto';
-import { UpdateTradeDeclineDto } from './dto/update-trade-declined.dto';
+import { Trade } from "./schema/trade.schema";
+import { TradeService } from "./trade.service";
+import { CaslService } from "../casl/casl.service";
+import { TradeController } from "./trade.controller";
+import { Test, TestingModule } from "@nestjs/testing";
+import {
+  ListTradeQueryDto,
+  SortOrder,
+  TradeStatus,
+  UpdateTradeDto,
+  CreateTradeDto,
+} from "./dto";
+import { UpdateTradeSuccessDto } from "./dto/update-trade-success.dto";
+import { UpdateTradeDeclineDto } from "./dto/update-trade-declined.dto";
 
-const userIdMock = 'userId';
+const userIdMock = "userId";
 
 const reqMock = { user: { userId: userIdMock } };
 
@@ -15,7 +21,7 @@ const caslServiceMock = {
   checkReadForTradeById: jest.fn(),
   checkDeleteForTrade: jest.fn(),
   checkUpdateForTrade: jest.fn(),
-}
+};
 
 const tradeServiceProviderMock = {
   createTrade: jest.fn(),
@@ -26,49 +32,62 @@ const tradeServiceProviderMock = {
   findTradesByUser: jest.fn(),
   acceptTrade: jest.fn(),
   declineTrade: jest.fn(),
-}
+};
 
-describe('TradeController', () => {
+describe("TradeController", () => {
   let controller: TradeController;
 
   beforeEach(async () => {
     jest.resetAllMocks();
     const module: TestingModule = await Test.createTestingModule({
       controllers: [TradeController],
-      providers: [
-        TradeService,
-        CaslService,
-      ]
+      providers: [TradeService, CaslService],
     })
-    .overrideProvider(TradeService)
-    .useValue(tradeServiceProviderMock)
-    .overrideProvider(CaslService)
-    .useValue(caslServiceMock)
-    .compile();
+      .overrideProvider(TradeService)
+      .useValue(tradeServiceProviderMock)
+      .overrideProvider(CaslService)
+      .useValue(caslServiceMock)
+      .compile();
 
     controller = module.get<TradeController>(TradeController);
   });
 
-  it('should be defined', () => {
+  it("should be defined", () => {
     expect(controller).toBeDefined();
   });
 
-  it('Should call createTrade()', async () => {
+  it("Should call createTrade()", async () => {
     // Given
     const createTradeDto: CreateTradeDto = {
-      trader: 'traderId',
-      traderCards: ['cardId'],
-    }
+      trader: "traderId",
+      traderCards: ["cardId"],
+    };
     // When
     await controller.createTrade(createTradeDto, reqMock);
     // Then
-    expect(tradeServiceProviderMock.createTrade)
-      .toHaveBeenCalledTimes(1);
-    expect(tradeServiceProviderMock.createTrade)
-      .toHaveBeenCalledWith(createTradeDto, userIdMock);
+    expect(tradeServiceProviderMock.createTrade).toHaveBeenCalledTimes(1);
+    expect(tradeServiceProviderMock.createTrade).toHaveBeenCalledWith(
+      createTradeDto,
+      userIdMock,
+    );
   });
 
-  it('Should call getAllTrades()', async () => {
+  it("Should list pending trades for a user with ordering and a limit", async () => {
+    const query: ListTradeQueryDto = {
+      limit: "4",
+      order: SortOrder.DESC,
+      status: TradeStatus.PENDING,
+    };
+
+    await controller.findTradeByUser(userIdMock, query);
+
+    expect(tradeServiceProviderMock.findTradesByUser).toHaveBeenCalledWith(
+      userIdMock,
+      query,
+    );
+  });
+
+  it("Should call getAllTrades()", async () => {
     // Given
     // When
     await controller.getAllTrades();
@@ -77,9 +96,9 @@ describe('TradeController', () => {
     expect(tradeServiceProviderMock.getAllTrades).toHaveBeenCalledTimes(1);
   });
 
-  it('Should call findTradeById() and checkForTradeById()', async () => {
+  it("Should call findTradeById() and checkForTradeById()", async () => {
     // Given
-    const tradeIdMock = Symbol('tradeId');
+    const tradeIdMock = Symbol("tradeId");
     const tradeMock = new Trade();
     tradeServiceProviderMock.getTradeById.mockReturnValueOnce(tradeMock);
 
@@ -87,19 +106,20 @@ describe('TradeController', () => {
     await controller.findTradeById(tradeIdMock, reqMock);
 
     // Then
-    expect(tradeServiceProviderMock.getTradeById)
-      .toHaveBeenCalledTimes(1);
-    expect(tradeServiceProviderMock.getTradeById)
-      .toHaveBeenCalledWith(tradeIdMock);
-    expect(caslServiceMock.checkReadForTradeById)
-      .toHaveBeenCalledTimes(1);
-    expect(caslServiceMock.checkReadForTradeById)
-      .toHaveBeenCalledWith(tradeMock, userIdMock);
+    expect(tradeServiceProviderMock.getTradeById).toHaveBeenCalledTimes(1);
+    expect(tradeServiceProviderMock.getTradeById).toHaveBeenCalledWith(
+      tradeIdMock,
+    );
+    expect(caslServiceMock.checkReadForTradeById).toHaveBeenCalledTimes(1);
+    expect(caslServiceMock.checkReadForTradeById).toHaveBeenCalledWith(
+      tradeMock,
+      userIdMock,
+    );
   });
 
-  it('Should call getTradeById(), checkDeleteForTrade() and deleteTrade()', async() => {
+  it("Should call getTradeById(), checkDeleteForTrade() and deleteTrade()", async () => {
     // Given
-    const tradeIdMock = Symbol('tradeId');
+    const tradeIdMock = Symbol("tradeId");
     const tradeMock = new Trade();
     tradeServiceProviderMock.getTradeById.mockReturnValueOnce(tradeMock);
 
@@ -107,23 +127,24 @@ describe('TradeController', () => {
     await controller.deleteTrade(tradeIdMock, reqMock);
 
     // Then
-    expect(tradeServiceProviderMock.getTradeById)
-      .toHaveBeenCalledTimes(1);
-    expect(tradeServiceProviderMock.getTradeById)
-      .toHaveBeenCalledWith(tradeIdMock);
-    expect(caslServiceMock.checkDeleteForTrade)
-      .toHaveBeenCalledTimes(1)
-    expect(caslServiceMock.checkDeleteForTrade)
-      .toHaveBeenCalledWith(tradeMock, userIdMock);
-    expect(tradeServiceProviderMock.deleteTrade)
-      .toHaveBeenCalledTimes(1);
-    expect(tradeServiceProviderMock.deleteTrade)
-      .toHaveBeenCalledWith(tradeIdMock);
+    expect(tradeServiceProviderMock.getTradeById).toHaveBeenCalledTimes(1);
+    expect(tradeServiceProviderMock.getTradeById).toHaveBeenCalledWith(
+      tradeIdMock,
+    );
+    expect(caslServiceMock.checkDeleteForTrade).toHaveBeenCalledTimes(1);
+    expect(caslServiceMock.checkDeleteForTrade).toHaveBeenCalledWith(
+      tradeMock,
+      userIdMock,
+    );
+    expect(tradeServiceProviderMock.deleteTrade).toHaveBeenCalledTimes(1);
+    expect(tradeServiceProviderMock.deleteTrade).toHaveBeenCalledWith(
+      tradeIdMock,
+    );
   });
 
-  it('Should call getTradeById(), checkUpdateForTrade() and updateTrade()', async() => {
+  it("Should call getTradeById(), checkUpdateForTrade() and updateTrade()", async () => {
     // Given
-    const tradeIdMock = Symbol('tradeId');
+    const tradeIdMock = Symbol("tradeId");
     const tradeMock = new Trade();
     const updateTradeDtoMock: UpdateTradeDto = {
       userCards: [],
@@ -143,47 +164,63 @@ describe('TradeController', () => {
     //   .toHaveBeenCalledTimes(1)
     // expect(caslServiceMock.checkUpdateForTrade)
     //   .toHaveBeenCalledWith(tradeMock, userIdMock, updateTradeDtoMock);
-    expect(tradeServiceProviderMock.updateTrade)
-      .toHaveBeenCalledTimes(1);
-    expect(tradeServiceProviderMock.updateTrade)
-      .toHaveBeenCalledWith(tradeIdMock, updateTradeDtoMock);
+    expect(tradeServiceProviderMock.updateTrade).toHaveBeenCalledTimes(1);
+    expect(tradeServiceProviderMock.updateTrade).toHaveBeenCalledWith(
+      tradeIdMock,
+      updateTradeDtoMock,
+    );
   });
 
-  it('Should call getTradeByUser()', async () => {
+  it("Should call getTradeByUser()", async () => {
     // Given
-    const userIdMock = Symbol('userId');
-    
+    const userIdMock = Symbol("userId");
+
     // When
-    await controller.findTradeByUser(userIdMock);
+    await controller.findTradeByUser(userIdMock, {});
 
     // Then
-    expect(tradeServiceProviderMock.findTradesByUser)
-      .toHaveBeenCalledTimes(1);
-    expect(tradeServiceProviderMock.findTradesByUser)
-      .toHaveBeenCalledWith(userIdMock);
+    expect(tradeServiceProviderMock.findTradesByUser).toHaveBeenCalledTimes(1);
+    expect(tradeServiceProviderMock.findTradesByUser).toHaveBeenCalledWith(
+      userIdMock,
+      {},
+    );
   });
 
-  it('Should call acceptTrade()', async () => {
-    const tradeIdMock = Symbol('tradeId');
+  it("Should call acceptTrade()", async () => {
+    const tradeIdMock = Symbol("tradeId");
     const updateTradeSuccessDto: UpdateTradeSuccessDto = { accept: true };
 
-    await controller.updateTradeSuccess(tradeIdMock, updateTradeSuccessDto, reqMock);
+    await controller.updateTradeSuccess(
+      tradeIdMock,
+      updateTradeSuccessDto,
+      reqMock,
+    );
 
     expect(tradeServiceProviderMock.acceptTrade).toHaveBeenCalledTimes(1);
-    expect(tradeServiceProviderMock.acceptTrade)
-      .toHaveBeenCalledWith(userIdMock, tradeIdMock, updateTradeSuccessDto);
+    expect(tradeServiceProviderMock.acceptTrade).toHaveBeenCalledWith(
+      userIdMock,
+      tradeIdMock,
+      updateTradeSuccessDto,
+    );
   });
 
-  it('Should call declineTrade()', async () => {
-    const logSpy = jest.spyOn(console, 'log').mockImplementation();
-    const tradeIdMock = Symbol('tradeId');
+  it("Should call declineTrade()", async () => {
+    const logSpy = jest.spyOn(console, "log").mockImplementation();
+    const tradeIdMock = Symbol("tradeId");
     const updateTradeDeclineDto: UpdateTradeDeclineDto = { decline: true };
 
-    await controller.updateTradeDecline(tradeIdMock, updateTradeDeclineDto, reqMock);
+    await controller.updateTradeDecline(
+      tradeIdMock,
+      updateTradeDeclineDto,
+      reqMock,
+    );
 
     expect(tradeServiceProviderMock.declineTrade).toHaveBeenCalledTimes(1);
-    expect(tradeServiceProviderMock.declineTrade)
-      .toHaveBeenCalledWith(userIdMock, tradeIdMock, updateTradeDeclineDto);
+    expect(tradeServiceProviderMock.declineTrade).toHaveBeenCalledWith(
+      userIdMock,
+      tradeIdMock,
+      updateTradeDeclineDto,
+    );
 
     logSpy.mockRestore();
   });

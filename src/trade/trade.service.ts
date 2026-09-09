@@ -1,15 +1,20 @@
-import { Model, MongooseOptions, PopulateOptions } from 'mongoose';
-import { InjectModel } from '@nestjs/mongoose';
-import { Card } from '../card/schema/card.schema';
-import { CreateTradeDto, UpdateTradeDto } from './dto';
-import { Trade, TradeDocument } from './schema/trade.schema';
-import { HttpException, Injectable, NotFoundException, UnauthorizedException } from '@nestjs/common';
-import { UpdateTradeSuccessDto } from './dto/update-trade-success.dto';
-import { UpdateTradeDeclineDto } from './dto/update-trade-declined.dto';
+import { Model, MongooseOptions, PopulateOptions } from "mongoose";
+import { InjectModel } from "@nestjs/mongoose";
+import { Card } from "../card/schema/card.schema";
+import { CreateTradeDto, UpdateTradeDto } from "./dto";
+import { Trade, TradeDocument } from "./schema/trade.schema";
+import {
+  HttpException,
+  Injectable,
+  NotFoundException,
+  UnauthorizedException,
+} from "@nestjs/common";
+import { UpdateTradeSuccessDto } from "./dto/update-trade-success.dto";
+import { UpdateTradeDeclineDto } from "./dto/update-trade-declined.dto";
+import { ListTradeQueryDto } from "./dto";
 
 @Injectable()
 export class TradeService {
-
   constructor(
     @InjectModel(Trade.name) private readonly tradeModel: Model<TradeDocument>,
     @InjectModel(Card.name) private readonly cardModel: Model<Card>,
@@ -31,16 +36,28 @@ export class TradeService {
 
   async getAllTrades(): Promise<Trade[]> {
     try {
-      return await this.tradeModel.find({})
-        .exec();
+      return await this.tradeModel.find({}).exec();
     } catch (error) {
       throw new HttpException(error.message, 520);
     }
   }
 
-  async findTradesByUser(userId: string): Promise<Trade[]> {
+  async findTradesByUser(
+    userId: string,
+    options: ListTradeQueryDto = {},
+  ): Promise<Trade[]> {
     try {
-      return await this.tradeModel.find({ $or: [{ user: userId }, { trader: userId }]});
+      const query = this.tradeModel.find({
+        $or: [{ user: userId }, { trader: userId }],
+        ...(options.status ? { tradeStatus: options.status } : {}),
+      });
+      if (options.order) {
+        query.sort({ createdAt: options.order === "asc" ? 1 : -1 });
+      }
+      if (options.limit) {
+        query.limit(Number(options.limit));
+      }
+      return await query.exec();
     } catch (error) {
       throw new HttpException(error.message, 520);
     }
@@ -49,12 +66,13 @@ export class TradeService {
   async getTradeById(tradeId: string): Promise<Trade> {
     let trade: Trade;
     try {
-      trade = await this.tradeModel.findOne({ _id: tradeId})
-        .populate({ path: 'userCards'})
-        .populate({ path: 'traderCards'})
+      trade = await this.tradeModel
+        .findOne({ _id: tradeId })
+        .populate({ path: "userCards" })
+        .populate({ path: "traderCards" })
         .exec();
     } catch (error) {
-      throw new HttpException('Database error', 520);
+      throw new HttpException("Database error", 520);
     }
     if (!trade) throw new NotFoundException();
     return trade;
@@ -71,18 +89,21 @@ export class TradeService {
     return trade;
   }
 
-  async updateTrade(tradeId: string, updateTradeDto: UpdateTradeDto): Promise<Trade> {
+  async updateTrade(
+    tradeId: string,
+    updateTradeDto: UpdateTradeDto,
+  ): Promise<Trade> {
     let trade: Trade;
     try {
       trade = await this.tradeModel
         .findOneAndUpdate(
           { _id: tradeId },
-          { $set: { ...updateTradeDto }},
+          { $set: { ...updateTradeDto } },
           { new: true },
         )
-        .populate({ path: 'userCards'})
-        .populate({ path: 'traderCards'})
-        .exec();;
+        .populate({ path: "userCards" })
+        .populate({ path: "traderCards" })
+        .exec();
     } catch (error) {
       throw new HttpException(error.message, 520);
     }
@@ -90,7 +111,11 @@ export class TradeService {
     return trade;
   }
 
-  async acceptTrade(userId: string, tradeId: string, updateTradeSuccessDto: UpdateTradeSuccessDto): Promise<Trade> {
+  async acceptTrade(
+    userId: string,
+    tradeId: string,
+    updateTradeSuccessDto: UpdateTradeSuccessDto,
+  ): Promise<Trade> {
     try {
       const trade = await this.tradeModel.findOne({ _id: tradeId });
       if (userId === trade.user) {
@@ -101,23 +126,31 @@ export class TradeService {
         throw new UnauthorizedException();
       }
       if (trade.userAccept && trade.traderAccept) {
-        trade.tradeStatus = 'success';
+        trade.tradeStatus = "success";
         const cardsToUpdate = trade.userCards.concat(trade.traderCards);
-        await this.cardModel.updateMany({ _id: { $in: cardsToUpdate }}, { $set: { availability: 'traded' }});
+        await this.cardModel.updateMany(
+          { _id: { $in: cardsToUpdate } },
+          { $set: { availability: "traded" } },
+        );
       }
-      return this.tradeModel.findOneAndUpdate({ _id: tradeId }, trade, { new: true})
-        .populate({ path: 'userCards'})
-        .populate({ path: 'traderCards'})
+      return this.tradeModel
+        .findOneAndUpdate({ _id: tradeId }, trade, { new: true })
+        .populate({ path: "userCards" })
+        .populate({ path: "traderCards" })
         .exec();
     } catch (error) {
       throw new HttpException(error.message, 520);
     }
   }
 
-  async declineTrade(userId: string, tradeId: string, updateTradeDeclineDto: UpdateTradeDeclineDto): Promise<Trade> {
+  async declineTrade(
+    userId: string,
+    tradeId: string,
+    updateTradeDeclineDto: UpdateTradeDeclineDto,
+  ): Promise<Trade> {
     try {
       const trade = await this.tradeModel.findOne({ _id: tradeId });
-      console.log('Trade', trade);
+      console.log("Trade", trade);
       if (userId !== trade.user && userId !== trade.trader) {
         throw new UnauthorizedException();
       }
@@ -127,9 +160,14 @@ export class TradeService {
       if (userId == trade.trader) {
         trade.traderAccept = !updateTradeDeclineDto.decline;
       }
-      return this.tradeModel.findOneAndUpdate({ _id: tradeId }, { $set: { tradeStatus: 'rejected' }}, { new: true})
-        .populate({ path: 'userCards'})
-        .populate({ path: 'traderCards'})
+      return this.tradeModel
+        .findOneAndUpdate(
+          { _id: tradeId },
+          { $set: { tradeStatus: "rejected" } },
+          { new: true },
+        )
+        .populate({ path: "userCards" })
+        .populate({ path: "traderCards" })
         .exec();
     } catch (error) {
       throw new HttpException(error.message, 520);
