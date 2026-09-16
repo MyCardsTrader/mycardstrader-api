@@ -51,6 +51,8 @@ const cardDoc = {
   collector_number: "1",
   colors: [],
   color_identity: [],
+  legalities: { commander: "legal" },
+  keywords: ["Flying"],
   user: "61aff9b226d0e050c18bfcae",
   availability: "available",
   foil_treatment: null,
@@ -107,6 +109,8 @@ describe("CardService", () => {
       collector_number: "1",
       colors: [],
       color_identity: [],
+      legalities: { commander: "legal" },
+      keywords: ["Flying"],
       foil_treatment: null,
     };
 
@@ -165,6 +169,8 @@ describe("CardService", () => {
           collector_number: "1",
           colors: [],
           color_identity: [],
+          legalities: { commander: "legal" },
+          keywords: ["Flying"],
           foil_treatment: null,
         },
       ],

@@ -719,6 +719,8 @@ describe("HTTP API (e2e)", () => {
         collector_number: "233",
         colors: [],
         color_identity: [],
+        legalities: { commander: "legal" },
+        keywords: ["Flying"],
       })
       .expect(201);
   });

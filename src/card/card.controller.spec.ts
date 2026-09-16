@@ -70,6 +70,8 @@ const cardMock = {
   collector_number: 1,
   colors: [],
   color_identity: [],
+  legalities: { commander: "legal" },
+  keywords: ["Flying"],
   availability: "available",
 };
 
@@ -133,6 +135,8 @@ describe("CardController", () => {
       collector_number: "1",
       colors: [],
       color_identity: [],
+      legalities: { commander: "legal" },
+      keywords: ["Flying"],
     };
 
     // When
@@ -176,6 +180,8 @@ describe("CardController", () => {
           collector_number: "1",
           colors: [],
           color_identity: [],
+          legalities: { commander: "legal" },
+          keywords: ["Flying"],
         },
       ],
     };
