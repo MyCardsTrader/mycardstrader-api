@@ -86,7 +86,7 @@ describe("HTTP API (e2e)", () => {
     trader: "other-user",
     userCards: ["card-1"],
     traderCards: ["card-2"],
-    tradeStatus: "pending",
+    tradeStatus: "success",
   };
 
   const messageFixture = {
@@ -141,6 +141,9 @@ describe("HTTP API (e2e)", () => {
     getMessageById: jest.fn(),
     deleteMessage: jest.fn(),
     getMessagesByTrade: jest.fn(),
+    updateMessage: jest.fn(),
+    markTradeMessagesRead: jest.fn(),
+    getMessageSummaries: jest.fn(),
   };
 
   const searchServiceMock = {
@@ -167,6 +170,7 @@ describe("HTTP API (e2e)", () => {
     checkCreateForMessage: jest.fn(),
     checkReadForMessageByTrade: jest.fn(),
     checkDeleteForMessage: jest.fn(),
+    checkUpdateForMessage: jest.fn(),
   };
 
   beforeAll(async () => {
@@ -384,9 +388,16 @@ describe("HTTP API (e2e)", () => {
       }
       return Promise.resolve({ ...messageFixture, _id: messageId });
     });
+    messageServiceMock.updateMessage.mockImplementation((messageId, dto) =>
+      Promise.resolve({ ...messageFixture, _id: messageId, ...dto }),
+    );
     messageServiceMock.deleteMessage.mockImplementation((messageId) =>
       Promise.resolve({ ...messageFixture, _id: messageId }),
     );
+    messageServiceMock.markTradeMessagesRead.mockResolvedValue({ updatedCount: 1 });
+    messageServiceMock.getMessageSummaries.mockResolvedValue([
+      { tradeId: 'trade-1', unreadCount: 2, lastMessageAt: '2026-09-19T10:00:00Z' },
+    ]);
     messageServiceMock.getMessagesByTrade.mockImplementation((tradeId) =>
       Promise.resolve([{ ...messageFixture, trade: tradeId }]),
     );
@@ -441,6 +452,14 @@ describe("HTTP API (e2e)", () => {
       (trade, userId) => {
         if (trade.user !== userId && trade.trader !== userId) {
           throw new UnauthorizedException("You cannot access this trade");
+        }
+        return Promise.resolve(true);
+      },
+    );
+    caslServiceMock.checkUpdateForMessage.mockImplementation(
+      (message, userId) => {
+        if (message.user !== userId) {
+          throw new UnauthorizedException("You cannot update this message");
         }
         return Promise.resolve(true);
       },
@@ -852,11 +871,52 @@ describe("HTTP API (e2e)", () => {
       .expect(400);
   });
 
+  it("PATCH /message/:messageId updates an owned message", async () => {
+    await request(server)
+      .patch("/message/message-1")
+      .set("Authorization", authHeader)
+      .send({ content: "Updated message" })
+      .expect(200)
+      .expect(({ body }) => expect(body.content).toBe("Updated message"));
+  });
+
+  it("PATCH /message/:messageId rejects another user's message", async () => {
+    await request(server)
+      .patch("/message/forbidden-message")
+      .set("Authorization", authHeader)
+      .send({ content: "Updated message" })
+      .expect(401);
+  });
+
+  it("PATCH /message/:messageId validates empty content", async () => {
+    await request(server)
+      .patch("/message/message-1")
+      .set("Authorization", authHeader)
+      .send({ content: "" })
+      .expect(400);
+  });
+
   it("DELETE /message/:messageId rejects deleting another user message", async () => {
     await request(server)
       .delete("/message/forbidden-message")
       .set("Authorization", authHeader)
       .expect(401);
+  });
+
+  it("GET /message/summary returns unread activity", async () => {
+    await request(server)
+      .get("/message/summary")
+      .set("Authorization", authHeader)
+      .expect(200)
+      .expect(({ body }) => expect(body[0].unreadCount).toBe(2));
+  });
+
+  it("PATCH /message/trade/:tradeId/read marks received messages read", async () => {
+    await request(server)
+      .patch("/message/trade/trade-1/read")
+      .set("Authorization", authHeader)
+      .expect(200)
+      .expect({ updatedCount: 1 });
   });
 
   it("GET /message/:tradeId returns trade messages", async () => {

@@ -4,7 +4,7 @@ import { Card } from '../card/schema/card.schema';
 import { Trade } from '../trade/schema/trade.schema';
 import { Message } from '../message/schema/message.schema';
 import { CaslAbilityFactory } from './casl-ability.factory';
-import { Injectable, UnauthorizedException } from '@nestjs/common';
+import { ForbiddenException, Injectable, UnauthorizedException } from '@nestjs/common';
 
 @Injectable()
 export class CaslService {
@@ -62,15 +62,29 @@ export class CaslService {
   }
 
   async checkCreateForMessage(trade: Trade, userId: string): Promise<boolean> {
+    return this.checkMessagingForTrade(trade, userId);
+  }
+
+  async checkReadForMessageByTrade(trade: Trade, userId: string): Promise<boolean> {
+    return this.checkMessagingForTrade(trade, userId);
+  }
+
+  async checkMessagingForTrade(trade: Trade, userId: string): Promise<boolean> {
     await this.checkReadForTradeById(trade, userId);
+    if (trade.tradeStatus !== "success") {
+      throw new ForbiddenException("Messaging is only available for completed trades");
+    }
     return true;
   }
-  
-  async checkReadForMessageByTrade(trade:Trade, userId: string): Promise<boolean> {
-    await this.checkReadForTradeById(trade, userId);
+
+  async checkUpdateForMessage(message: Message, userId: string): Promise<boolean> {
+    const ability = this.abilityFactory.createForUser(userId);
+    if (!ability.can(Action.Put, message)) {
+      throw new UnauthorizedException("You cannot update this message");
+    }
     return true;
   }
-  
+
   async checkDeleteForMessage(message: Message, userId: string): Promise<boolean> {
     const ability = this.abilityFactory.createForUser(userId);
     if (!ability.can(Action.Delete, message)) {

@@ -1,7 +1,7 @@
 /* istanbul ignore file */
 
 import { ApiProperty } from "@nestjs/swagger";
-import { IsMongoId, IsNotEmpty } from "class-validator";
+import { IsMongoId, IsNotEmpty, IsString, MaxLength } from "class-validator";
 
 export class CreateMessageDto {
   @ApiProperty({
@@ -20,6 +20,8 @@ export class CreateMessageDto {
     description: 'Message content',
     example: 'Hello, I am interested in your card',
   })
+  @IsString()
   @IsNotEmpty()
+  @MaxLength(2000)
   content: string;
 }

@@ -4,7 +4,7 @@ import { Trade } from '../trade/schema/trade.schema';
 import { Test, TestingModule } from '@nestjs/testing';
 import { TradeService } from '../trade/trade.service';
 import { MessageController } from './message.controller';
-import { CreateMessageDto } from './dto/create-message.dto';
+import { CreateMessageDto, UpdateMessageDto } from './dto';
 import { Message } from './schema/message.schema';
 
 const messageServiceMock = {
@@ -12,15 +12,20 @@ const messageServiceMock = {
   deleteMessage: jest.fn(),
   getMessageById: jest.fn(),
   getMessagesByTrade: jest.fn(),
+  updateMessage: jest.fn(),
+  markTradeMessagesRead: jest.fn(),
+  getMessageSummaries: jest.fn(),
 }
 
 const tradeServiceMock = {
   getTradeById: jest.fn(),
+  findTradesByUser: jest.fn(),
 }
 
 const caslServiceMock = {
   checkCreateForMessage: jest.fn(),
   checkDeleteForMessage: jest.fn(),
+  checkUpdateForMessage: jest.fn(),
   checkReadForMessageByTrade: jest.fn(),
 }
 
@@ -33,7 +38,7 @@ const tradeMock: Trade = {
   userCards: [],
   userAccept: false,
   traderAccept: false,
-  tradeStatus: 'pending',
+  tradeStatus: 'success',
 };
 
 const reqMock = {
@@ -88,6 +93,18 @@ describe('MessageController', () => {
       .toHaveBeenCalledWith(createMessageDto, userIdMock);
   });
 
+  it('Should call message service updateMessage()', async() => {
+    const messageId = 'messageIdMock';
+    const dto: UpdateMessageDto = { content: 'Updated content' };
+    const messageMock: Message = { user: userIdMock, content: 'Old', trade: 'tradeId', viewed: false };
+    messageServiceMock.getMessageById.mockReturnValueOnce(messageMock);
+
+    await controller.updateMessage(messageId, dto, reqMock);
+
+    expect(caslServiceMock.checkUpdateForMessage).toHaveBeenCalledWith(messageMock, userIdMock);
+    expect(messageServiceMock.updateMessage).toHaveBeenCalledWith(messageId, dto);
+  });
+
   it('Should call message service deleteMessage()', async() => {
     // Given
     const messageIdMock = 'messageIdMock';
@@ -114,6 +131,24 @@ describe('MessageController', () => {
       .toHaveBeenCalledWith(messageIdMock);
   });
 
+
+  it('Should return message summaries for completed trades', async() => {
+    tradeServiceMock.findTradesByUser.mockReturnValueOnce([{ _id: 'tradeId' }]);
+
+    await controller.getMessageSummaries(reqMock);
+
+    expect(tradeServiceMock.findTradesByUser).toHaveBeenCalledWith(userIdMock, { status: 'success' });
+    expect(messageServiceMock.getMessageSummaries).toHaveBeenCalledWith(['tradeId'], userIdMock);
+  });
+
+  it('Should mark received trade messages as read', async() => {
+    tradeServiceMock.getTradeById.mockReturnValueOnce(tradeMock);
+
+    await controller.markTradeMessagesRead('tradeId', reqMock);
+
+    expect(caslServiceMock.checkReadForMessageByTrade).toHaveBeenCalledWith(tradeMock, userIdMock);
+    expect(messageServiceMock.markTradeMessagesRead).toHaveBeenCalledWith('tradeId', userIdMock);
+  });
 
   it('Should call message service getMessagesByTrade()', async() => {
     // Given
