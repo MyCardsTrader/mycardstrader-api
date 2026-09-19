@@ -280,6 +280,6 @@ La messagerie est accessible uniquement aux deux participants d’un trade en st
 - `PATCH /message/:messageId` modifie le contenu d’un message appartenant au compte connecté.
 - `DELETE /message/:messageId` supprime un message appartenant au compte connecté.
 - `PATCH /message/trade/:tradeId/read` marque comme lus les messages reçus sur le trade.
-- `GET /message/summary` retourne, pour chaque trade finalisé ayant des messages, `{ tradeId, unreadCount, lastMessageAt }`.
+- `GET /message/trades/summary` retourne, pour chaque trade finalisé ayant des messages, `{ tradeId, unreadCount, lastMessageAt }`.
 
 Le contenu est obligatoire, limité à 2 000 caractères et les contrôles d’accès reposent exclusivement sur le JWT.

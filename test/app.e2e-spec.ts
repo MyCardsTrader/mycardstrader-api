@@ -903,9 +903,9 @@ describe("HTTP API (e2e)", () => {
       .expect(401);
   });
 
-  it("GET /message/summary returns unread activity", async () => {
+  it("GET /message/trades/summary returns unread activity", async () => {
     await request(server)
-      .get("/message/summary")
+      .get("/message/trades/summary")
       .set("Authorization", authHeader)
       .expect(200)
       .expect(({ body }) => expect(body[0].unreadCount).toBe(2));

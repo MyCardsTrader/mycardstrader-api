@@ -109,7 +109,7 @@ export class MessageController {
   @ApiOkResponse({ type: [MessageSummaryDto], description: 'Message summaries returned successfully.' })
   @ApiUnauthorizedResponse({ description: 'Authentication is required.' })
   @ApiInternalServerErrorResponse({ description: 'Unexpected message summary error.' })
-  @Get('summary')
+  @Get('trades/summary')
   async getMessageSummaries(@Request() req): Promise<MessageSummaryDto[]> {
     const trades = await this.tradeService.findTradesByUser(req.user.userId, {
       status: TradeStatus.SUCCESS,
