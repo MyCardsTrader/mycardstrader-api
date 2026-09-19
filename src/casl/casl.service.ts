@@ -79,7 +79,8 @@ export class CaslService {
 
   async checkUpdateForMessage(message: Message, userId: string): Promise<boolean> {
     const ability = this.abilityFactory.createForUser(userId);
-    if (!ability.can(Action.Put, message)) {
+    const messageToTest = this.normalizeMessageOwner(message);
+    if (!ability.can(Action.Put, messageToTest)) {
       throw new UnauthorizedException("You cannot update this message");
     }
     return true;
@@ -87,10 +88,17 @@ export class CaslService {
 
   async checkDeleteForMessage(message: Message, userId: string): Promise<boolean> {
     const ability = this.abilityFactory.createForUser(userId);
-    if (!ability.can(Action.Delete, message)) {
+    const messageToTest = this.normalizeMessageOwner(message);
+    if (!ability.can(Action.Delete, messageToTest)) {
       throw new UnauthorizedException('You cannot delete this message');
     }
     return true;
+  }
+
+  private normalizeMessageOwner(message: Message): Message {
+    const messageToTest = new Message();
+    Object.assign(messageToTest, message, { user: String(message.user) });
+    return messageToTest;
   }
 
 }
