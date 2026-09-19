@@ -269,3 +269,17 @@ npm audit --omit-dev
 - Si `development.env` pointe sur Atlas, Docker Mongo local ne sera pas utilisé par l’application.
 - La documentation Swagger est générée au boot dans `src/main.ts`.
 - Le health check est exposé par `AppController`.
+
+
+### Messagerie des trades finalisés
+
+La messagerie est accessible uniquement aux deux participants d’un trade en statut `success`.
+
+- `POST /message` crée un message avec `{ trade, content }`.
+- `GET /message/:tradeId` retourne les messages chronologiquement.
+- `PATCH /message/:messageId` modifie le contenu d’un message appartenant au compte connecté.
+- `DELETE /message/:messageId` supprime un message appartenant au compte connecté.
+- `PATCH /message/trade/:tradeId/read` marque comme lus les messages reçus sur le trade.
+- `GET /message/trades/summary` retourne, pour chaque trade finalisé ayant des messages, `{ tradeId, unreadCount, lastMessageAt }`.
+
+Le contenu est obligatoire, limité à 2 000 caractères et les contrôles d’accès reposent exclusivement sur le JWT.

@@ -1,13 +1,14 @@
+import { Types } from 'mongoose';
 import { Action } from './action.enum';
 import { CaslService } from './casl.service';
 import { Trade } from '../trade/schema/trade.schema';
 import { Test, TestingModule } from '@nestjs/testing';
-import { UnauthorizedException } from '@nestjs/common';
+import { ForbiddenException, UnauthorizedException } from '@nestjs/common';
 import { CardLang } from '../card/interfaces/lang.enum';
 import { Grading } from '../card/interfaces/grading.enum';
 import { CaslAbilityFactory } from './casl-ability.factory';
-import { Message } from 'src/message/schema/message.schema';
-import { Card } from 'src/card/schema/card.schema';
+import { Message } from '../message/schema/message.schema';
+import { Card } from '../card/schema/card.schema';
 
 const userIdMock = 'userId';
 const traderIdMock = 'traderId';
@@ -19,7 +20,7 @@ const tradeMock: Trade = {
   traderCards: [],
   userAccept: false,
   traderAccept: false,
-  tradeStatus: 'pending',
+  tradeStatus: 'success',
 };
 
 const caslAbilityFactoryMock = {
@@ -223,6 +224,34 @@ describe('CaslService', () => {
     })
   });
 
+  describe('checkMessagingForTrade', () => {
+    it('Should reject messaging before both users accepted', async() => {
+      await expect(service.checkMessagingForTrade(
+        { ...tradeMock, tradeStatus: 'pending' },
+        userIdMock,
+      )).rejects.toThrow(ForbiddenException);
+    });
+  });
+
+  describe('CheckUpdateForMessage', () => {
+    const messageMock: Message = {
+      user: userIdMock,
+      trade: 'tradeId',
+      content: 'Nice message',
+      viewed: false,
+    };
+
+    it('Should return true if user is the message owner', async() => {
+      await expect(service.checkUpdateForMessage(messageMock, userIdMock)).resolves.toBe(true);
+    });
+
+    it('Should throw an UnauthorizedException', async() => {
+      jest.spyOn(caslAbilityFactoryMock, 'createForUser').mockReturnValueOnce({ can: () => false });
+      await expect(service.checkUpdateForMessage(messageMock, userIdMock))
+        .rejects.toThrow(UnauthorizedException);
+    });
+  });
+
   describe('CheckDeleteForMessage', () => {
     const messageMock: Message = {
       user: userIdMock,
@@ -251,6 +280,27 @@ describe('CaslService', () => {
       // Then
       await expect(service.checkDeleteForMessage(messageMock, userIdMock))
         .rejects.toThrow(UnauthorizedException);
+    });
+  });
+
+  describe('Message ownership with MongoDB ObjectIds', () => {
+    const ownerId = new Types.ObjectId();
+    const message = Object.assign(new Message(), {
+      user: ownerId,
+      trade: new Types.ObjectId(),
+      content: 'Persisted message',
+      viewed: false,
+    }) as Message;
+    const realService = new CaslService(new CaslAbilityFactory());
+
+    it('Should allow the owner to update a persisted message', async () => {
+      await expect(realService.checkUpdateForMessage(message, ownerId.toString()))
+        .resolves.toBe(true);
+    });
+
+    it('Should allow the owner to delete a persisted message', async () => {
+      await expect(realService.checkDeleteForMessage(message, ownerId.toString()))
+        .resolves.toBe(true);
     });
   });
 });

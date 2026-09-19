@@ -32,7 +32,7 @@ export class CaslAbilityFactory {
     can(Action.Delete, Trade, { user: userId });
     // can(Action.Put, Trade, ['traderCards', 'userAccept'], { user: userId });
     // can(Action.Put, Trade, ['userCards', 'traderAccept'], { trader: userId });
-    can(Action.Delete, Message, { user: userId });
+    can([Action.Put, Action.Delete], Message, { user: userId });
 
     return build({
       detectSubjectType

@@ -1,6 +1,6 @@
 import { Model } from 'mongoose';
 import { InjectModel } from '@nestjs/mongoose';
-import { CreateMessageDto } from './dto/create-message.dto';
+import { CreateMessageDto, MessageSummaryDto, UpdateMessageDto } from './dto';
 import { Message, MessageDocument } from './schema/message.schema';
 import { HttpException, Injectable, NotFoundException } from '@nestjs/common';
 
@@ -23,6 +23,21 @@ export class MessageService {
     } catch (error) {
       throw new HttpException(error.message, 520);
     }
+  }
+
+  async updateMessage(messageId: string, updateMessageDto: UpdateMessageDto): Promise<Message> {
+    let messageUpdated: Message;
+    try {
+      messageUpdated = await this.messageModel.findOneAndUpdate(
+        { _id: messageId },
+        { $set: { content: updateMessageDto.content } },
+        { new: true },
+      );
+    } catch (error) {
+      throw new HttpException(error.message, 520);
+    }
+    if (!messageUpdated) throw new NotFoundException();
+    return messageUpdated;
   }
 
   async deleteMessage(messageId: string): Promise<Message> {
@@ -50,10 +65,45 @@ export class MessageService {
   async getMessagesByTrade(tradeId: string): Promise<Message[]> {
     try {
       return await this.messageModel.find({ trade: tradeId })
+        .sort({ createdAt: 1 })
         .populate({ path: 'user', select: '-password -salt'})
         .exec()
     } catch (error) {
       throw new HttpException(error.message, 520);
     }
   }
+
+  async markTradeMessagesRead(tradeId: string, userId: string): Promise<{ updatedCount: number }> {
+    try {
+      const result = await this.messageModel.updateMany(
+        { trade: tradeId, user: { $ne: userId }, viewed: false },
+        { $set: { viewed: true } },
+      );
+      return { updatedCount: result.modifiedCount };
+    } catch (error) {
+      throw new HttpException(error.message, 520);
+    }
+  }
+
+  async getMessageSummaries(tradeIds: string[], userId: string): Promise<MessageSummaryDto[]> {
+    if (tradeIds.length === 0) return [];
+    try {
+      const messages = await this.messageModel.find({ trade: { $in: tradeIds } })
+        .sort({ createdAt: 1 })
+        .lean()
+        .exec();
+      const summaries = new Map<string, MessageSummaryDto>();
+      for (const message of messages) {
+        const tradeId = String(message.trade);
+        const summary = summaries.get(tradeId) ?? { tradeId, unreadCount: 0, lastMessageAt: null };
+        summary.lastMessageAt = (message as any).createdAt ?? summary.lastMessageAt;
+        if (String(message.user) !== userId && !message.viewed) summary.unreadCount += 1;
+        summaries.set(tradeId, summary);
+      }
+      return Array.from(summaries.values());
+    } catch (error) {
+      throw new HttpException(error.message, 520);
+    }
+  }
+
 }

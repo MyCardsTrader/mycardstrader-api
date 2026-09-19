@@ -3,6 +3,7 @@ import {
   Body,
   Post,
   Param,
+  Patch,
   Delete,
   Request,
   UseGuards,
@@ -13,7 +14,8 @@ import { Message } from './schema/message.schema';
 import { MessageService } from './message.service';
 import { CaslService } from '../casl/casl.service';
 import { TradeService } from '../trade/trade.service';
-import { CreateMessageDto } from './dto/create-message.dto';
+import { CreateMessageDto, MessageSummaryDto, UpdateMessageDto } from './dto';
+import { TradeStatus } from '../trade/dto';
 import {
   ApiBadRequestResponse,
   ApiBearerAuth,
@@ -59,6 +61,28 @@ export class MessageController {
 
   @ApiBearerAuth()
   @UseGuards(JwtAuthGuard)
+  @ApiParam({ name: 'messageId', required: true })
+  @ApiOperation({ summary: 'Update a message by id' })
+  @ApiBody({ type: UpdateMessageDto })
+  @ApiOkResponse({ description: 'Message updated successfully.' })
+  @ApiBadRequestResponse({ description: 'Message payload is invalid.' })
+  @ApiUnauthorizedResponse({ description: 'Authentication is required.' })
+  @ApiForbiddenResponse({ description: 'Current user cannot update this message.' })
+  @ApiNotFoundResponse({ description: 'Message was not found.' })
+  @ApiInternalServerErrorResponse({ description: 'Unexpected message update error.' })
+  @Patch(':messageId')
+  async updateMessage(
+    @Param('messageId') messageId: string,
+    @Body() updateMessageDto: UpdateMessageDto,
+    @Request() req,
+  ): Promise<Message> {
+    const message = await this.messageService.getMessageById(messageId);
+    await this.caslService.checkUpdateForMessage(message, req.user.userId);
+    return await this.messageService.updateMessage(messageId, updateMessageDto);
+  }
+
+  @ApiBearerAuth()
+  @UseGuards(JwtAuthGuard)
   @ApiParam({
     name: 'messageId',
     required: true,
@@ -77,6 +101,42 @@ export class MessageController {
     const message = await this.messageService.getMessageById(messageId);
     this.caslService.checkDeleteForMessage(message, req.user.userId);
     return await this.messageService.deleteMessage(messageId);
+  }
+
+  @ApiBearerAuth()
+  @UseGuards(JwtAuthGuard)
+  @ApiOperation({ summary: 'Get unread counts and last message dates for completed trades' })
+  @ApiOkResponse({ type: [MessageSummaryDto], description: 'Message summaries returned successfully.' })
+  @ApiUnauthorizedResponse({ description: 'Authentication is required.' })
+  @ApiInternalServerErrorResponse({ description: 'Unexpected message summary error.' })
+  @Get('trades/summary')
+  async getMessageSummaries(@Request() req): Promise<MessageSummaryDto[]> {
+    const trades = await this.tradeService.findTradesByUser(req.user.userId, {
+      status: TradeStatus.SUCCESS,
+    });
+    return await this.messageService.getMessageSummaries(
+      trades.map((trade: any) => String(trade._id)),
+      req.user.userId,
+    );
+  }
+
+  @ApiBearerAuth()
+  @UseGuards(JwtAuthGuard)
+  @ApiParam({ name: 'tradeId', required: true })
+  @ApiOperation({ summary: 'Mark received messages for a trade as read' })
+  @ApiOkResponse({ description: 'Messages marked as read.' })
+  @ApiUnauthorizedResponse({ description: 'Authentication is required.' })
+  @ApiForbiddenResponse({ description: 'Messaging is unavailable for this trade.' })
+  @ApiNotFoundResponse({ description: 'Trade was not found.' })
+  @ApiInternalServerErrorResponse({ description: 'Unexpected message update error.' })
+  @Patch('trade/:tradeId/read')
+  async markTradeMessagesRead(
+    @Param('tradeId') tradeId: string,
+    @Request() req,
+  ): Promise<{ updatedCount: number }> {
+    const trade = await this.tradeService.getTradeById(tradeId);
+    await this.caslService.checkReadForMessageByTrade(trade, req.user.userId);
+    return await this.messageService.markTradeMessagesRead(tradeId, req.user.userId);
   }
 
   @ApiBearerAuth()
