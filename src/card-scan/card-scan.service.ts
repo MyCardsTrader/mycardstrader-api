@@ -1,5 +1,6 @@
 import {
   BadRequestException,
+  HttpException,
   Injectable,
   Logger,
   NotFoundException,
@@ -89,8 +90,7 @@ export class CardScanService {
       );
       return completedScan!;
     } catch (error) {
-      const reason =
-        error instanceof Error ? error.message : "Card scan failed";
+      const reason = this.publicFailureReason(error);
       await this.model.findByIdAndUpdate(scan.id, {
         $set: { status: CardScanStatus.FAILED, failureReason: reason },
       });
@@ -142,6 +142,10 @@ export class CardScanService {
     if (file.size > this.config.getOrThrow<number>("cardScan.maxImageBytes"))
       throw new BadRequestException("Image exceeds the configured size limit");
   }
+  private publicFailureReason(error: unknown): string {
+    return error instanceof HttpException ? error.message : "Card scan failed";
+  }
+
   private computeStatus(cards: ResolvedScanCard[]): CardScanStatus {
     return cards.every((card) => card.status === ScanCardStatus.RESOLVED)
       ? CardScanStatus.READY

@@ -31,6 +31,7 @@ import {
   ApiUnprocessableEntityResponse,
 } from "@nestjs/swagger";
 import { JwtAuthGuard } from "../auth/jwt.guard";
+import { DEFAULT_CARD_SCAN_MAX_IMAGE_BYTES } from "../config";
 import { CardScanService } from "./card-scan.service";
 import { UploadedImage } from "./card-scan.types";
 import { ListCardScansQueryDto, QualifyScanCardDto } from "./dto";
@@ -42,7 +43,11 @@ import { CardScan } from "./schema/card-scan.schema";
 export class CardScanController {
   constructor(private readonly service: CardScanService) {}
   @Post()
-  @UseInterceptors(FileInterceptor("image"))
+  @UseInterceptors(
+    FileInterceptor("image", {
+      limits: { files: 1, fileSize: DEFAULT_CARD_SCAN_MAX_IMAGE_BYTES },
+    }),
+  )
   @ApiConsumes("multipart/form-data")
   @ApiOperation({
     summary: "Recognize and validate up to 60 cards in one image",

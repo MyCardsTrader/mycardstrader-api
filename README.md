@@ -64,6 +64,10 @@ Variables utilisées en développement :
 - `JWT_SECRET`
 - `JWT_EXPIRE`
 - `PORT`
+- `OPENROUTER_API_KEY`
+- `OPENROUTER_MODEL` (default: `qwen/qwen3.7-flash`)
+- `CARD_SCAN_HTTP_TIMEOUT_MS` (optional, default: `15000`)
+- `CARD_SCAN_MAX_IMAGE_BYTES` (optional, default: `10485760`)
 
 Transactional emails are sent with [Resend](https://resend.com). `EMAIL_FROM` must use a sender address on a domain verified in Resend, for example:
 
@@ -149,6 +153,17 @@ Par défaut, avec `PORT=3000`, Swagger est accessible sur :
 ```text
 http://localhost:3000/api
 ```
+
+## Card photo scans
+
+Authenticated users can upload one JPEG, PNG, or WebP image with `POST /card-scans` using multipart field `image`. Processing is synchronous: OpenRouter visually identifies candidates, then the API validates printing details through Scryfall before storing a temporary scan. Exact set and collector-number hints are resolved with one Scryfall collection call; failed hints fall back to strict name-and-set searches. No card is added to a binder.
+
+A scan accepts at most 60 physical cards, based on the sum of detected quantities. Suggested frontend guidance (the Angular implementation is intentionally outside this change): **“You can scan up to 60 cards per photo. For best results, make sure each card’s set code and collector number are readable.”**
+
+- `POST /card-scans` — create and synchronously process a scan.
+- `GET /card-scans?status=needs_review` — list owned scans, optionally filtered by status.
+- `GET /card-scans/:scanId` — retrieve an owned scan.
+- `PATCH /card-scans/:scanId/cards/:cardId` with `{ "scryfallId": "..." }` — select one stored, Scryfall-validated candidate.
 
 ## Tests
 
