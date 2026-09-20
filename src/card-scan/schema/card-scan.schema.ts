@@ -1,19 +1,30 @@
 import { Prop, Schema, SchemaFactory } from "@nestjs/mongoose";
 import { HydratedDocument } from "mongoose";
-import { CardScanStatus, ScanCardStatus } from "../card-scan.types";
+import {
+  CardScanStatus,
+  SCRYFALL_LANGUAGES,
+  ScanCardStatus,
+  ScryfallLanguage,
+} from "../card-scan.types";
 export type CardScanDocument = HydratedDocument<CardScan>;
 @Schema({ _id: false })
 export class DetectedCard {
-  @Prop() name?: string;
+  @Prop() printedName?: string;
+  @Prop() canonicalName?: string;
+  @Prop({ enum: SCRYFALL_LANGUAGES }) language?: ScryfallLanguage;
   @Prop() set?: string;
   @Prop() collectorNumber?: string;
   @Prop({ min: 0, max: 1 }) confidence?: number;
+  @Prop({ min: 0, max: 1 }) languageConfidence?: number;
 }
 @Schema({ _id: false })
 export class ValidatedCardPrinting {
   @Prop({ required: true }) scryfallId: string;
   @Prop({ required: true }) oracleId: string;
   @Prop({ required: true }) name: string;
+  @Prop() printedName?: string;
+  @Prop({ required: true, enum: SCRYFALL_LANGUAGES })
+  language: ScryfallLanguage;
   @Prop({ required: true }) set: string;
   @Prop({ required: true }) collectorNumber: string;
 }

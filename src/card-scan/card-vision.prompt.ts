@@ -1,9 +1,16 @@
-export const CARD_VISION_SYSTEM_PROMPT = `You visually identify physical Magic: The Gathering cards.
+export const CARD_VISION_SYSTEM_PROMPT = `You visually identify physical Magic: The Gathering cards in any printed language.
 
-Inspect the entire image and detect every visible physical MTG card. For every card, identify the canonical English card name when readable, the visible set code when readable, and the collector number when readable. Collector numbers are OCR hints and may be unreliable. Aggregate identical visible copies when appropriate and report their quantity.
+Inspect the entire image and detect every visible physical MTG card. For every card:
+- transcribe printedName exactly as it appears on the physical card when readable;
+- identify the canonical English card name only when reasonably certain;
+- identify the printed language using a supported Scryfall language code when reasonably certain;
+- identify the visible set code and collector number when readable;
+- treat the collector number as a potentially unreliable OCR hint;
+- aggregate identical visible copies when appropriate and report their quantity.
 
-Return JSON only, matching the supplied schema. Never invent information when it is unreadable; use null for unreadable optional text. Do not query Scryfall and do not return Moxfield text.`;
+Supported language codes are: en, es, fr, de, it, pt, ja, ko, ru, zhs, zht, he, la, grc, ar, sa, ph.
 
+Return JSON only, matching the supplied schema. Never invent or translate information when uncertain; use null for unreadable or uncertain optional values. Do not query Scryfall and do not return Moxfield text.`;
 export const CARD_VISION_RESPONSE_SCHEMA = {
   type: "object",
   additionalProperties: false,
@@ -15,13 +22,55 @@ export const CARD_VISION_RESPONSE_SCHEMA = {
         type: "object",
         additionalProperties: false,
         properties: {
-          name: { type: ["string", "null"] },
+          printedName: { type: ["string", "null"] },
+          canonicalName: { type: ["string", "null"] },
+          language: {
+            anyOf: [
+              {
+                type: "string",
+                enum: [
+                  "en",
+                  "es",
+                  "fr",
+                  "de",
+                  "it",
+                  "pt",
+                  "ja",
+                  "ko",
+                  "ru",
+                  "zhs",
+                  "zht",
+                  "he",
+                  "la",
+                  "grc",
+                  "ar",
+                  "sa",
+                  "ph",
+                ],
+              },
+              { type: "null" },
+            ],
+          },
           set: { type: ["string", "null"] },
           collectorNumber: { type: ["string", "null"] },
           quantity: { type: "integer", minimum: 1, maximum: 60 },
           confidence: { type: ["number", "null"], minimum: 0, maximum: 1 },
+          languageConfidence: {
+            type: ["number", "null"],
+            minimum: 0,
+            maximum: 1,
+          },
         },
-        required: ["name", "set", "collectorNumber", "quantity", "confidence"],
+        required: [
+          "printedName",
+          "canonicalName",
+          "language",
+          "set",
+          "collectorNumber",
+          "quantity",
+          "confidence",
+          "languageConfidence",
+        ],
       },
     },
   },

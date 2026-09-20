@@ -14,6 +14,8 @@ import {
 } from "./card-vision.prompt";
 import {
   CardRecognitionCandidate,
+  SCRYFALL_LANGUAGES,
+  ScryfallLanguage,
   VisionRecognitionResult,
 } from "./card-scan.types";
 
@@ -136,10 +138,8 @@ export class OpenRouterService {
       !Number.isInteger(value.quantity) ||
       Number(value.quantity) < 1 ||
       Number(value.quantity) > 60 ||
-      (value.confidence != null &&
-        (typeof value.confidence !== "number" ||
-          value.confidence < 0 ||
-          value.confidence > 1))
+      !this.isOptionalConfidence(value.confidence) ||
+      !this.isOptionalConfidence(value.languageConfidence)
     )
       throw new BadGatewayException(
         "Card recognition returned a malformed card",
@@ -153,13 +153,29 @@ export class OpenRouterService {
         );
       return item.trim();
     };
+    const language = optionalString("language")?.toLowerCase();
+    if (language && !SCRYFALL_LANGUAGES.includes(language as ScryfallLanguage))
+      throw new BadGatewayException(
+        "Card recognition returned a malformed card",
+      );
     return {
-      name: optionalString("name"),
+      printedName: optionalString("printedName"),
+      canonicalName: optionalString("canonicalName"),
+      language: language as ScryfallLanguage | undefined,
       set: optionalString("set")?.toLowerCase(),
       collectorNumber: optionalString("collectorNumber"),
       quantity: Number(value.quantity),
       confidence:
         typeof value.confidence === "number" ? value.confidence : undefined,
+      languageConfidence:
+        typeof value.languageConfidence === "number"
+          ? value.languageConfidence
+          : undefined,
     };
+  }
+  private isOptionalConfidence(value: unknown): boolean {
+    return (
+      value == null || (typeof value === "number" && value >= 0 && value <= 1)
+    );
   }
 }

@@ -3,7 +3,12 @@ import { Injectable, ServiceUnavailableException } from "@nestjs/common";
 import { ConfigService } from "@nestjs/config";
 import { AxiosError } from "axios";
 import { firstValueFrom } from "rxjs";
-import { CardRecognitionCandidate, ScryfallCard } from "./card-scan.types";
+import {
+  CardRecognitionCandidate,
+  SCRYFALL_LANGUAGES,
+  ScryfallCard,
+  ScryfallLanguage,
+} from "./card-scan.types";
 interface CollectionResponse {
   data?: ScryfallCard[];
 }
@@ -31,7 +36,7 @@ export class ScryfallService {
         this.httpService.post<CollectionResponse>(
           "https://api.scryfall.com/cards/collection",
           { identifiers },
-          { timeout: this.timeout },
+          this.requestConfig,
         ),
       );
       return Array.isArray(response.data.data)
@@ -43,13 +48,34 @@ export class ScryfallService {
       );
     }
   }
+  async getLocalizedPrinting(
+    set: string,
+    collectorNumber: string,
+    language: ScryfallLanguage,
+  ): Promise<ScryfallCard | null> {
+    try {
+      const response = await firstValueFrom(
+        this.httpService.get<ScryfallCard>(
+          `https://api.scryfall.com/cards/${encodeURIComponent(set)}/${encodeURIComponent(collectorNumber)}/${encodeURIComponent(language)}`,
+          this.requestConfig,
+        ),
+      );
+      return this.isCard(response.data) ? response.data : null;
+    } catch (error) {
+      if (error instanceof AxiosError && error.response?.status === 404)
+        return null;
+      throw new ServiceUnavailableException(
+        "Scryfall validation is unavailable",
+      );
+    }
+  }
   async findPrintings(name: string, set: string): Promise<ScryfallCard[]> {
     try {
       const response = await firstValueFrom(
         this.httpService.get<SearchResponse>(
           "https://api.scryfall.com/cards/search",
           {
-            timeout: this.timeout,
+            ...this.requestConfig,
             params: { q: `!\"${name}\" set:${set}`, unique: "prints" },
           },
         ),
@@ -65,14 +91,24 @@ export class ScryfallService {
       );
     }
   }
-  private get timeout(): number {
-    return this.config.getOrThrow<number>("cardScan.externalHttpTimeoutMs");
+  private get requestConfig() {
+    return {
+      timeout: this.config.getOrThrow<number>("cardScan.externalHttpTimeoutMs"),
+      headers: {
+        Accept: "application/json;q=0.9,*/*;q=0.8",
+        "User-Agent": "NearbyCardTrader/1.0 card-scanner",
+      },
+    };
   }
   private isCard(value: unknown): value is ScryfallCard {
     if (typeof value !== "object" || value === null) return false;
     const card = value as Record<string, unknown>;
-    return ["id", "oracle_id", "name", "set", "collector_number"].every(
-      (field) => typeof card[field] === "string" && card[field] !== "",
+    return (
+      ["id", "oracle_id", "name", "lang", "set", "collector_number"].every(
+        (field) => typeof card[field] === "string" && card[field] !== "",
+      ) &&
+      SCRYFALL_LANGUAGES.includes(card.lang as ScryfallLanguage) &&
+      (card.printed_name === undefined || typeof card.printed_name === "string")
     );
   }
 }

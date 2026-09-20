@@ -37,7 +37,10 @@ describe("OpenRouterService", () => {
       JSON.stringify({
         cards: [
           {
-            name: " Sol Ring ",
+            printedName: " Anneau solaire ",
+            canonicalName: " Sol Ring ",
+            language: "FR",
+            languageConfidence: 0.95,
             set: "CMM",
             collectorNumber: null,
             quantity: 2,
@@ -52,7 +55,10 @@ describe("OpenRouterService", () => {
     ).resolves.toEqual({
       cards: [
         {
-          name: "Sol Ring",
+          printedName: "Anneau solaire",
+          canonicalName: "Sol Ring",
+          language: "fr",
+          languageConfidence: 0.95,
           set: "cmm",
           collectorNumber: undefined,
           quantity: 2,
@@ -94,8 +100,8 @@ describe("OpenRouterService", () => {
     JSON.stringify({ cards: [null] }),
     JSON.stringify({ cards: [{ quantity: 0 }] }),
     JSON.stringify({ cards: [{ quantity: 1, confidence: 2 }] }),
-    JSON.stringify({ cards: [{ quantity: 1, name: 4 }] }),
-    JSON.stringify({ cards: [{ quantity: 1, name: " " }] }),
+    JSON.stringify({ cards: [{ quantity: 1, canonicalName: 4 }] }),
+    JSON.stringify({ cards: [{ quantity: 1, printedName: " " }] }),
   ])("rejects malformed structured output", async (content) => {
     respond(content);
     await expect(
@@ -132,6 +138,8 @@ describe("OpenRouterService defensive parser branches", () => {
     JSON.stringify({ cards: [{ quantity: 1.5 }] }),
     JSON.stringify({ cards: [{ quantity: 1, confidence: "high" }] }),
     JSON.stringify({ cards: [{ quantity: 1, confidence: -1 }] }),
+    JSON.stringify({ cards: [{ quantity: 1, languageConfidence: 2 }] }),
+    JSON.stringify({ cards: [{ quantity: 1, language: "xx" }] }),
     JSON.stringify({ cards: [{ quantity: 1, collectorNumber: 3 }] }),
   ])("rejects every malformed boundary", (content) => {
     expect(() => parse(content)).toThrow(BadGatewayException);
@@ -139,7 +147,10 @@ describe("OpenRouterService defensive parser branches", () => {
   it("accepts absent confidence and all absent optional strings", () => {
     expect(parse(JSON.stringify({ cards: [{ quantity: 1 }] }))).toEqual([
       {
-        name: undefined,
+        printedName: undefined,
+        canonicalName: undefined,
+        language: undefined,
+        languageConfidence: undefined,
         set: undefined,
         collectorNumber: undefined,
         quantity: 1,

@@ -156,9 +156,9 @@ http://localhost:3000/api
 
 ## Card photo scans
 
-Authenticated users can upload one JPEG, PNG, or WebP image with `POST /card-scans` using multipart field `image`. Processing is synchronous: OpenRouter visually identifies candidates, then the API validates printing details through Scryfall before storing a temporary scan. Exact set and collector-number hints are resolved with one Scryfall collection call; failed hints fall back to strict name-and-set searches. No card is added to a binder.
+Authenticated users can upload one JPEG, PNG, or WebP image with `POST /card-scans` using multipart field `image`. Processing is synchronous: OpenRouter visually identifies candidates, then the API validates printing details through Scryfall before storing a temporary scan. Exact set and collector-number hints are resolved with one Scryfall collection call; failed hints fall back to strict canonical-name-and-set searches. For reliably detected non-English cards, the API then requests `GET /cards/:set/:collectorNumber/:lang` and verifies the Oracle ID, set, collector number, canonical name, printed name and language before accepting the localized printing. No card is added to a binder.
 
-A scan accepts at most 60 physical cards, based on the sum of detected quantities. Suggested frontend guidance (the Angular implementation is intentionally outside this change): **“You can scan up to 60 cards per photo. For best results, make sure each card’s set code and collector number are readable.”**
+A scan accepts at most 60 physical cards, based on the sum of detected quantities. Detection stores the name printed on the physical card, the canonical English name, the Scryfall language code and separate recognition confidences. Localized Scryfall lookups are processed serially to avoid request bursts. Suggested frontend guidance (the Angular implementation is intentionally outside this change): **“You can scan up to 60 cards per photo. For best results, make sure each card’s set code and collector number are readable.”**
 
 - `POST /card-scans` — create and synchronously process a scan.
 - `GET /card-scans?status=needs_review` — list owned scans, optionally filtered by status.
