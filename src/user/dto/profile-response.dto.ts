@@ -31,5 +31,5 @@ export class ProfileResponseDto {
     example: true,
     description: "Whether AI-assisted bulk card scanning is enabled",
   })
-  isBulkImport?: true;
+  aiBulkImport?: true;
 }

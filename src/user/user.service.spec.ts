@@ -32,7 +32,7 @@ const userDoc = {
   holdCoins: 0,
   spentCoins: 0,
   country: "fr",
-  isBulkImport: false,
+  aiBulkImport: false,
   usedPromocode: [],
   verify: "verify",
 };
@@ -636,7 +636,7 @@ describe("UserService bulk import access", () => {
     [undefined, false],
   ])("returns access %s for stored flag %s", async (flag, expected) => {
     Mock(UserTestModel).toReturn(
-      flag === undefined ? null : { ...userDoc, isBulkImport: flag },
+      flag === undefined ? null : { ...userDoc, aiBulkImport: flag },
       "findOne",
     );
     await expect(service.hasBulkImportAccess(userDoc._id)).resolves.toBe(
@@ -653,13 +653,13 @@ describe("UserService bulk import access", () => {
     Mock(UserTestModel).toReturn(
       {
         ...userDoc,
-        isBulkImport: true,
+        aiBulkImport: true,
         location: { type: "Point", coordinates: [2.35, 48.85] },
       },
       "findOne",
     );
     await expect(service.getProfile(userDoc._id)).resolves.toMatchObject({
-      isBulkImport: true,
+      aiBulkImport: true,
     });
   });
 });

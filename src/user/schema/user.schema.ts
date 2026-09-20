@@ -113,7 +113,7 @@ export class User {
     type: Boolean,
     default: false,
   })
-  isBulkImport?: boolean;
+  aiBulkImport?: boolean;
 }
 
 export const UserSchema = SchemaFactory.createForClass(User);
