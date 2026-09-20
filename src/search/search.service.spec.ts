@@ -92,13 +92,19 @@ describe("SearchService", () => {
       expect(aggregate).toHaveBeenCalledTimes(1);
     });
 
-    it("projects the stored display metadata while retaining legacy names and trade IDs", async () => {
+    it("projects every frontend filter field while retaining display metadata and trade IDs", async () => {
       aggregate.mockResolvedValueOnce([]);
       await service.getCardsNearMe("48.8566", "2.3522", "10", "FR", "user-1");
       const pipeline = aggregate.mock.calls[0][0];
       expect(pipeline[pipeline.length - 1].$project).toEqual(
         expect.objectContaining({
           name: "$cards.name",
+          cmc: "$cards.cmc",
+          legalities: "$cards.legalities",
+          color_identity: "$cards.color_identity",
+          type_line: "$cards.type_line",
+          keywords: "$cards.keywords",
+          grading: "$cards.grading",
           cardName: "$cards.name",
           foil_treatment: "$cards.foil_treatment",
           lang: "$cards.lang",

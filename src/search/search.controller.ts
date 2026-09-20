@@ -45,7 +45,7 @@ export class SearchController {
   })
   @ApiOkResponse({
     description:
-      "Nearby cards with binder display metadata. cardName is retained for older clients.",
+      "Nearby cards with binder display metadata and all frontend filter fields. cardName is retained for older clients.",
     schema: {
       type: "array",
       items: {
@@ -56,6 +56,23 @@ export class SearchController {
           distance: { type: "number" },
           cardName: { type: "string", example: "Sol Ring" },
           name: { type: "string", example: "Sol Ring" },
+          cmc: { type: "string", example: "1" },
+          legalities: {
+            type: "object",
+            additionalProperties: { type: "string" },
+            example: { commander: "legal", standard: "not_legal" },
+          },
+          color_identity: {
+            type: "array",
+            items: { type: "string" },
+            example: ["W", "U"],
+          },
+          type_line: { type: "string", example: "Artifact" },
+          keywords: {
+            type: "array",
+            items: { type: "string" },
+            example: ["Flying"],
+          },
           foil_treatment: { type: "string", example: "etched foil" },
           lang: { type: "string", example: "fr" },
           grading: { type: "string", example: "near mint" },
