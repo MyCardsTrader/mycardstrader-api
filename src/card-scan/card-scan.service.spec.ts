@@ -51,6 +51,25 @@ describe("CardScanService qualification and ownership", () => {
     });
     expect(scan.save).toHaveBeenCalled();
   });
+  it("marks a scan imported when only not-found cards remain", async () => {
+    const scan = {
+      cards: [{ id: "missing", status: ScanCardStatus.NOT_FOUND }],
+      status: CardScanStatus.NEEDS_REVIEW,
+      save: jest.fn().mockResolvedValue(undefined),
+    };
+    model.findOne.mockResolvedValue(scan);
+    await expect(service.markImported("user-1", "scan-1")).resolves.toBe(scan);
+    expect(scan.status).toBe(CardScanStatus.IMPORTED);
+    expect(scan.save).toHaveBeenCalled();
+  });
+  it("rejects completion while an ambiguous card remains", async () => {
+    model.findOne.mockResolvedValue({
+      cards: [{ id: "ambiguous", status: ScanCardStatus.AMBIGUOUS }],
+    });
+    await expect(service.markImported("user-1", "scan-1")).rejects.toThrow(
+      BadRequestException,
+    );
+  });
   it("rejects a Scryfall id outside the stored candidates", async () => {
     model.findOne.mockResolvedValue({
       cards: [{ id: "card-1", candidates: [printing] }],

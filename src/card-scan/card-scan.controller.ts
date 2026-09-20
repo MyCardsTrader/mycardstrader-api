@@ -105,6 +105,21 @@ export class CardScanController {
   getScan(@Request() req, @Param("scanId") scanId: string): Promise<CardScan> {
     return this.service.getScan(req.user.userId, scanId);
   }
+  @Patch(":scanId/imported")
+  @ApiOperation({ summary: "Mark an owned scan as imported" })
+  @ApiParam({ name: "scanId" })
+  @ApiOkResponse({ description: "Card scan marked as imported." })
+  @ApiBadRequestResponse({
+    description: "Ambiguous cards still require qualification.",
+  })
+  @ApiUnauthorizedResponse({ description: "Authentication is required." })
+  @ApiNotFoundResponse({ description: "Card scan was not found." })
+  markImported(
+    @Request() req,
+    @Param("scanId") scanId: string,
+  ): Promise<CardScan> {
+    return this.service.markImported(req.user.userId, scanId);
+  }
   @Patch(":scanId/cards/:cardId")
   @ApiOperation({ summary: "Select a validated printing for a scanned card" })
   @ApiParam({ name: "scanId" })

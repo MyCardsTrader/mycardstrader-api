@@ -3,6 +3,7 @@ export enum CardScanStatus {
   READY = "ready",
   NEEDS_REVIEW = "needs_review",
   FAILED = "failed",
+  IMPORTED = "imported",
 }
 export enum ScanCardStatus {
   RESOLVED = "resolved",

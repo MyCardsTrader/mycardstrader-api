@@ -35,6 +35,7 @@ describe("Card scans HTTP (e2e)", () => {
     listScans: jest.fn(),
     getScan: jest.fn(),
     qualifyCard: jest.fn(),
+    markImported: jest.fn(),
   };
   beforeAll(async () => {
     const module = await Test.createTestingModule({
@@ -73,6 +74,10 @@ describe("Card scans HTTP (e2e)", () => {
     service.getScan.mockImplementation((user: string, id: string) => {
       if (id === "foreign") throw new NotFoundException("Card scan not found");
       return { _id: id, userId: user };
+    });
+    service.markImported.mockResolvedValue({
+      _id: "scan-1",
+      status: CardScanStatus.IMPORTED,
     });
     service.qualifyCard.mockResolvedValue({
       _id: "scan-1",
@@ -143,6 +148,13 @@ describe("Card scans HTTP (e2e)", () => {
       .get("/card-scans/scan-1")
       .set("Authorization", auth)
       .expect(200));
+  it("marks an owned scan imported", async () => {
+    await request(app.getHttpServer())
+      .patch("/card-scans/scan-1/imported")
+      .set("Authorization", auth)
+      .expect(200);
+    expect(service.markImported).toHaveBeenCalledWith("user-1", "scan-1");
+  });
   it("qualifies a card with a UUID", () =>
     request(app.getHttpServer())
       .patch("/card-scans/scan-1/cards/card-1")

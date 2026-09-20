@@ -7,6 +7,7 @@ describe("CardScanController", () => {
     listScans: jest.fn(),
     getScan: jest.fn(),
     qualifyCard: jest.fn(),
+    markImported: jest.fn(),
   };
   const req = { user: { userId: "user-1" } };
   let controller: CardScanController;
@@ -32,6 +33,11 @@ describe("CardScanController", () => {
     service.getScan.mockResolvedValue({});
     await controller.getScan(req, "scan-1");
     expect(service.getScan).toHaveBeenCalledWith("user-1", "scan-1");
+  });
+  it("delegates imported scan completion", async () => {
+    service.markImported.mockResolvedValue({});
+    await controller.markImported(req, "scan-1");
+    expect(service.markImported).toHaveBeenCalledWith("user-1", "scan-1");
   });
   it("delegates qualification using only a Scryfall id", async () => {
     service.qualifyCard.mockResolvedValue({});

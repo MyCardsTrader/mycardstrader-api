@@ -134,6 +134,20 @@ export class CardScanService {
     await scan.save();
     return scan;
   }
+  async markImported(
+    userId: string,
+    scanId: string,
+  ): Promise<CardScanDocument> {
+    const scan = await this.getScan(userId, scanId);
+    if (scan.cards.some((card) => card.status === ScanCardStatus.AMBIGUOUS))
+      throw new BadRequestException(
+        "Ambiguous cards must be qualified before completing the scan",
+      );
+    scan.status = CardScanStatus.IMPORTED;
+    await scan.save();
+    return scan;
+  }
+
   private validateFile(file?: UploadedImage): void {
     if (!file || !file.size)
       throw new BadRequestException("One image is required");
