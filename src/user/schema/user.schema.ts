@@ -107,6 +107,13 @@ export class User {
     type: [String],
   })
   usedPromocode?: string[];
+
+  @Prop({
+    required: true,
+    type: Boolean,
+    default: false,
+  })
+  isBulkImport?: boolean;
 }
 
 export const UserSchema = SchemaFactory.createForClass(User);

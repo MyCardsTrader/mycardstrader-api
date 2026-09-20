@@ -19,6 +19,7 @@ import {
   ApiBody,
   ApiConsumes,
   ApiCreatedResponse,
+  ApiForbiddenResponse,
   ApiGatewayTimeoutResponse,
   ApiNotFoundResponse,
   ApiOkResponse,
@@ -31,6 +32,7 @@ import {
   ApiUnprocessableEntityResponse,
 } from "@nestjs/swagger";
 import { JwtAuthGuard } from "../auth/jwt.guard";
+import { BulkImportAccessGuard } from "./bulk-import-access.guard";
 import { DEFAULT_CARD_SCAN_MAX_IMAGE_BYTES } from "../config";
 import { CardScanService } from "./card-scan.service";
 import { UploadedImage } from "./card-scan.types";
@@ -38,7 +40,10 @@ import { ListCardScansQueryDto, QualifyScanCardDto } from "./dto";
 import { CardScan } from "./schema/card-scan.schema";
 @ApiTags("card-scans")
 @ApiBearerAuth()
-@UseGuards(JwtAuthGuard)
+@ApiForbiddenResponse({
+  description: "AI-assisted bulk import is not enabled for this user.",
+})
+@UseGuards(JwtAuthGuard, BulkImportAccessGuard)
 @Controller("card-scans")
 export class CardScanController {
   constructor(private readonly service: CardScanService) {}

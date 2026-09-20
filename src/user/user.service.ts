@@ -77,6 +77,15 @@ export class UserService {
     }
   }
 
+  async hasBulkImportAccess(userId: string): Promise<boolean> {
+    try {
+      const user = await this.userModel.findById(userId).exec();
+      return user?.isBulkImport === true;
+    } catch {
+      throw new InternalServerErrorException("Database error");
+    }
+  }
+
   async getProfile(userId: string): Promise<ProfileResponseDto> {
     let user: User;
     try {
@@ -198,6 +207,7 @@ export class UserService {
       availableCoins: user.availableCoins ?? 0,
       holdCoins: user.holdCoins ?? 0,
       spentCoins: user.spentCoins ?? 0,
+      ...(user.isBulkImport === true ? { isBulkImport: true as const } : {}),
     };
   }
 

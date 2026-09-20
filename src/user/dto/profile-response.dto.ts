@@ -1,6 +1,6 @@
 /* istanbul ignore file */
 
-import { ApiProperty } from "@nestjs/swagger";
+import { ApiProperty, ApiPropertyOptional } from "@nestjs/swagger";
 import { UserLocation } from "../schema/user.schema";
 
 export class ProfileResponseDto {
@@ -26,4 +26,10 @@ export class ProfileResponseDto {
 
   @ApiProperty({ example: 4, description: "Spent trade tokens" })
   spentCoins: number;
+
+  @ApiPropertyOptional({
+    example: true,
+    description: "Whether AI-assisted bulk card scanning is enabled",
+  })
+  isBulkImport?: true;
 }

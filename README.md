@@ -313,3 +313,9 @@ Les projections de recherche n’incluent plus l’email du détenteur. `GET /se
 ## Trade tokens
 
 The profile calls the trading balance “tokens” in both English and French. The existing API and database fields `availableCoins`, `holdCoins` and `spentCoins` retain their names for compatibility; their values represent available, reserved and spent tokens.
+
+## Accès au scan de cartes
+
+Tous les endpoints `/card-scans` nécessitent un utilisateur authentifié dont le champ MongoDB `isBulkImport` vaut strictement `true`. Le champ vaut `false` par défaut pour les nouveaux comptes et les documents historiques sans valeur explicite restent sans accès.
+
+Les réponses de profil utilisées par le frontend (`GET /user/me` et `PATCH /user/me/location`) incluent `isBulkImport: true` lorsque la fonctionnalité est activée. Le champ est omis lorsqu’elle ne l’est pas, afin de conserver la compatibilité des réponses existantes.

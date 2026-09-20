@@ -9,6 +9,8 @@ import { PassportModule, PassportStrategy } from "@nestjs/passport";
 import { Test } from "@nestjs/testing";
 import { ExtractJwt, Strategy } from "passport-jwt";
 import request from "supertest";
+import { BulkImportAccessGuard } from "../src/card-scan/bulk-import-access.guard";
+import { UserService } from "../src/user/user.service";
 import { CardScanController } from "../src/card-scan/card-scan.controller";
 import { CardScanService } from "../src/card-scan/card-scan.service";
 import { CardScanStatus } from "../src/card-scan/card-scan.types";
@@ -27,6 +29,7 @@ class TestStrategy extends PassportStrategy(Strategy, "jwt") {
 describe("Card scans HTTP (e2e)", () => {
   let app: INestApplication;
   let auth: string;
+  const users = { hasBulkImportAccess: jest.fn() };
   const service = {
     createScan: jest.fn(),
     listScans: jest.fn(),
@@ -42,6 +45,8 @@ describe("Card scans HTTP (e2e)", () => {
       controllers: [CardScanController],
       providers: [
         { provide: CardScanService, useValue: service },
+        { provide: UserService, useValue: users },
+        BulkImportAccessGuard,
         TestStrategy,
       ],
     }).compile();
@@ -55,6 +60,7 @@ describe("Card scans HTTP (e2e)", () => {
   afterAll(async () => app.close());
   beforeEach(() => {
     jest.resetAllMocks();
+    users.hasBulkImportAccess.mockResolvedValue(true);
     service.createScan.mockImplementation(
       (_user: string, file?: { mimetype: string }) => {
         if (!file) throw new BadRequestException("One image is required");
@@ -104,6 +110,14 @@ describe("Card scans HTTP (e2e)", () => {
       .expect(400));
   it("requires authentication", () =>
     request(app.getHttpServer()).get("/card-scans").expect(401));
+  it("forbids an authenticated user without the feature flag", async () => {
+    users.hasBulkImportAccess.mockResolvedValue(false);
+    await request(app.getHttpServer())
+      .get("/card-scans")
+      .set("Authorization", auth)
+      .expect(403);
+    expect(service.listScans).not.toHaveBeenCalled();
+  });
   it("lists scans using a validated status", async () => {
     await request(app.getHttpServer())
       .get("/card-scans?status=needs_review")
