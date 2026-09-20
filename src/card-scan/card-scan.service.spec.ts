@@ -165,7 +165,7 @@ describe("CardScanService processing", () => {
           modelUsed: "actual",
         }),
       }),
-      { new: true },
+      { returnDocument: "after" },
     );
   });
   it("marks a scan needs_review when one result is unresolved", async () => {

@@ -74,7 +74,7 @@ export class CardScanService {
         {
           $set: { cards, status, modelUsed: result.model, usage: result.usage },
         },
-        { new: true },
+        { returnDocument: "after" },
       );
       const resolved = cards.filter(
         (card) => card.status === ScanCardStatus.RESOLVED,

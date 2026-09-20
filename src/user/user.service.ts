@@ -118,7 +118,7 @@ export class UserService {
               },
             },
           },
-          { new: true },
+          { returnDocument: "after" },
         )
         .exec();
     } catch {
@@ -171,7 +171,7 @@ export class UserService {
             $set: { password, salt },
             $unset: { resetToken: 1 },
           },
-          { new: true },
+          { returnDocument: "after" },
         )
         .exec();
     } catch {
