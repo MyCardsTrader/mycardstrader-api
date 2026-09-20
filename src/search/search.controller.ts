@@ -1,103 +1,150 @@
-import { SearchService } from './search.service';
-import { Controller, Get, Query} from '@nestjs/common';
+import { SearchService } from "./search.service";
+import { Controller, Get, Query } from "@nestjs/common";
 import {
   ApiBadRequestResponse,
   ApiInternalServerErrorResponse,
   ApiOkResponse,
   ApiOperation,
   ApiQuery,
+  ApiResponse,
   ApiTags,
-} from '@nestjs/swagger';
+} from "@nestjs/swagger";
 
-@ApiTags('search')
-@Controller('search')
+@ApiTags("search")
+@Controller("search")
 export class SearchController {
   constructor(private readonly searchService: SearchService) {}
 
   @ApiQuery({
-    name: 'lat',
+    name: "lat",
     required: true,
     description: "Longitude",
   })
   @ApiQuery({
-    name: 'lng',
+    name: "lng",
     required: true,
     description: "Latitude",
   })
   @ApiQuery({
-    name: 'distance',
+    name: "distance",
     required: false,
     description: "Max distance in Km",
   })
   @ApiQuery({
-    name: 'country',
+    name: "country",
     required: false,
     description: "Restrict to a country",
   })
   @ApiQuery({
-    name: 'userId',
+    name: "userId",
     required: false,
-    description: 'Authenticated user id to exclude from results',
+    description: "Authenticated user id to exclude from results",
   })
-  @ApiOperation({ summary: 'Search nearby available cards around a geographic point' })
-  @ApiOkResponse({ description: 'Nearby cards returned successfully.' })
-  @ApiBadRequestResponse({ description: 'Search query parameters are invalid.' })
-  @ApiInternalServerErrorResponse({ description: 'Unexpected search error.' })
-  @Get('nearme')
+  @ApiOperation({
+    summary: "Search nearby available cards around a geographic point",
+  })
+  @ApiOkResponse({
+    description:
+      "Nearby cards with binder display metadata. cardName is retained for older clients.",
+    schema: {
+      type: "array",
+      items: {
+        type: "object",
+        properties: {
+          cardId: { type: "string" },
+          userId: { type: "string" },
+          distance: { type: "number" },
+          cardName: { type: "string", example: "Sol Ring" },
+          name: { type: "string", example: "Sol Ring" },
+          foil_treatment: { type: "string", example: "etched foil" },
+          lang: { type: "string", example: "fr" },
+          grading: { type: "string", example: "near mint" },
+          set: { type: "string", example: "cmm" },
+          collector_number: { type: "string", example: "396" },
+          image_uris: {
+            oneOf: [
+              { type: "object" },
+              { type: "array", items: { type: "object" } },
+            ],
+          },
+        },
+      },
+    },
+  })
+  @ApiResponse({ status: 520, description: "The nearby search query failed." })
+  @ApiBadRequestResponse({
+    description: "Search query parameters are invalid.",
+  })
+  @ApiInternalServerErrorResponse({ description: "Unexpected search error." })
+  @Get("nearme")
   async searchNearMe(
-    @Query('lat') lat,
-    @Query('lng') lng,
-    @Query('distance') distance,
-    @Query('country') country,
-    @Query('userId') userId?,
+    @Query("lat") lat,
+    @Query("lng") lng,
+    @Query("distance") distance,
+    @Query("country") country,
+    @Query("userId") userId?,
   ): Promise<any> {
-    return await this.searchService
-      .getCardsNearMe(lat, lng, distance, country, userId);
+    return await this.searchService.getCardsNearMe(
+      lat,
+      lng,
+      distance,
+      country,
+      userId,
+    );
   }
 
   @ApiQuery({
-    name: 'lat',
+    name: "lat",
     required: true,
     description: "Latitude for the search",
   })
   @ApiQuery({
-    name: 'lng',
+    name: "lng",
     required: true,
     description: "Longitude for the search",
   })
   @ApiQuery({
-    name: 'country',
+    name: "country",
     required: false,
     description: "Restrict to a country",
   })
   @ApiQuery({
-    name: 'name',
+    name: "name",
     required: false,
     description: "Card name",
   })
   @ApiQuery({
-    name: 'type',
+    name: "type",
     required: false,
     description: "Card type",
   })
   @ApiQuery({
-    name: 'set',
+    name: "set",
     required: false,
     description: "Set id",
   })
-  @ApiOperation({ summary: 'Search cards using geographic and card criteria' })
-  @ApiOkResponse({ description: 'Card search completed successfully.' })
-  @ApiBadRequestResponse({ description: 'Search query parameters are invalid.' })
-  @ApiInternalServerErrorResponse({ description: 'Unexpected search error.' })
+  @ApiOperation({ summary: "Search cards using geographic and card criteria" })
+  @ApiOkResponse({ description: "Card search completed successfully." })
+  @ApiBadRequestResponse({
+    description: "Search query parameters are invalid.",
+  })
+  @ApiInternalServerErrorResponse({ description: "Unexpected search error." })
   @Get()
   async searchCardByCritera(
-    @Query('lat') lat,
-    @Query('lng') lng,
-    @Query('country') country,
-    @Query('name') name,
-    @Query('type') type,
-    @Query('set') set,
+    @Query("lat") lat,
+    @Query("lng") lng,
+    @Query("country") country,
+    @Query("name") name,
+    @Query("type") type,
+    @Query("set") set,
   ): Promise<any> {
-    return await this.searchService.findCards(lat, lng, country, name, type, set);
+    return await this.searchService.findCards(
+      lat,
+      lng,
+      country,
+      name,
+      type,
+      set,
+    );
   }
 }
