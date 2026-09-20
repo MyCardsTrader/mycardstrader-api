@@ -270,7 +270,6 @@ npm audit --omit-dev
 - La documentation Swagger est générée au boot dans `src/main.ts`.
 - Le health check est exposé par `AppController`.
 
-
 ### Messagerie des trades finalisés
 
 La messagerie est accessible uniquement aux deux participants d’un trade en statut `success`.
@@ -283,3 +282,9 @@ La messagerie est accessible uniquement aux deux participants d’un trade en st
 - `GET /message/trades/summary` retourne, pour chaque trade finalisé ayant des messages, `{ tradeId, unreadCount, lastMessageAt }`.
 
 Le contenu est obligatoire, limité à 2 000 caractères et les contrôles d’accès reposent exclusivement sur le JWT.
+
+### Métadonnées des résultats de recherche
+
+`GET /search/nearme` renvoie `name` et tous les champs utilisés par les filtres du front : `cmc`, `legalities`, `color_identity`, `set`, `type_line`, `lang`, `grading`, `foil_treatment`, `keywords` et `collector_number`. Les tableaux de couleurs/mots-clés et l’objet des légalités conservent leur structure ; le CMC conserve le type stocké dans le schéma (chaîne). Le champ historique `cardName` et les identifiants `cardId`/`userId` restent disponibles. Le traitement reflète la valeur enregistrée : les anciennes cartes sans traitement ne reçoivent pas de valeur inventée. Déployer cette réponse additive pour activer les traitements dans les résultats du front.
+
+Le test `test/search.e2e-spec.ts` vérifie la réponse HTTP avec une vraie agrégation MongoDB dans une base isolée `search_e2e_*`, sur le même service Mongo que les tests batch. Il couvre tous les champs de filtrage, les tableaux/objets vides, le CMC zéro et l’exclusion des cartes échangées ou appartenant à l’utilisateur.

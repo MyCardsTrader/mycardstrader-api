@@ -1,3 +1,4 @@
+import { HttpException } from "@nestjs/common";
 import request from "supertest";
 import {
   INestApplication,
@@ -394,16 +395,29 @@ describe("HTTP API (e2e)", () => {
     messageServiceMock.deleteMessage.mockImplementation((messageId) =>
       Promise.resolve({ ...messageFixture, _id: messageId }),
     );
-    messageServiceMock.markTradeMessagesRead.mockResolvedValue({ updatedCount: 1 });
+    messageServiceMock.markTradeMessagesRead.mockResolvedValue({
+      updatedCount: 1,
+    });
     messageServiceMock.getMessageSummaries.mockResolvedValue([
-      { tradeId: 'trade-1', unreadCount: 2, lastMessageAt: '2026-09-19T10:00:00Z' },
+      {
+        tradeId: "trade-1",
+        unreadCount: 2,
+        lastMessageAt: "2026-09-19T10:00:00Z",
+      },
     ]);
     messageServiceMock.getMessagesByTrade.mockImplementation((tradeId) =>
       Promise.resolve([{ ...messageFixture, trade: tradeId }]),
     );
 
     searchServiceMock.getCardsNearMe.mockResolvedValue([
-      { cardName: "Black Lotus", distance: 2 },
+      {
+        cardName: "Black Lotus",
+        name: "Black Lotus",
+        foil_treatment: "nonfoil",
+        lang: "en",
+        set: "lea",
+        distance: 2,
+      },
     ]);
     searchServiceMock.findCards.mockResolvedValue([
       { cardName: "Mox Sapphire", distance: 5 },
@@ -935,8 +949,33 @@ describe("HTTP API (e2e)", () => {
       .query({ lat: "48.8566", lng: "2.3522", distance: "10", country: "FR" })
       .expect(200)
       .expect(({ body }) => {
-        expect(body[0].cardName).toBe("Black Lotus");
+        expect(body[0]).toMatchObject({
+          cardName: "Black Lotus",
+          name: "Black Lotus",
+          foil_treatment: "nonfoil",
+          lang: "en",
+          set: "lea",
+        });
       });
+  });
+
+  it("GET /search/nearme returns an empty list when no cards match", async () => {
+    searchServiceMock.getCardsNearMe.mockResolvedValueOnce([]);
+    await request(server)
+      .get("/search/nearme")
+      .query({ lat: "48.8566", lng: "2.3522", distance: "10", country: "FR" })
+      .expect(200)
+      .expect([]);
+  });
+
+  it("GET /search/nearme reports a failed search", async () => {
+    searchServiceMock.getCardsNearMe.mockRejectedValueOnce(
+      new HttpException("Search failed", 520),
+    );
+    await request(server)
+      .get("/search/nearme")
+      .query({ lat: "48.8566", lng: "2.3522", distance: "10", country: "FR" })
+      .expect(520);
   });
 
   it("GET /search returns card results", async () => {
