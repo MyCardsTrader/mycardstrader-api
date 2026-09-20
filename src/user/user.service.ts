@@ -306,27 +306,4 @@ export class UserService {
       }
     }
   }
-
-  // async findOneById(id: string): Promise<User> {
-  //   try {
-  //     const user: User = await this.userModel
-  //       .findById(
-  //         id,
-  //         {
-  //           password: 0,
-  //           salt: 0,
-  //           availableTreasures: 0,
-  //           holdTreasures: 0,
-  //           location: 0,
-  //         }
-  //       );
-  //     if (!user) {
-  //       throw new NotFoundException('User not found');
-  //     }
-  //     return user;
-  //   } catch (error) {
-  //     console.log('error: ', error);
-  //     throw new HttpException('Database error', 520);
-  //   }
-  // }
 }
