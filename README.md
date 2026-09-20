@@ -294,3 +294,7 @@ Le test `test/search.e2e-spec.ts` vérifie la réponse HTTP avec une vraie agré
 `GET /card/user/:userId` renvoie les documents carte disponibles complets : les dix champs des filtres (`cmc`, `legalities`, `color_identity`, `set`, `type_line`, `lang`, `grading`, `foil_treatment`, `keywords`, `collector_number`) ainsi que le nom et les images. Aucun champ stocké n’est retiré par une projection. La sérialisation JSON conserve les objets vides, notamment `legalities: {}`. Des tests HTTP sur MongoDB vérifient les valeurs structurées, les valeurs vides et le CMC zéro. Les données absentes des anciennes cartes ne sont pas reconstituées.
 
 Les projections de recherche n’incluent plus l’email du détenteur. `GET /search/nearme` conserve `userId` et `cardId` pour permettre les trades. Un test HTTP vérifie que l’email et les données privées du compte ne sont pas exposés.
+
+## Trade tokens
+
+The profile calls the trading balance “tokens” in both English and French. The existing API and database fields `availableCoins`, `holdCoins` and `spentCoins` retain their names for compatibility; their values represent available, reserved and spent tokens.

@@ -15,12 +15,15 @@ export class ProfileResponseDto {
   })
   location: UserLocation;
 
-  @ApiProperty({ example: 12 })
+  @ApiProperty({ example: 12, description: "Available trade tokens" })
   availableCoins: number;
 
-  @ApiProperty({ example: 2 })
+  @ApiProperty({
+    example: 2,
+    description: "Trade tokens reserved by an active trade",
+  })
   holdCoins: number;
 
-  @ApiProperty({ example: 4 })
+  @ApiProperty({ example: 4, description: "Spent trade tokens" })
   spentCoins: number;
 }

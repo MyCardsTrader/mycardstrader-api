@@ -210,7 +210,7 @@ describe("UserService", () => {
       expect(result).not.toHaveProperty("salt");
     });
 
-    it("defaults missing treasure counters to zero", async () => {
+    it("defaults missing token counters to zero", async () => {
       Mock(UserTestModel).toReturn(
         {
           email: userDoc.email,
