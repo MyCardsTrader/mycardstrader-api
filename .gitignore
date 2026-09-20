@@ -1,7 +1,8 @@
 # compiled output
 /dist
 /node_modules
-/docs
+/docs/*
+!/docs/STRIPE_IMPLEMENTATION_PLAN.md
 
 # Logs
 logs
