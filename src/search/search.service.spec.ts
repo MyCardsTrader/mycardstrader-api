@@ -96,6 +96,9 @@ describe("SearchService", () => {
       aggregate.mockResolvedValueOnce([]);
       await service.getCardsNearMe("48.8566", "2.3522", "10", "FR", "user-1");
       const pipeline = aggregate.mock.calls[0][0];
+      expect(pipeline[pipeline.length - 1].$project).not.toHaveProperty(
+        "email",
+      );
       expect(pipeline[pipeline.length - 1].$project).toEqual(
         expect.objectContaining({
           name: "$cards.name",
@@ -141,6 +144,10 @@ describe("SearchService", () => {
       ).resolves.toBeUndefined();
 
       expect(aggregate).toHaveBeenCalledTimes(1);
+      const pipeline = aggregate.mock.calls[0][0];
+      expect(pipeline[pipeline.length - 1].$project).not.toHaveProperty(
+        "email",
+      );
     });
 
     it("wraps aggregate errors in HttpException", async () => {

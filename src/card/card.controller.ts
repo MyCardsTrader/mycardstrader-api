@@ -55,7 +55,10 @@ export class CardController {
     required: true,
   })
   @ApiOperation({ summary: "List cards owned by a user" })
-  @ApiOkResponse({ description: "Cards returned successfully." })
+  @ApiOkResponse({
+    description:
+      "Available cards with full stored metadata, including all frontend filter fields: name, cmc, legalities, color_identity, set, type_line, lang, grading, foil_treatment, keywords and collector_number.",
+  })
   @ApiUnauthorizedResponse({ description: "Authentication is required." })
   @ApiForbiddenResponse({
     description: "Current user cannot read these cards.",

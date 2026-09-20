@@ -8,6 +8,7 @@ export type CardDocument = Card & Document;
 
 @Schema({
   timestamps: true,
+  toJSON: { minimize: false },
 })
 export class Card {
   @Prop({
