@@ -99,6 +99,86 @@ describe("Transactional card batches (HTTP + real Mongo replica set)", () => {
     );
   });
 
+  describe("Binder card metadata", () => {
+    const filterFields = {
+      cmc: "3",
+      legalities: { pauper: "legal", modern: "not_legal" },
+      color_identity: ["W", "U"],
+      set: "mh3",
+      type_line: "Creature — Bird",
+      lang: "fr",
+      grading: "near mint",
+      foil_treatment: "etched foil",
+      keywords: ["Flying", "Vigilance"],
+      collector_number: "123",
+    };
+
+    it("returns all stored filter fields and images through the authenticated binder endpoint", async () => {
+      await cards.updateOne({ _id: ids[0] }, { $set: filterFields });
+      const response = await request(app.getHttpServer())
+        .get(`/card/user/${owner}`)
+        .query({ order: "desc" })
+        .set("Authorization", authorization)
+        .expect(200);
+      expect(response.body).toHaveLength(2);
+      expect(
+        response.body.find((card: { _id: string }) => card._id === ids[0]),
+      ).toMatchObject({
+        ...filterFields,
+        _id: ids[0],
+        name: "Card 0",
+        image_uris: { small: "test" },
+      });
+      expect(
+        response.body.every((card: { user: string }) => card.user === owner),
+      ).toBe(true);
+    });
+
+    it("preserves zero CMC and empty legality/keyword/color values", async () => {
+      await cards.updateOne(
+        { _id: ids[0] },
+        {
+          $set: { cmc: "0", color_identity: [], keywords: [], legalities: {} },
+        },
+      );
+      const response = await request(app.getHttpServer())
+        .get(`/card/user/${owner}`)
+        .set("Authorization", authorization)
+        .expect(200);
+      expect(
+        response.body.find((card: { _id: string }) => card._id === ids[0]),
+      ).toMatchObject({
+        cmc: "0",
+        color_identity: [],
+        keywords: [],
+        legalities: {},
+      });
+    });
+
+    it("excludes traded cards and returns an empty binder for an unknown owner", async () => {
+      await cards.updateOne(
+        { _id: ids[0] },
+        { $set: { availability: "traded" } },
+      );
+      const response = await request(app.getHttpServer())
+        .get(`/card/user/${owner}`)
+        .set("Authorization", authorization)
+        .expect(200);
+      expect(response.body.map((card: { _id: string }) => card._id)).toEqual([
+        ids[1],
+      ]);
+      await request(app.getHttpServer())
+        .get("/card/user/unknown-owner")
+        .set("Authorization", authorization)
+        .expect(200)
+        .expect([]);
+    });
+
+    it("requires authentication to read binder metadata", async () => {
+      await request(app.getHttpServer()).get(`/card/user/${owner}`).expect(401);
+    });
+  });
+
   afterAll(async () => {
     jest.restoreAllMocks();
     if (app) await app.close();

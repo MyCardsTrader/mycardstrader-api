@@ -115,6 +115,29 @@ describe("Nearby search filter metadata (HTTP + real Mongo)", () => {
     });
   });
 
+  it("does not expose the owner's email or private account fields", async () => {
+    await users.updateOne(
+      {},
+      {
+        $set: {
+          password: "private-password",
+          salt: "private-salt",
+          resetToken: "private-reset",
+        },
+      },
+    );
+    const response = await request(app.getHttpServer())
+      .get("/search/nearme")
+      .query(query)
+      .expect(200);
+    expect(response.body).toHaveLength(1);
+    expect(response.body[0].userId).toBe(ownerId);
+    for (const field of ["email", "password", "salt", "resetToken"]) {
+      expect(response.body[0]).not.toHaveProperty(field);
+    }
+    expect(response.text).not.toContain("search@example.test");
+  });
+
   it("preserves zero CMC, colorless identity and empty keywords/legalities", async () => {
     await cards.updateOne(
       {},

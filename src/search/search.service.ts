@@ -94,7 +94,6 @@ export class SearchService {
           $project: {
             _id: 0,
             userId: 1,
-            email: 1,
             distance: 1,
             cardName: "$cards.name",
             name: "$cards.name",
@@ -161,7 +160,6 @@ export class SearchService {
           $project: {
             _id: 0,
             userId: 1,
-            email: 0,
             distance: 1,
             cardName: "$cards.name",
             image_uris: "$cards.image_uris",

@@ -288,3 +288,9 @@ Le contenu est obligatoire, limité à 2 000 caractères et les contrôles d’a
 `GET /search/nearme` renvoie `name` et tous les champs utilisés par les filtres du front : `cmc`, `legalities`, `color_identity`, `set`, `type_line`, `lang`, `grading`, `foil_treatment`, `keywords` et `collector_number`. Les tableaux de couleurs/mots-clés et l’objet des légalités conservent leur structure ; le CMC conserve le type stocké dans le schéma (chaîne). Le champ historique `cardName` et les identifiants `cardId`/`userId` restent disponibles. Le traitement reflète la valeur enregistrée : les anciennes cartes sans traitement ne reçoivent pas de valeur inventée. Déployer cette réponse additive pour activer les traitements dans les résultats du front.
 
 Le test `test/search.e2e-spec.ts` vérifie la réponse HTTP avec une vraie agrégation MongoDB dans une base isolée `search_e2e_*`, sur le même service Mongo que les tests batch. Il couvre tous les champs de filtrage, les tableaux/objets vides, le CMC zéro et l’exclusion des cartes échangées ou appartenant à l’utilisateur.
+
+### Champs du binder et confidentialité de la recherche
+
+`GET /card/user/:userId` renvoie les documents carte disponibles complets : les dix champs des filtres (`cmc`, `legalities`, `color_identity`, `set`, `type_line`, `lang`, `grading`, `foil_treatment`, `keywords`, `collector_number`) ainsi que le nom et les images. Aucun champ stocké n’est retiré par une projection. La sérialisation JSON conserve les objets vides, notamment `legalities: {}`. Des tests HTTP sur MongoDB vérifient les valeurs structurées, les valeurs vides et le CMC zéro. Les données absentes des anciennes cartes ne sont pas reconstituées.
+
+Les projections de recherche n’incluent plus l’email du détenteur. `GET /search/nearme` conserve `userId` et `cardId` pour permettre les trades. Un test HTTP vérifie que l’email et les données privées du compte ne sont pas exposés.

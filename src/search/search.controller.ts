@@ -45,7 +45,7 @@ export class SearchController {
   })
   @ApiOkResponse({
     description:
-      "Nearby cards with binder display metadata and all frontend filter fields. cardName is retained for older clients.",
+      "Nearby cards with binder display metadata and all frontend filter fields. cardName is retained for older clients. Owner email addresses are not returned.",
     schema: {
       type: "array",
       items: {
