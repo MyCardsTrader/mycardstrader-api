@@ -48,6 +48,67 @@ describe("CardPrintingResolver", () => {
     });
     expect(scryfall.getLocalizedPrinting).not.toHaveBeenCalled();
   });
+  it("resolves a zero-padded collector number without falling back to ambiguous printings", async () => {
+    scryfall.getPrintingDetails.mockResolvedValue([
+      card({
+        name: "Pearl-Ear, Imperial Advisor",
+        set: "mh3",
+        collector_number: "39",
+      }),
+    ]);
+    const [result] = await resolver.resolveAll([
+      {
+        canonicalName: "Pearl-Ear, Imperial Advisor",
+        printedName: "Pearl-Ear, Imperial Advisor",
+        language: "en",
+        set: "mh3",
+        collectorNumber: "0039",
+        quantity: 1,
+      },
+    ]);
+    expect(result.status).toBe(ScanCardStatus.RESOLVED);
+    expect(result.detected.collectorNumber).toBe("0039");
+    expect(result.resolved?.collectorNumber).toBe("39");
+    expect(scryfall.findPrintings).not.toHaveBeenCalled();
+  });
+  it("still validates the localized language for zero-padded numbers", async () => {
+    scryfall.getPrintingDetails.mockResolvedValue([card()]);
+    scryfall.getLocalizedPrinting.mockResolvedValue(
+      card({ id: "fr-id", lang: "fr", printed_name: "Anneau solaire" }),
+    );
+    const [result] = await resolver.resolveAll([
+      {
+        canonicalName: "Sol Ring",
+        printedName: "Anneau solaire",
+        language: "fr",
+        languageConfidence: 1,
+        set: "cmm",
+        collectorNumber: "0395",
+        quantity: 1,
+      },
+    ]);
+    expect(scryfall.getLocalizedPrinting).toHaveBeenCalledWith(
+      "cmm",
+      "395",
+      "fr",
+    );
+    expect(result.status).toBe(ScanCardStatus.RESOLVED);
+  });
+  it("does not treat different alphanumeric collector numbers as equal", async () => {
+    scryfall.getPrintingDetails.mockResolvedValue([
+      card({ collector_number: "39a" }),
+    ]);
+    const [result] = await resolver.resolveAll([
+      {
+        canonicalName: "Sol Ring",
+        set: "cmm",
+        collectorNumber: "039a",
+        quantity: 1,
+      },
+    ]);
+    expect(result.status).toBe(ScanCardStatus.NOT_FOUND);
+    expect(scryfall.findPrintings).toHaveBeenCalled();
+  });
   it("does not accept a collector number belonging to another card", async () => {
     scryfall.getPrintingDetails.mockResolvedValue([
       card({ name: "Arcane Signet" }),

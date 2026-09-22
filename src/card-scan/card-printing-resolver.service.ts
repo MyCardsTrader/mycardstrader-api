@@ -1,5 +1,6 @@
 import { Injectable } from "@nestjs/common";
 import { randomUUID } from "node:crypto";
+import { normalizeCollectorNumber } from "./collector-number";
 import {
   CardRecognitionCandidate,
   ResolvedScanCard,
@@ -38,7 +39,8 @@ export class CardPrintingResolver {
       ? exactCards.find(
           (card) =>
             card.set.toLowerCase() === candidate.set!.toLowerCase() &&
-            card.collector_number === candidate.collectorNumber,
+            normalizeCollectorNumber(card.collector_number) ===
+              normalizeCollectorNumber(candidate.collectorNumber!),
         )
       : undefined;
     if (exact && this.canonicalIdentityMatches(candidate, exact))

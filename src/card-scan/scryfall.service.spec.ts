@@ -43,6 +43,25 @@ describe("ScryfallService", () => {
       },
     );
   });
+  it("removes OCR padding from numeric collection identifiers only", async () => {
+    http.post.mockReturnValue(of({ data: { data: [] } }));
+    await service.getPrintingDetails([
+      { set: "mh3", collectorNumber: "0039", quantity: 1 },
+      { set: "mh3", collectorNumber: "000", quantity: 1 },
+      { set: "mh3", collectorNumber: "0039a", quantity: 1 },
+    ]);
+    expect(http.post).toHaveBeenCalledWith(
+      expect.stringContaining("collection"),
+      {
+        identifiers: [
+          { set: "mh3", collector_number: "39" },
+          { set: "mh3", collector_number: "0" },
+          { set: "mh3", collector_number: "0039a" },
+        ],
+      },
+      expect.any(Object),
+    );
+  });
   it("handles malformed collection data", async () => {
     http.post.mockReturnValue(of({ data: {} }));
     await expect(

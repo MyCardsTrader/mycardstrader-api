@@ -3,6 +3,7 @@ import { Injectable, ServiceUnavailableException } from "@nestjs/common";
 import { ConfigService } from "@nestjs/config";
 import { AxiosError } from "axios";
 import { firstValueFrom } from "rxjs";
+import { normalizeCollectorNumber } from "./collector-number";
 import {
   CardRecognitionCandidate,
   SCRYFALL_LANGUAGES,
@@ -28,7 +29,7 @@ export class ScryfallService {
       .filter((card) => card.set && card.collectorNumber)
       .map((card) => ({
         set: card.set,
-        collector_number: card.collectorNumber,
+        collector_number: normalizeCollectorNumber(card.collectorNumber!),
       }));
     if (!identifiers.length) return [];
     try {
