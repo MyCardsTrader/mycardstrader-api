@@ -1,13 +1,14 @@
-import { Model } from 'mongoose';
-import { InjectModel } from '@nestjs/mongoose';
-import { CreateMessageDto, MessageSummaryDto, UpdateMessageDto } from './dto';
-import { Message, MessageDocument } from './schema/message.schema';
-import { HttpException, Injectable, NotFoundException } from '@nestjs/common';
+import { Model } from "mongoose";
+import { InjectModel } from "@nestjs/mongoose";
+import { CreateMessageDto, MessageSummaryDto, UpdateMessageDto } from "./dto";
+import { Message, MessageDocument } from "./schema/message.schema";
+import { HttpException, Injectable, NotFoundException } from "@nestjs/common";
 
 @Injectable()
 export class MessageService {
   constructor(
-    @InjectModel(Message.name) private readonly messageModel: Model<MessageDocument>
+    @InjectModel(Message.name)
+    private readonly messageModel: Model<MessageDocument>,
   ) {}
 
   async createMessage(
@@ -25,13 +26,16 @@ export class MessageService {
     }
   }
 
-  async updateMessage(messageId: string, updateMessageDto: UpdateMessageDto): Promise<Message> {
+  async updateMessage(
+    messageId: string,
+    updateMessageDto: UpdateMessageDto,
+  ): Promise<Message> {
     let messageUpdated: Message;
     try {
       messageUpdated = await this.messageModel.findOneAndUpdate(
         { _id: messageId },
         { $set: { content: updateMessageDto.content } },
-        { new: true },
+        { returnDocument: "after" },
       );
     } catch (error) {
       throw new HttpException(error.message, 520);
@@ -43,7 +47,9 @@ export class MessageService {
   async deleteMessage(messageId: string): Promise<Message> {
     let messageDeleted: Message;
     try {
-      messageDeleted = await this.messageModel.findOneAndDelete({ _id: messageId });
+      messageDeleted = await this.messageModel.findOneAndDelete({
+        _id: messageId,
+      });
     } catch (error) {
       throw new HttpException(error.message, 520);
     }
@@ -64,16 +70,20 @@ export class MessageService {
 
   async getMessagesByTrade(tradeId: string): Promise<Message[]> {
     try {
-      return await this.messageModel.find({ trade: tradeId })
+      return await this.messageModel
+        .find({ trade: tradeId })
         .sort({ createdAt: 1 })
-        .populate({ path: 'user', select: '-password -salt'})
-        .exec()
+        .populate({ path: "user", select: "-password -salt" })
+        .exec();
     } catch (error) {
       throw new HttpException(error.message, 520);
     }
   }
 
-  async markTradeMessagesRead(tradeId: string, userId: string): Promise<{ updatedCount: number }> {
+  async markTradeMessagesRead(
+    tradeId: string,
+    userId: string,
+  ): Promise<{ updatedCount: number }> {
     try {
       const result = await this.messageModel.updateMany(
         { trade: tradeId, user: { $ne: userId }, viewed: false },
@@ -85,19 +95,29 @@ export class MessageService {
     }
   }
 
-  async getMessageSummaries(tradeIds: string[], userId: string): Promise<MessageSummaryDto[]> {
+  async getMessageSummaries(
+    tradeIds: string[],
+    userId: string,
+  ): Promise<MessageSummaryDto[]> {
     if (tradeIds.length === 0) return [];
     try {
-      const messages = await this.messageModel.find({ trade: { $in: tradeIds } })
+      const messages = await this.messageModel
+        .find({ trade: { $in: tradeIds } })
         .sort({ createdAt: 1 })
         .lean()
         .exec();
       const summaries = new Map<string, MessageSummaryDto>();
       for (const message of messages) {
         const tradeId = String(message.trade);
-        const summary = summaries.get(tradeId) ?? { tradeId, unreadCount: 0, lastMessageAt: null };
-        summary.lastMessageAt = (message as any).createdAt ?? summary.lastMessageAt;
-        if (String(message.user) !== userId && !message.viewed) summary.unreadCount += 1;
+        const summary = summaries.get(tradeId) ?? {
+          tradeId,
+          unreadCount: 0,
+          lastMessageAt: null,
+        };
+        summary.lastMessageAt =
+          (message as any).createdAt ?? summary.lastMessageAt;
+        if (String(message.user) !== userId && !message.viewed)
+          summary.unreadCount += 1;
         summaries.set(tradeId, summary);
       }
       return Array.from(summaries.values());
@@ -105,5 +125,4 @@ export class MessageService {
       throw new HttpException(error.message, 520);
     }
   }
-
 }

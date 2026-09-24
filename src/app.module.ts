@@ -17,6 +17,7 @@ import { PromocodeModule } from "./promocode/promocode.module";
 import {
   appConfig,
   authConfig,
+  cardScanConfig,
   databaseConfig,
   getEnvFilePath,
   mailConfig,
@@ -25,12 +26,13 @@ import {
 
 import { AppService } from "./app.service";
 import { AppController } from "./app.controller";
+import { CardScanModule } from "./card-scan/card-scan.module";
 @Module({
   imports: [
     ConfigModule.forRoot({
       isGlobal: true,
       envFilePath: getEnvFilePath(),
-      load: [appConfig, authConfig, databaseConfig, mailConfig],
+      load: [appConfig, authConfig, databaseConfig, mailConfig, cardScanConfig],
       validate: validateEnv,
     }),
     MongooseModule.forRootAsync({
@@ -50,6 +52,7 @@ import { AppController } from "./app.controller";
     SetModule,
     FoilModule,
     PromocodeModule,
+    CardScanModule,
   ],
   controllers: [AppController],
   providers: [AppService],

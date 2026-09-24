@@ -92,7 +92,7 @@ export class CardService {
       return await this.cardModel.findOneAndUpdate(
         { _id: cardId },
         { $set: { ...updateCardDto } },
-        { new: true },
+        { returnDocument: "after" },
       );
     } catch (error) {
       throw new HttpException(error.message, 520);

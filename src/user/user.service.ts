@@ -77,6 +77,15 @@ export class UserService {
     }
   }
 
+  async hasBulkImportAccess(userId: string): Promise<boolean> {
+    try {
+      const user = await this.userModel.findById(userId).exec();
+      return user?.aiBulkImport === true;
+    } catch {
+      throw new InternalServerErrorException("Database error");
+    }
+  }
+
   async getProfile(userId: string): Promise<ProfileResponseDto> {
     let user: User;
     try {
@@ -109,7 +118,7 @@ export class UserService {
               },
             },
           },
-          { new: true },
+          { returnDocument: "after" },
         )
         .exec();
     } catch {
@@ -162,7 +171,7 @@ export class UserService {
             $set: { password, salt },
             $unset: { resetToken: 1 },
           },
-          { new: true },
+          { returnDocument: "after" },
         )
         .exec();
     } catch {
@@ -198,6 +207,7 @@ export class UserService {
       availableCoins: user.availableCoins ?? 0,
       holdCoins: user.holdCoins ?? 0,
       spentCoins: user.spentCoins ?? 0,
+      ...(user.aiBulkImport === true ? { aiBulkImport: true as const } : {}),
     };
   }
 

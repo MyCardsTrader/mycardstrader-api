@@ -64,6 +64,10 @@ Variables utilisées en développement :
 - `JWT_SECRET`
 - `JWT_EXPIRE`
 - `PORT`
+- `OPENROUTER_API_KEY`
+- `OPENROUTER_MODEL` (default: `qwen/qwen3.7-flash`)
+- `CARD_SCAN_HTTP_TIMEOUT_MS` (optional, default: `15000`)
+- `CARD_SCAN_MAX_IMAGE_BYTES` (optional, default: `10485760`)
 
 Transactional emails are sent with [Resend](https://resend.com). `EMAIL_FROM` must use a sender address on a domain verified in Resend, for example:
 
@@ -149,6 +153,17 @@ Par défaut, avec `PORT=3000`, Swagger est accessible sur :
 ```text
 http://localhost:3000/api
 ```
+
+## Card photo scans
+
+Authenticated users can upload one JPEG, PNG, or WebP image with `POST /card-scans` using multipart field `image`. Processing is synchronous: OpenRouter visually identifies candidates, then the API validates printing details through Scryfall before storing a temporary scan. Exact set and collector-number hints are resolved with one Scryfall collection call; leading zeroes in purely numeric collector numbers are ignored for lookup and matching while the detected value is preserved; failed hints fall back to strict canonical-name-and-set searches. For reliably detected non-English cards, the API then requests `GET /cards/:set/:collectorNumber/:lang` and verifies the Oracle ID, set, collector number, canonical name, printed name and language before accepting the localized printing. No card is added to a binder.
+
+A scan accepts at most 60 physical cards, based on the sum of detected quantities. Detection stores the name printed on the physical card, the canonical English name, the Scryfall language code and separate recognition confidences. Localized Scryfall lookups are processed serially to avoid request bursts. Suggested frontend guidance (the Angular implementation is intentionally outside this change): **“You can scan up to 60 cards per photo. For best results, make sure each card’s set code and collector number are readable.”**
+
+- `POST /card-scans` — create and synchronously process a scan.
+- `GET /card-scans?status=needs_review` — list owned scans, optionally filtered by status.
+- `GET /card-scans/:scanId` — retrieve an owned scan.
+- `PATCH /card-scans/:scanId/cards/:cardId` with `{ "scryfallId": "..." }` — select one stored, Scryfall-validated candidate.
 
 ## Tests
 
@@ -298,3 +313,9 @@ Les projections de recherche n’incluent plus l’email du détenteur. `GET /se
 ## Trade tokens
 
 The profile calls the trading balance “tokens” in both English and French. The existing API and database fields `availableCoins`, `holdCoins` and `spentCoins` retain their names for compatibility; their values represent available, reserved and spent tokens.
+
+## Accès au scan de cartes
+
+Tous les endpoints `/card-scans` nécessitent un utilisateur authentifié dont le champ MongoDB `aiBulkImport` vaut strictement `true`. Le champ vaut `false` par défaut pour les nouveaux comptes et les documents historiques sans valeur explicite restent sans accès.
+
+Les réponses de profil utilisées par le frontend (`GET /user/me` et `PATCH /user/me/location`) incluent `aiBulkImport: true` lorsque la fonctionnalité est activée. Le champ est omis lorsqu’elle ne l’est pas, afin de conserver la compatibilité des réponses existantes.

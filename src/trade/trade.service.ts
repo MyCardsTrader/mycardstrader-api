@@ -99,7 +99,7 @@ export class TradeService {
         .findOneAndUpdate(
           { _id: tradeId },
           { $set: { ...updateTradeDto } },
-          { new: true },
+          { returnDocument: "after" },
         )
         .populate({ path: "userCards" })
         .populate({ path: "traderCards" })
@@ -134,7 +134,7 @@ export class TradeService {
         );
       }
       return this.tradeModel
-        .findOneAndUpdate({ _id: tradeId }, trade, { new: true })
+        .findOneAndUpdate({ _id: tradeId }, trade, { returnDocument: "after" })
         .populate({ path: "userCards" })
         .populate({ path: "traderCards" })
         .exec();
@@ -164,7 +164,7 @@ export class TradeService {
         .findOneAndUpdate(
           { _id: tradeId },
           { $set: { tradeStatus: "rejected" } },
-          { new: true },
+          { returnDocument: "after" },
         )
         .populate({ path: "userCards" })
         .populate({ path: "traderCards" })

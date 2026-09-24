@@ -251,6 +251,7 @@ describe("HTTP API (e2e)", () => {
         country: userFixture.country,
         location: { type: "Point", coordinates: [2.35, 48.85] },
         availableCoins: userFixture.availableCoins,
+        aiBulkImport: true,
         requestedFor: userId,
       });
     });
@@ -260,6 +261,7 @@ describe("HTTP API (e2e)", () => {
       }
       return Promise.resolve({
         email: userFixture.email,
+        aiBulkImport: true,
         location: {
           type: "Point",
           coordinates: [location.longitude, location.latitude],
@@ -547,6 +549,7 @@ describe("HTTP API (e2e)", () => {
       .expect(200)
       .expect(({ body }) => {
         expect(body.email).toBe(userFixture.email);
+        expect(body.aiBulkImport).toBe(true);
         expect(body.requestedFor).toBe("auth-user");
         expect(body).not.toHaveProperty("password");
       });
@@ -575,6 +578,7 @@ describe("HTTP API (e2e)", () => {
           coordinates: [2.35, 48.85],
         });
         expect(body.requestedFor).toBe("auth-user");
+        expect(body.aiBulkImport).toBe(true);
       });
   });
 

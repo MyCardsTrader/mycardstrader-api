@@ -32,6 +32,7 @@ const userDoc = {
   holdCoins: 0,
   spentCoins: 0,
   country: "fr",
+  aiBulkImport: false,
   usedPromocode: [],
   verify: "verify",
 };
@@ -610,6 +611,55 @@ describe("UserService", () => {
       await expect(
         service.changePassword(userDoc.email, "newPassword"),
       ).rejects.toThrow(HttpException);
+    });
+  });
+});
+
+describe("UserService bulk import access", () => {
+  let service: UserService;
+  beforeEach(async () => {
+    Mock.resetAll();
+    const module = await Test.createTestingModule({
+      providers: [
+        UserService,
+        { provide: userModel, useValue: UserTestModel },
+        { provide: MailService, useValue: mailServiceMock },
+        { provide: PromocodeService, useValue: promocodeServiceMock },
+        { provide: ConfigService, useValue: configServiceMock },
+      ],
+    }).compile();
+    service = module.get(UserService);
+  });
+  it.each([
+    [true, true],
+    [false, false],
+    [undefined, false],
+  ])("returns access %s for stored flag %s", async (flag, expected) => {
+    Mock(UserTestModel).toReturn(
+      flag === undefined ? null : { ...userDoc, aiBulkImport: flag },
+      "findOne",
+    );
+    await expect(service.hasBulkImportAccess(userDoc._id)).resolves.toBe(
+      expected,
+    );
+  });
+  it("hides database details when checking access", async () => {
+    Mock(UserTestModel).toReturn(new Error("database details"), "findOne");
+    await expect(
+      service.hasBulkImportAccess(userDoc._id),
+    ).rejects.toMatchObject({ status: 500, message: "Database error" });
+  });
+  it("returns the true flag in the safe profile", async () => {
+    Mock(UserTestModel).toReturn(
+      {
+        ...userDoc,
+        aiBulkImport: true,
+        location: { type: "Point", coordinates: [2.35, 48.85] },
+      },
+      "findOne",
+    );
+    await expect(service.getProfile(userDoc._id)).resolves.toMatchObject({
+      aiBulkImport: true,
     });
   });
 });

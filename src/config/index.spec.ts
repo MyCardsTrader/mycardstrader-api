@@ -1,6 +1,10 @@
 import {
   appConfig,
   authConfig,
+  cardScanConfig,
+  DEFAULT_CARD_SCAN_MAX_IMAGE_BYTES,
+  DEFAULT_EXTERNAL_HTTP_TIMEOUT_MS,
+  DEFAULT_OPENROUTER_MODEL,
   databaseConfig,
   DEFAULT_JWT_EXPIRE_MINUTES,
   DEFAULT_PORT,
@@ -130,6 +134,33 @@ describe("config", () => {
     });
   });
 
+  describe("cardScanConfig", () => {
+    it("maps configured scan settings", () => {
+      process.env.OPENROUTER_API_KEY = "key";
+      process.env.OPENROUTER_MODEL = "model";
+      process.env.CARD_SCAN_HTTP_TIMEOUT_MS = "500";
+      process.env.CARD_SCAN_MAX_IMAGE_BYTES = "1000";
+      expect(cardScanConfig()).toEqual({
+        openRouterApiKey: "key",
+        openRouterModel: "model",
+        externalHttpTimeoutMs: 500,
+        maxImageBytes: 1000,
+      });
+    });
+    it("uses scan defaults", () => {
+      delete process.env.OPENROUTER_API_KEY;
+      delete process.env.OPENROUTER_MODEL;
+      delete process.env.CARD_SCAN_HTTP_TIMEOUT_MS;
+      delete process.env.CARD_SCAN_MAX_IMAGE_BYTES;
+      expect(cardScanConfig()).toEqual({
+        openRouterApiKey: "",
+        openRouterModel: DEFAULT_OPENROUTER_MODEL,
+        externalHttpTimeoutMs: DEFAULT_EXTERNAL_HTTP_TIMEOUT_MS,
+        maxImageBytes: DEFAULT_CARD_SCAN_MAX_IMAGE_BYTES,
+      });
+    });
+  });
+
   describe("validateEnv", () => {
     it("validates non-test envs with mail settings", () => {
       expect(
@@ -142,6 +173,7 @@ describe("config", () => {
           RESEND_API_KEY: "re_test",
           EMAIL_FROM: "test@example.com",
           FRONT_URL: "http://localhost:4200",
+          OPENROUTER_API_KEY: "test-key",
         }),
       ).toEqual({
         NODE_ENV: "development",
@@ -149,9 +181,13 @@ describe("config", () => {
         JWT_SECRET: "secret",
         JWT_EXPIRE: 30,
         PORT: 3000,
+        OPENROUTER_MODEL: "qwen/qwen3.7-flash",
+        CARD_SCAN_HTTP_TIMEOUT_MS: 15000,
+        CARD_SCAN_MAX_IMAGE_BYTES: 10485760,
         RESEND_API_KEY: "re_test",
         EMAIL_FROM: "test@example.com",
         FRONT_URL: "http://localhost:4200",
+        OPENROUTER_API_KEY: "test-key",
       });
     });
 
@@ -170,9 +206,13 @@ describe("config", () => {
         JWT_SECRET: "secret",
         JWT_EXPIRE: 60,
         PORT: 3003,
+        OPENROUTER_MODEL: "qwen/qwen3.7-flash",
+        CARD_SCAN_HTTP_TIMEOUT_MS: 15000,
+        CARD_SCAN_MAX_IMAGE_BYTES: 10485760,
         RESEND_API_KEY: "",
         EMAIL_FROM: "",
         FRONT_URL: "",
+        OPENROUTER_API_KEY: "test-openrouter-key",
       });
     });
 
@@ -185,6 +225,8 @@ describe("config", () => {
           JWT_EXPIRE: "60",
           PORT: "3003",
           RESEND_API_KEY: "re_test",
+          OPENROUTER_MODEL: "custom-model",
+          OPENROUTER_API_KEY: "custom-key",
           EMAIL_FROM: "test@example.com",
           FRONT_URL: "http://localhost:4200",
         }),
@@ -194,9 +236,13 @@ describe("config", () => {
         JWT_SECRET: "secret",
         JWT_EXPIRE: 60,
         PORT: 3003,
+        OPENROUTER_MODEL: "custom-model",
+        CARD_SCAN_HTTP_TIMEOUT_MS: 15000,
+        CARD_SCAN_MAX_IMAGE_BYTES: 10485760,
         RESEND_API_KEY: "re_test",
         EMAIL_FROM: "test@example.com",
         FRONT_URL: "http://localhost:4200",
+        OPENROUTER_API_KEY: "custom-key",
       });
     });
 
@@ -210,6 +256,7 @@ describe("config", () => {
           RESEND_API_KEY: "re_test",
           EMAIL_FROM: "test@example.com",
           FRONT_URL: "http://localhost:4200",
+          OPENROUTER_API_KEY: "test-key",
         }),
       ).toEqual({
         NODE_ENV: "development",
@@ -217,9 +264,13 @@ describe("config", () => {
         JWT_SECRET: "secret",
         JWT_EXPIRE: DEFAULT_JWT_EXPIRE_MINUTES,
         PORT: DEFAULT_PORT,
+        OPENROUTER_MODEL: "qwen/qwen3.7-flash",
+        CARD_SCAN_HTTP_TIMEOUT_MS: 15000,
+        CARD_SCAN_MAX_IMAGE_BYTES: 10485760,
         RESEND_API_KEY: "re_test",
         EMAIL_FROM: "test@example.com",
         FRONT_URL: "http://localhost:4200",
+        OPENROUTER_API_KEY: "test-key",
       });
     });
 

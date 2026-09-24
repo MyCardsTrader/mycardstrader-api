@@ -24,6 +24,19 @@ export const validateEnv = (config: EnvConfig) => {
     JWT_SECRET: getRequiredString(config, "JWT_SECRET"),
     JWT_EXPIRE: parseInteger(config.JWT_EXPIRE, DEFAULT_JWT_EXPIRE_MINUTES),
     PORT: parseInteger(config.PORT, DEFAULT_PORT),
+    OPENROUTER_MODEL:
+      typeof config.OPENROUTER_MODEL === "string" &&
+      config.OPENROUTER_MODEL.trim() !== ""
+        ? config.OPENROUTER_MODEL
+        : "qwen/qwen3.7-flash",
+    CARD_SCAN_HTTP_TIMEOUT_MS: parseInteger(
+      config.CARD_SCAN_HTTP_TIMEOUT_MS,
+      15_000,
+    ),
+    CARD_SCAN_MAX_IMAGE_BYTES: parseInteger(
+      config.CARD_SCAN_MAX_IMAGE_BYTES,
+      10 * 1024 * 1024,
+    ),
   };
 
   if (nodeEnv !== "test") {
@@ -32,6 +45,7 @@ export const validateEnv = (config: EnvConfig) => {
       RESEND_API_KEY: getRequiredString(config, "RESEND_API_KEY"),
       EMAIL_FROM: getRequiredString(config, "EMAIL_FROM"),
       FRONT_URL: getRequiredString(config, "FRONT_URL"),
+      OPENROUTER_API_KEY: getRequiredString(config, "OPENROUTER_API_KEY"),
     };
   }
 
@@ -41,5 +55,9 @@ export const validateEnv = (config: EnvConfig) => {
       typeof config.RESEND_API_KEY === "string" ? config.RESEND_API_KEY : "",
     EMAIL_FROM: typeof config.EMAIL_FROM === "string" ? config.EMAIL_FROM : "",
     FRONT_URL: typeof config.FRONT_URL === "string" ? config.FRONT_URL : "",
+    OPENROUTER_API_KEY:
+      typeof config.OPENROUTER_API_KEY === "string"
+        ? config.OPENROUTER_API_KEY
+        : "test-openrouter-key",
   };
 };
