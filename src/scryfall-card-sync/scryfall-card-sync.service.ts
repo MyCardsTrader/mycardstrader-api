@@ -11,6 +11,8 @@ import { AxiosResponse } from "axios";
 import { Model } from "mongoose";
 import { Readable } from "node:stream";
 import { StringDecoder } from "node:string_decoder";
+import { createInterface } from "node:readline";
+import { createGunzip } from "node:zlib";
 import { firstValueFrom } from "rxjs";
 import {
   ScryfallCard,
@@ -20,6 +22,12 @@ import {
 interface BulkDataDescriptor {
   type?: string;
   download_uri?: string;
+  jsonl_download_uri?: string;
+}
+
+interface BulkDownload {
+  uri: string;
+  format: "json-array" | "jsonl-gzip";
 }
 
 export interface ScryfallSyncResult {
@@ -60,9 +68,9 @@ export class ScryfallCardSyncService {
 
     this.running = true;
     try {
-      const downloadUri = await this.getDownloadUri();
-      const stream = await this.download(downloadUri);
-      const result = await this.ingest(stream);
+      const download = await this.getDownload();
+      const stream = await this.download(download.uri);
+      const result = await this.ingest(stream, download.format);
       this.logger.log(
         `Scryfall synchronization completed: ${result.processed} cards in ${result.batches} batches`,
       );
@@ -78,17 +86,25 @@ export class ScryfallCardSyncService {
     }
   }
 
-  private async getDownloadUri(): Promise<string> {
+  private async getDownload(): Promise<BulkDownload> {
     const response = await firstValueFrom(
       this.http.get<BulkDataDescriptor>(BULK_DATA_URL, this.requestConfig),
     );
     const descriptor = response.data;
-    if (descriptor.type !== "all_cards" || !descriptor.download_uri)
+    if (descriptor.type !== "all_cards")
       throw new ServiceUnavailableException(
         "Scryfall returned an invalid all-cards descriptor",
       );
-    this.assertTrustedDownloadUri(descriptor.download_uri);
-    return descriptor.download_uri;
+    const uri = descriptor.jsonl_download_uri ?? descriptor.download_uri;
+    if (!uri)
+      throw new ServiceUnavailableException(
+        "Scryfall returned an invalid all-cards descriptor",
+      );
+    this.assertTrustedDownloadUri(uri);
+    return {
+      uri,
+      format: descriptor.jsonl_download_uri ? "jsonl-gzip" : "json-array",
+    };
   }
 
   private async download(uri: string): Promise<Readable> {
@@ -101,7 +117,10 @@ export class ScryfallCardSyncService {
     return this.extractReadable(response);
   }
 
-  private async ingest(stream: Readable): Promise<{
+  private async ingest(
+    stream: Readable,
+    format: BulkDownload["format"],
+  ): Promise<{
     processed: number;
     batches: number;
   }> {
@@ -111,7 +130,11 @@ export class ScryfallCardSyncService {
     let processed = 0;
     let batches = 0;
 
-    for await (const card of this.parseCards(stream)) {
+    const cards =
+      format === "jsonl-gzip"
+        ? this.parseJsonLines(stream.pipe(createGunzip()))
+        : this.parseCards(stream);
+    for await (const card of cards) {
       batch.push(card);
       if (batch.length >= batchSize) {
         await this.writeBatch(batch, syncedAt);
@@ -127,6 +150,24 @@ export class ScryfallCardSyncService {
       batches++;
     }
     return { processed, batches };
+  }
+
+  private async *parseJsonLines(
+    stream: Readable,
+  ): AsyncGenerator<Record<string, unknown>> {
+    const lines = createInterface({ input: stream, crlfDelay: Infinity });
+    for await (const line of lines) {
+      if (!line.trim()) continue;
+      let parsed: unknown;
+      try {
+        parsed = JSON.parse(line);
+      } catch {
+        throw new ServiceUnavailableException(
+          "Scryfall returned malformed all-cards JSON Lines",
+        );
+      }
+      yield this.parseCard(parsed);
+    }
   }
 
   private async *parseCards(

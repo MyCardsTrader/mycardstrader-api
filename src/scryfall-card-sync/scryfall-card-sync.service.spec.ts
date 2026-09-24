@@ -1,6 +1,7 @@
 import { ServiceUnavailableException } from "@nestjs/common";
 import { Subject, of, throwError } from "rxjs";
 import { Readable } from "node:stream";
+import { gzipSync } from "node:zlib";
 import { ScryfallCardSyncService } from "./scryfall-card-sync.service";
 
 const descriptor = {
@@ -150,6 +151,60 @@ describe("ScryfallCardSyncService", () => {
       }),
     );
     await expect(service.synchronize()).rejects.toThrow("invalid download URI");
+  });
+
+  it("ingests the current Scryfall JSON Lines gzip format", async () => {
+    const jsonlUri =
+      "https://data.scryfall.io/all-cards/all-cards-20260924211809.jsonl.gz";
+    http.get
+      .mockReturnValueOnce(
+        of({
+          data: {
+            type: "all_cards",
+            jsonl_download_uri: jsonlUri,
+          },
+        }),
+      )
+      .mockReturnValueOnce(
+        of({
+          data: Readable.from([
+            gzipSync(
+              '{"id":"card-1","prices":{"eur":"1.00"}}\n\n{"id":"card-2"}\n',
+            ),
+          ]),
+        }),
+      );
+
+    await expect(service.synchronize()).resolves.toEqual({
+      processed: 2,
+      batches: 1,
+      skipped: false,
+    });
+    expect(http.get).toHaveBeenNthCalledWith(
+      2,
+      jsonlUri,
+      expect.objectContaining({ responseType: "stream" }),
+    );
+  });
+
+  it("rejects malformed Scryfall JSON Lines", async () => {
+    http.get
+      .mockReturnValueOnce(
+        of({
+          data: {
+            type: "all_cards",
+            jsonl_download_uri:
+              "https://data.scryfall.io/all-cards/all-cards.jsonl.gz",
+          },
+        }),
+      )
+      .mockReturnValueOnce(
+        of({ data: Readable.from([gzipSync('{"id":}\n')]) }),
+      );
+
+    await expect(service.synchronize()).rejects.toThrow(
+      "malformed all-cards JSON Lines",
+    );
   });
 
   it("accepts the root Scryfall download host", async () => {

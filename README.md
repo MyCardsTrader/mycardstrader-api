@@ -169,7 +169,7 @@ A scan accepts at most 60 physical cards, based on the sum of detected quantitie
 
 ## Synchronisation du catalogue Scryfall
 
-Le module `scryfall-card-sync` récupère chaque jour à **04:00, heure de Paris**, le descripteur officiel `all_cards`, puis traite son `download_uri` en streaming. Les cartes sont écrites par lots dans la collection MongoDB `scryfall-cards`.
+Le module `scryfall-card-sync` récupère chaque jour à **04:00, heure de Paris**, le descripteur officiel `all_cards`, puis traite son flux `jsonl_download_uri` compressé en gzip en streaming. L'ancien format `download_uri` sous forme de tableau JSON reste pris en charge. Les cartes sont écrites par lots dans la collection MongoDB `scryfall-cards`.
 
 Chaque carte utilise son identifiant Scryfall `id` comme clé d’upsert. La mise à jour emploie `$set` : les propriétés présentes dans le nouveau fichier sont ajoutées ou remplacées, tandis que les propriétés absentes sont conservées. Le traitement ne supprime aucune carte. Un champ `syncedAt` indique le dernier passage ayant traité le document.
 
