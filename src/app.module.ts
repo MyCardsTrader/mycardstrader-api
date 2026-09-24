@@ -3,6 +3,7 @@
 import { Module } from "@nestjs/common";
 import { ConfigModule, ConfigService } from "@nestjs/config";
 import { MongooseModule } from "@nestjs/mongoose";
+import { ScheduleModule } from "@nestjs/schedule";
 import { SetModule } from "./set/set.module";
 import { MailModule } from "./mail";
 import { UserModule } from "./user/user.module";
@@ -21,20 +22,30 @@ import {
   databaseConfig,
   getEnvFilePath,
   mailConfig,
+  scryfallSyncConfig,
   validateEnv,
 } from "./config";
 
 import { AppService } from "./app.service";
 import { AppController } from "./app.controller";
 import { CardScanModule } from "./card-scan/card-scan.module";
+import { ScryfallCardSyncModule } from "./scryfall-card-sync/scryfall-card-sync.module";
 @Module({
   imports: [
     ConfigModule.forRoot({
       isGlobal: true,
       envFilePath: getEnvFilePath(),
-      load: [appConfig, authConfig, databaseConfig, mailConfig, cardScanConfig],
+      load: [
+        appConfig,
+        authConfig,
+        databaseConfig,
+        mailConfig,
+        cardScanConfig,
+        scryfallSyncConfig,
+      ],
       validate: validateEnv,
     }),
+    ScheduleModule.forRoot(),
     MongooseModule.forRootAsync({
       inject: [ConfigService],
       useFactory: async (configService: ConfigService) => ({
@@ -53,6 +64,7 @@ import { CardScanModule } from "./card-scan/card-scan.module";
     FoilModule,
     PromocodeModule,
     CardScanModule,
+    ScryfallCardSyncModule,
   ],
   controllers: [AppController],
   providers: [AppService],

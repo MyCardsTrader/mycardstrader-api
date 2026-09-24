@@ -8,6 +8,7 @@
   "scripts": {
     "prebuild": "rimraf dist tsconfig.build.tsbuildinfo",
     "build": "nest build",
+    "sync:scryfall": "npm run build && node dist/scryfall-card-sync/scryfall-card-sync.command.js",
     "format": "prettier --write \"src/**/*.ts\" \"test/**/*.ts\"",
     "start": "NODE_ENV=development nest start",
     "docker:dev:up": "docker compose up -d --wait mongo && docker compose run --rm mongo-seed",
