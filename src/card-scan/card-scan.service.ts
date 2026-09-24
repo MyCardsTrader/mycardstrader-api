@@ -72,7 +72,13 @@ export class CardScanService {
       const completedScan = await this.model.findByIdAndUpdate(
         scan.id,
         {
-          $set: { cards, status, modelUsed: result.model, usage: result.usage },
+          $set: {
+            cards,
+            status,
+            modelUsed: result.model,
+            usage: result.usage,
+            reasoning: result.reasoning,
+          },
         },
         { returnDocument: "after" },
       );

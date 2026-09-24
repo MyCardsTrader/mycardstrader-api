@@ -58,6 +58,7 @@ export class CardScan {
   @Prop({ required: true }) modelUsed: string;
   @Prop({ type: SchemaFactory.createForClass(CardScanUsage) })
   usage?: CardScanUsage;
+  @Prop({ select: false, maxlength: 32_768 }) reasoning?: string;
   @Prop() failureReason?: string;
   createdAt?: Date;
   updatedAt?: Date;

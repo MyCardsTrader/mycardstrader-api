@@ -22,12 +22,12 @@ describe("OpenRouterService", () => {
     jest.clearAllMocks();
     service = new OpenRouterService(http as never, config as never);
   });
-  const respond = (content: unknown, usage?: object) =>
+  const respond = (content: unknown, usage?: object, reasoning?: string) =>
     http.post.mockReturnValue(
       of({
         data: {
           model: "actual-model",
-          choices: [{ message: { content } }],
+          choices: [{ message: { content, reasoning } }],
           usage,
         },
       }),
@@ -49,6 +49,7 @@ describe("OpenRouterService", () => {
         ],
       }),
       { prompt_tokens: 10, completion_tokens: 5, total_tokens: 15, cost: 0.01 },
+      "Detected two copies of Sol Ring.",
     );
     await expect(
       service.recognizeCards(Buffer.from("x"), "image/png"),
@@ -66,11 +67,15 @@ describe("OpenRouterService", () => {
         },
       ],
       model: "actual-model",
+      reasoning: "Detected two copies of Sol Ring.",
       usage: { inputTokens: 10, outputTokens: 5, totalTokens: 15, cost: 0.01 },
     });
     expect(http.post).toHaveBeenCalledWith(
       expect.any(String),
-      expect.objectContaining({ response_format: expect.any(Object) }),
+      expect.objectContaining({
+        response_format: expect.any(Object),
+        reasoning: { enabled: true },
+      }),
       expect.objectContaining({ timeout: 100 }),
     );
   });
@@ -84,7 +89,12 @@ describe("OpenRouterService", () => {
     );
     await expect(
       service.recognizeCards(Buffer.from("x"), "image/jpeg"),
-    ).resolves.toEqual({ cards: [], model: "test-model", usage: undefined });
+    ).resolves.toEqual({
+      cards: [],
+      model: "test-model",
+      reasoning: undefined,
+      usage: undefined,
+    });
   });
   it.each([undefined, "not-json"])(
     "rejects absent or invalid JSON",
@@ -107,6 +117,16 @@ describe("OpenRouterService", () => {
     await expect(
       service.recognizeCards(Buffer.from("x"), "image/png"),
     ).rejects.toThrow(BadGatewayException);
+  });
+  it("limits returned reasoning to the MongoDB field size", async () => {
+    respond(JSON.stringify({ cards: [] }), undefined, "x".repeat(40_000));
+    const result = await service.recognizeCards(Buffer.from("x"), "image/png");
+    expect(result.reasoning).toHaveLength(32_768);
+  });
+  it("omits an empty reasoning response", async () => {
+    respond(JSON.stringify({ cards: [] }), undefined, "");
+    const result = await service.recognizeCards(Buffer.from("x"), "image/png");
+    expect(result.reasoning).toBeUndefined();
   });
   it("maps request timeouts", async () => {
     const error = new AxiosError("timeout");

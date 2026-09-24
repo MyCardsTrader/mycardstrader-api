@@ -3,6 +3,7 @@ import {
   BadGatewayException,
   GatewayTimeoutException,
   Injectable,
+  Logger,
   ServiceUnavailableException,
 } from "@nestjs/common";
 import { ConfigService } from "@nestjs/config";
@@ -21,7 +22,9 @@ import {
 
 interface OpenRouterResponse {
   model?: string;
-  choices?: Array<{ message?: { content?: string } }>;
+  choices?: Array<{
+    message?: { content?: string; reasoning?: string | null };
+  }>;
   usage?: {
     prompt_tokens?: number;
     completion_tokens?: number;
@@ -31,6 +34,7 @@ interface OpenRouterResponse {
 }
 @Injectable()
 export class OpenRouterService {
+  private readonly logger = new Logger(OpenRouterService.name);
   constructor(
     private readonly httpService: HttpService,
     private readonly config: ConfigService,
@@ -73,6 +77,7 @@ export class OpenRouterService {
               },
             },
             temperature: 0,
+            reasoning: { enabled: true },
           },
           {
             timeout: this.config.getOrThrow<number>(
@@ -85,11 +90,11 @@ export class OpenRouterService {
           },
         ),
       );
-      const cards = this.parseCandidates(
-        response.data.choices?.[0]?.message?.content,
-      );
+      const message = response.data.choices?.[0]?.message;
+      const cards = this.parseCandidates(message?.content);
       return {
         cards,
+        reasoning: message!.reasoning?.slice(0, 32_768) || undefined,
         model: response.data.model ?? model,
         usage: response.data.usage
           ? {
@@ -101,6 +106,7 @@ export class OpenRouterService {
           : undefined,
       };
     } catch (error) {
+      this.logger.error("Error during card recognition", error);
       if (error instanceof BadGatewayException) throw error;
       if (error instanceof AxiosError && error.code === "ECONNABORTED")
         throw new GatewayTimeoutException("Card recognition timed out");

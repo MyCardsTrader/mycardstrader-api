@@ -79,6 +79,7 @@ export interface UploadedImage {
 }
 export interface VisionRecognitionResult {
   cards: CardRecognitionCandidate[];
+  reasoning?: string;
   model: string;
   usage?: VisionUsage;
 }

@@ -140,6 +140,7 @@ describe("CardScanService processing", () => {
       cards: [{ name: "Sol Ring", quantity: 1 }],
       model: "actual",
       usage: { totalTokens: 5 },
+      reasoning: "The image shows Sol Ring.",
     });
     resolver.resolveAll.mockResolvedValue([
       {
@@ -163,6 +164,7 @@ describe("CardScanService processing", () => {
         $set: expect.objectContaining({
           status: CardScanStatus.READY,
           modelUsed: "actual",
+          reasoning: "The image shows Sol Ring.",
         }),
       }),
       { returnDocument: "after" },
