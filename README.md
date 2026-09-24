@@ -68,6 +68,8 @@ Variables utilisées en développement :
 - `OPENROUTER_MODEL` (default: `qwen/qwen3.7-flash`)
 - `CARD_SCAN_HTTP_TIMEOUT_MS` (optional, default: `15000`)
 - `CARD_SCAN_MAX_IMAGE_BYTES` (optional, default: `10485760`)
+- `SCRYFALL_SYNC_BATCH_SIZE` (optional, default: `500`)
+- `SCRYFALL_SYNC_HTTP_TIMEOUT_MS` (optional, default: `600000`)
 
 Transactional emails are sent with [Resend](https://resend.com). `EMAIL_FROM` must use a sender address on a domain verified in Resend, for example:
 
@@ -164,6 +166,18 @@ A scan accepts at most 60 physical cards, based on the sum of detected quantitie
 - `GET /card-scans?status=needs_review` — list owned scans, optionally filtered by status.
 - `GET /card-scans/:scanId` — retrieve an owned scan.
 - `PATCH /card-scans/:scanId/cards/:cardId` with `{ "scryfallId": "..." }` — select one stored, Scryfall-validated candidate.
+
+## Synchronisation du catalogue Scryfall
+
+Le module `scryfall-card-sync` récupère chaque jour à **04:00, heure de Paris**, le descripteur officiel `all_cards`, puis traite son `download_uri` en streaming. Les cartes sont écrites par lots dans la collection MongoDB `scryfall-cards`.
+
+Chaque carte utilise son identifiant Scryfall `id` comme clé d’upsert. La mise à jour emploie `$set` : les propriétés présentes dans le nouveau fichier sont ajoutées ou remplacées, tandis que les propriétés absentes sont conservées. Le traitement ne supprime aucune carte. Un champ `syncedAt` indique le dernier passage ayant traité le document.
+
+À chaque passage, le prix courant reste disponible dans `prices` et un snapshot `{ capturedAt, prices }` est ajouté au tableau `priceHistory` du document. La même date de capture est utilisée pour tous les lots d'une synchronisation. Si Scryfall ne fournit pas de prix, le snapshot contient `prices: null`.
+
+La synchronisation peut aussi être déclenchée manuellement avec `npm run sync:scryfall`. La commande construit l'application, initialise un contexte Nest sans serveur HTTP, exécute le même service que le cron, puis ferme les connexions. Elle utilise les variables d'environnement habituelles, notamment `MONGO_URI`.
+
+Le téléchargement est limité aux URL HTTPS du domaine `scryfall.io`. Les requêtes déclarent un `User-Agent` et un en-tête `Accept` conformes aux recommandations Scryfall. Le traitement en streaming évite de charger le fichier `all_cards` complet en mémoire.
 
 ## Tests
 

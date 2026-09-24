@@ -6,11 +6,14 @@ import {
   DEFAULT_EXTERNAL_HTTP_TIMEOUT_MS,
   DEFAULT_OPENROUTER_MODEL,
   databaseConfig,
+  DEFAULT_SCRYFALL_SYNC_BATCH_SIZE,
+  DEFAULT_SCRYFALL_SYNC_HTTP_TIMEOUT_MS,
   DEFAULT_JWT_EXPIRE_MINUTES,
   DEFAULT_PORT,
   getEnvFilePath,
   mailConfig,
   parseInteger,
+  scryfallSyncConfig,
   validateEnv,
 } from "./index";
 
@@ -161,6 +164,26 @@ describe("config", () => {
     });
   });
 
+  describe("scryfallSyncConfig", () => {
+    it("maps configured synchronization settings", () => {
+      process.env.SCRYFALL_SYNC_BATCH_SIZE = "250";
+      process.env.SCRYFALL_SYNC_HTTP_TIMEOUT_MS = "120000";
+      expect(scryfallSyncConfig()).toEqual({
+        batchSize: 250,
+        httpTimeoutMs: 120000,
+      });
+    });
+
+    it("uses synchronization defaults", () => {
+      delete process.env.SCRYFALL_SYNC_BATCH_SIZE;
+      delete process.env.SCRYFALL_SYNC_HTTP_TIMEOUT_MS;
+      expect(scryfallSyncConfig()).toEqual({
+        batchSize: DEFAULT_SCRYFALL_SYNC_BATCH_SIZE,
+        httpTimeoutMs: DEFAULT_SCRYFALL_SYNC_HTTP_TIMEOUT_MS,
+      });
+    });
+  });
+
   describe("validateEnv", () => {
     it("validates non-test envs with mail settings", () => {
       expect(
@@ -184,6 +207,8 @@ describe("config", () => {
         OPENROUTER_MODEL: "qwen/qwen3.7-flash",
         CARD_SCAN_HTTP_TIMEOUT_MS: 15000,
         CARD_SCAN_MAX_IMAGE_BYTES: 10485760,
+        SCRYFALL_SYNC_BATCH_SIZE: DEFAULT_SCRYFALL_SYNC_BATCH_SIZE,
+        SCRYFALL_SYNC_HTTP_TIMEOUT_MS: DEFAULT_SCRYFALL_SYNC_HTTP_TIMEOUT_MS,
         RESEND_API_KEY: "re_test",
         EMAIL_FROM: "test@example.com",
         FRONT_URL: "http://localhost:4200",
@@ -209,6 +234,8 @@ describe("config", () => {
         OPENROUTER_MODEL: "qwen/qwen3.7-flash",
         CARD_SCAN_HTTP_TIMEOUT_MS: 15000,
         CARD_SCAN_MAX_IMAGE_BYTES: 10485760,
+        SCRYFALL_SYNC_BATCH_SIZE: DEFAULT_SCRYFALL_SYNC_BATCH_SIZE,
+        SCRYFALL_SYNC_HTTP_TIMEOUT_MS: DEFAULT_SCRYFALL_SYNC_HTTP_TIMEOUT_MS,
         RESEND_API_KEY: "",
         EMAIL_FROM: "",
         FRONT_URL: "",
@@ -239,6 +266,8 @@ describe("config", () => {
         OPENROUTER_MODEL: "custom-model",
         CARD_SCAN_HTTP_TIMEOUT_MS: 15000,
         CARD_SCAN_MAX_IMAGE_BYTES: 10485760,
+        SCRYFALL_SYNC_BATCH_SIZE: DEFAULT_SCRYFALL_SYNC_BATCH_SIZE,
+        SCRYFALL_SYNC_HTTP_TIMEOUT_MS: DEFAULT_SCRYFALL_SYNC_HTTP_TIMEOUT_MS,
         RESEND_API_KEY: "re_test",
         EMAIL_FROM: "test@example.com",
         FRONT_URL: "http://localhost:4200",
@@ -267,6 +296,8 @@ describe("config", () => {
         OPENROUTER_MODEL: "qwen/qwen3.7-flash",
         CARD_SCAN_HTTP_TIMEOUT_MS: 15000,
         CARD_SCAN_MAX_IMAGE_BYTES: 10485760,
+        SCRYFALL_SYNC_BATCH_SIZE: DEFAULT_SCRYFALL_SYNC_BATCH_SIZE,
+        SCRYFALL_SYNC_HTTP_TIMEOUT_MS: DEFAULT_SCRYFALL_SYNC_HTTP_TIMEOUT_MS,
         RESEND_API_KEY: "re_test",
         EMAIL_FROM: "test@example.com",
         FRONT_URL: "http://localhost:4200",

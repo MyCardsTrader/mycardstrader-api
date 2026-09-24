@@ -1,4 +1,8 @@
 import { DEFAULT_JWT_EXPIRE_MINUTES, DEFAULT_PORT, parseInteger } from "./env";
+import {
+  DEFAULT_SCRYFALL_SYNC_BATCH_SIZE,
+  DEFAULT_SCRYFALL_SYNC_HTTP_TIMEOUT_MS,
+} from "./scryfall-sync.config";
 
 type EnvConfig = Record<string, unknown>;
 
@@ -36,6 +40,14 @@ export const validateEnv = (config: EnvConfig) => {
     CARD_SCAN_MAX_IMAGE_BYTES: parseInteger(
       config.CARD_SCAN_MAX_IMAGE_BYTES,
       10 * 1024 * 1024,
+    ),
+    SCRYFALL_SYNC_BATCH_SIZE: parseInteger(
+      config.SCRYFALL_SYNC_BATCH_SIZE,
+      DEFAULT_SCRYFALL_SYNC_BATCH_SIZE,
+    ),
+    SCRYFALL_SYNC_HTTP_TIMEOUT_MS: parseInteger(
+      config.SCRYFALL_SYNC_HTTP_TIMEOUT_MS,
+      DEFAULT_SCRYFALL_SYNC_HTTP_TIMEOUT_MS,
     ),
   };
 
