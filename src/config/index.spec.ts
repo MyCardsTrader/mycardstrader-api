@@ -140,24 +140,39 @@ describe("config", () => {
       process.env.OPENROUTER_MODEL = "model";
       process.env.CARD_SCAN_HTTP_TIMEOUT_MS = "500";
       process.env.CARD_SCAN_MAX_IMAGE_BYTES = "1000";
-      expect(cardScanConfig()).toEqual({
-        openRouterApiKey: "key",
-        openRouterModel: "model",
-        externalHttpTimeoutMs: 500,
-        maxImageBytes: 1000,
-      });
+      process.env.CARD_SCAN_CROP_PADDING_RATIO = "0.05";
+      process.env.CARD_SCAN_CROP_FORMAT = "webp";
+      process.env.CARD_SCAN_CROP_QUALITY = "80";
+      process.env.CARD_SCAN_PROMPT_VERSION = "v2";
+      process.env.CARD_SCAN_PIPELINE_VERSION = "v3";
+      process.env.CARD_SCAN_STORAGE_ENDPOINT = "https://r2.example";
+      process.env.CARD_SCAN_STORAGE_REGION = "auto";
+      process.env.CARD_SCAN_STORAGE_BUCKET = "dataset";
+      process.env.CARD_SCAN_STORAGE_ACCESS_KEY_ID = "access";
+      process.env.CARD_SCAN_STORAGE_SECRET_ACCESS_KEY = "secret";
+      process.env.CARD_SCAN_STORAGE_FORCE_PATH_STYLE = "false";
+      expect(cardScanConfig()).toEqual(
+        expect.objectContaining({
+          openRouterApiKey: "key",
+          openRouterModel: "model",
+          externalHttpTimeoutMs: 500,
+          maxImageBytes: 1000,
+        }),
+      );
     });
     it("uses scan defaults", () => {
       delete process.env.OPENROUTER_API_KEY;
       delete process.env.OPENROUTER_MODEL;
       delete process.env.CARD_SCAN_HTTP_TIMEOUT_MS;
       delete process.env.CARD_SCAN_MAX_IMAGE_BYTES;
-      expect(cardScanConfig()).toEqual({
-        openRouterApiKey: "",
-        openRouterModel: DEFAULT_OPENROUTER_MODEL,
-        externalHttpTimeoutMs: DEFAULT_EXTERNAL_HTTP_TIMEOUT_MS,
-        maxImageBytes: DEFAULT_CARD_SCAN_MAX_IMAGE_BYTES,
-      });
+      expect(cardScanConfig()).toEqual(
+        expect.objectContaining({
+          openRouterApiKey: "",
+          openRouterModel: DEFAULT_OPENROUTER_MODEL,
+          externalHttpTimeoutMs: DEFAULT_EXTERNAL_HTTP_TIMEOUT_MS,
+          maxImageBytes: DEFAULT_CARD_SCAN_MAX_IMAGE_BYTES,
+        }),
+      );
     });
   });
 
