@@ -1,8 +1,12 @@
 import { HttpService } from "@nestjs/axios";
-import { Injectable, ServiceUnavailableException } from "@nestjs/common";
+import {
+  Injectable,
+  Logger,
+  ServiceUnavailableException,
+} from "@nestjs/common";
 import { ConfigService } from "@nestjs/config";
-import { AxiosError } from "axios";
-import { firstValueFrom } from "rxjs";
+import { AxiosError, AxiosResponse } from "axios";
+import { firstValueFrom, Observable } from "rxjs";
 import { normalizeCollectorNumber } from "./collector-number";
 import {
   CardRecognitionCandidate,
@@ -16,8 +20,12 @@ interface CollectionResponse {
 interface SearchResponse {
   data?: ScryfallCard[];
 }
+const SCRYFALL_REQUEST_INTERVAL_MS = 600;
 @Injectable()
 export class ScryfallService {
+  private readonly logger = new Logger(ScryfallService.name);
+  private requestQueue: Promise<void> = Promise.resolve();
+  private lastRequestStartedAt = 0;
   constructor(
     private readonly httpService: HttpService,
     private readonly config: ConfigService,
@@ -33,7 +41,7 @@ export class ScryfallService {
       }));
     if (!identifiers.length) return [];
     try {
-      const response = await firstValueFrom(
+      const response = await this.request(() =>
         this.httpService.post<CollectionResponse>(
           "https://api.scryfall.com/cards/collection",
           { identifiers },
@@ -43,36 +51,80 @@ export class ScryfallService {
       return Array.isArray(response.data.data)
         ? response.data.data.filter((card) => this.isCard(card))
         : [];
-    } catch {
-      throw new ServiceUnavailableException(
-        "Scryfall validation is unavailable",
-      );
+    } catch (error) {
+      this.throwUnavailable("collection lookup", error);
     }
   }
-  async getLocalizedPrinting(
-    set: string,
-    collectorNumber: string,
+  async findLocalizedPrintings(
+    name: string,
     language: ScryfallLanguage,
-  ): Promise<ScryfallCard | null> {
+  ): Promise<ScryfallCard[]> {
     try {
-      const response = await firstValueFrom(
+      const namedResponse = await this.request(() =>
         this.httpService.get<ScryfallCard>(
-          `https://api.scryfall.com/cards/${encodeURIComponent(set)}/${encodeURIComponent(collectorNumber)}/${encodeURIComponent(language)}`,
-          this.requestConfig,
+          "https://api.scryfall.com/cards/named",
+          {
+            ...this.requestConfig,
+            params: { fuzzy: name },
+          },
         ),
       );
-      return this.isCard(response.data) ? response.data : null;
+      if (!this.isCard(namedResponse.data)) return [];
+      const response = await this.request(() =>
+        this.httpService.get<SearchResponse>(
+          "https://api.scryfall.com/cards/search",
+          {
+            ...this.requestConfig,
+            params: {
+              q: `oracleid:${namedResponse.data.oracle_id} lang:${language}`,
+              unique: "prints",
+              include_multilingual: true,
+            },
+          },
+        ),
+      );
+      return Array.isArray(response.data.data)
+        ? response.data.data.filter((card) => this.isCard(card))
+        : [];
     } catch (error) {
       if (error instanceof AxiosError && error.response?.status === 404)
-        return null;
-      throw new ServiceUnavailableException(
-        "Scryfall validation is unavailable",
+        return [];
+      this.throwUnavailable("localized printing lookup", error);
+    }
+  }
+  async findPrintedNameCandidates(
+    name: string,
+    language: ScryfallLanguage,
+  ): Promise<ScryfallCard[]> {
+    const fragment = name.trim().slice(1);
+    if (fragment.length < 5) return [];
+    const escapedFragment = fragment.replace(/[\\/^$.*+?()[\]{}|]/g, "\\$&");
+    try {
+      const response = await this.request(() =>
+        this.httpService.get<SearchResponse>(
+          "https://api.scryfall.com/cards/search",
+          {
+            ...this.requestConfig,
+            params: {
+              q: `lang:${language} name:/${escapedFragment}/ include:multilingual`,
+              unique: "prints",
+              include_multilingual: true,
+            },
+          },
+        ),
       );
+      return Array.isArray(response.data.data)
+        ? response.data.data.filter((card) => this.isCard(card))
+        : [];
+    } catch (error) {
+      if (error instanceof AxiosError && error.response?.status === 404)
+        return [];
+      this.throwUnavailable("printed-name fragment search", error);
     }
   }
   async findPrintings(name: string, set: string): Promise<ScryfallCard[]> {
     try {
-      const response = await firstValueFrom(
+      const response = await this.request(() =>
         this.httpService.get<SearchResponse>(
           "https://api.scryfall.com/cards/search",
           {
@@ -87,9 +139,7 @@ export class ScryfallService {
     } catch (error) {
       if (error instanceof AxiosError && error.response?.status === 404)
         return [];
-      throw new ServiceUnavailableException(
-        "Scryfall validation is unavailable",
-      );
+      this.throwUnavailable("name-and-set search", error);
     }
   }
   private get requestConfig() {
@@ -100,6 +150,48 @@ export class ScryfallService {
         "User-Agent": "NearbyCardTrader/1.0 card-scanner",
       },
     };
+  }
+  private request<T>(
+    request: () => Observable<AxiosResponse<T>>,
+  ): Promise<AxiosResponse<T>> {
+    const queued = this.requestQueue.then(async () => {
+      const waitMs = Math.max(
+        0,
+        this.lastRequestStartedAt + SCRYFALL_REQUEST_INTERVAL_MS - Date.now(),
+      );
+      if (waitMs) await new Promise((resolve) => setTimeout(resolve, waitMs));
+      this.lastRequestStartedAt = Date.now();
+      return firstValueFrom(request());
+    });
+    this.requestQueue = queued.then(
+      () => undefined,
+      () => undefined,
+    );
+    return queued;
+  }
+  private throwUnavailable(operation: string, error: unknown): never {
+    if (error instanceof AxiosError) {
+      const status = error.response?.status ?? "no-response";
+      const responseBody = this.serializeLogValue(error.response?.data);
+      this.logger.error(
+        `Scryfall ${operation} failed: HTTP ${status}; axiosCode=${error.code ?? "none"}; response=${responseBody}`,
+      );
+    } else {
+      this.logger.error(
+        `Scryfall ${operation} failed without an HTTP response: ${this.serializeLogValue(error)}`,
+      );
+    }
+    throw new ServiceUnavailableException("Scryfall validation is unavailable");
+  }
+  private serializeLogValue(value: unknown): string {
+    if (value instanceof Error) return `${value.name}: ${value.message}`;
+    if (typeof value === "string") return value;
+    if (value === undefined) return "undefined";
+    try {
+      return JSON.stringify(value);
+    } catch {
+      return String(value);
+    }
   }
   private isCard(value: unknown): value is ScryfallCard {
     if (typeof value !== "object" || value === null) return false;
