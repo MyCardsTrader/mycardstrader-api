@@ -33,8 +33,19 @@ export class CardPrintingResolver {
     };
     if (!candidate.canonicalName && !candidate.printedName)
       return { ...base, status: ScanCardStatus.NOT_FOUND };
-    if (!candidate.set)
+    if (
+      candidate.language &&
+      candidate.language !== "en" &&
+      !this.requiresLocalizedLookup(candidate)
+    )
       return { ...base, status: ScanCardStatus.AMBIGUOUS, candidates: [] };
+    if (this.requiresLocalizedLookup(candidate))
+      return this.resolveLocalized(base, candidate);
+    if (!candidate.set)
+      return this.resolveLocalized(base, {
+        ...candidate,
+        language: "en",
+      });
     const exact = candidate.collectorNumber
       ? exactCards.find(
           (card) =>
@@ -44,55 +55,91 @@ export class CardPrintingResolver {
         )
       : undefined;
     if (exact && this.canonicalIdentityMatches(candidate, exact))
-      return this.resolveExactLanguage(base, candidate, exact);
+      return {
+        ...base,
+        status: ScanCardStatus.RESOLVED,
+        resolved: this.toPrinting(exact),
+      };
     if (!candidate.canonicalName)
-      return { ...base, status: ScanCardStatus.AMBIGUOUS, candidates: [] };
+      return this.resolveLocalized(base, {
+        ...candidate,
+        language: "en",
+      });
     const matches = (
       await this.scryfall.findPrintings(candidate.canonicalName, candidate.set)
     ).filter((card) => this.namesMatch(candidate.canonicalName!, card.name));
     if (matches.length === 1)
-      return this.resolveExactLanguage(base, candidate, matches[0]);
+      return {
+        ...base,
+        status: ScanCardStatus.RESOLVED,
+        resolved: this.toPrinting(matches[0]),
+      };
     if (matches.length > 1)
       return {
         ...base,
         status: ScanCardStatus.AMBIGUOUS,
         candidates: matches.map((card) => this.toPrinting(card)),
       };
-    return { ...base, status: ScanCardStatus.NOT_FOUND };
+    return this.resolveLocalized(base, {
+      ...candidate,
+      language: "en",
+    });
   }
-  private async resolveExactLanguage(
+  private async resolveLocalized(
     base: { id: string; quantity: number; detected: CardRecognitionCandidate },
     candidate: CardRecognitionCandidate,
-    identity: ScryfallCard,
   ): Promise<ResolvedScanCard> {
-    if (
-      candidate.language &&
-      candidate.language !== "en" &&
-      !this.requiresLocalizedLookup(candidate)
-    )
-      return { ...base, status: ScanCardStatus.AMBIGUOUS, candidates: [] };
-    if (!this.requiresLocalizedLookup(candidate))
-      return {
-        ...base,
-        status: ScanCardStatus.RESOLVED,
-        resolved: this.toPrinting(identity),
-      };
-    const localized = await this.scryfall.getLocalizedPrinting(
-      identity.set,
-      identity.collector_number,
-      candidate.language!,
+    const lookupLanguage =
+      candidate.printedName &&
+      candidate.canonicalName &&
+      this.namesMatch(candidate.printedName, candidate.canonicalName)
+        ? "en"
+        : candidate.language!;
+    let printings = await this.scryfall.findLocalizedPrintings(
+      candidate.printedName ?? candidate.canonicalName!,
+      lookupLanguage,
     );
-    if (
-      localized &&
-      this.samePrintingIdentity(identity, localized) &&
-      this.detectedNamesMatch(candidate, localized)
-    )
+    if (!printings.length && candidate.printedName) {
+      const printedNameCandidates =
+        await this.scryfall.findPrintedNameCandidates(
+          candidate.printedName,
+          lookupLanguage,
+        );
+      printings = this.closestPrintedNameMatches(
+        candidate.printedName,
+        printedNameCandidates,
+      );
+    }
+    if (!printings.length && candidate.printedName && candidate.canonicalName) {
+      printings = await this.scryfall.findLocalizedPrintings(
+        candidate.canonicalName,
+        lookupLanguage,
+      );
+    }
+    if (!printings.length) return { ...base, status: ScanCardStatus.NOT_FOUND };
+    const nameMatches = printings.filter(
+      (card) => card.lang === lookupLanguage,
+    );
+    const hintedMatches = nameMatches.filter(
+      (card) =>
+        (!candidate.set ||
+          card.set.toLowerCase() === candidate.set.toLowerCase()) &&
+        (!candidate.collectorNumber ||
+          normalizeCollectorNumber(card.collector_number) ===
+            normalizeCollectorNumber(candidate.collectorNumber)),
+    );
+    const matches = hintedMatches.length ? hintedMatches : nameMatches;
+    if (matches.length === 1)
       return {
         ...base,
         status: ScanCardStatus.RESOLVED,
-        resolved: this.toPrinting(localized),
+        resolved: this.toPrinting(matches[0]),
       };
-    return { ...base, status: ScanCardStatus.AMBIGUOUS, candidates: [] };
+    return {
+      ...base,
+      status: ScanCardStatus.AMBIGUOUS,
+      candidates: matches.map((card) => this.toPrinting(card)),
+    };
   }
   private requiresLocalizedLookup(
     candidate: CardRecognitionCandidate,
@@ -109,39 +156,10 @@ export class CardPrintingResolver {
   ): boolean {
     if (candidate.canonicalName)
       return this.namesMatch(candidate.canonicalName, card.name);
-    if (candidate.printedName && this.requiresLocalizedLookup(candidate))
-      return true;
     return Boolean(
       candidate.printedName &&
       candidate.language === "en" &&
       this.namesMatch(candidate.printedName, card.name),
-    );
-  }
-  private detectedNamesMatch(
-    candidate: CardRecognitionCandidate,
-    card: ScryfallCard,
-  ): boolean {
-    const canonicalMatches =
-      !candidate.canonicalName ||
-      this.namesMatch(candidate.canonicalName, card.name);
-    const printedMatches =
-      !candidate.printedName ||
-      Boolean(
-        card.printed_name &&
-        this.namesMatch(candidate.printedName, card.printed_name),
-      );
-    return (
-      canonicalMatches && printedMatches && card.lang === candidate.language
-    );
-  }
-  private samePrintingIdentity(
-    reference: ScryfallCard,
-    localized: ScryfallCard,
-  ): boolean {
-    return (
-      reference.oracle_id === localized.oracle_id &&
-      reference.set.toLowerCase() === localized.set.toLowerCase() &&
-      reference.collector_number === localized.collector_number
     );
   }
   private namesMatch(candidateName: string, scryfallName: string): boolean {
@@ -150,10 +168,51 @@ export class CardPrintingResolver {
       .map((name) => this.normalize(name))
       .includes(candidate);
   }
+  private closestPrintedNameMatches(
+    detectedName: string,
+    cards: ScryfallCard[],
+  ): ScryfallCard[] {
+    const withDistances = cards
+      .filter((card) => card.printed_name)
+      .map((card) => ({
+        card,
+        distance: this.editDistance(
+          this.normalize(detectedName),
+          this.normalize(card.printed_name!),
+        ),
+      }));
+    const minimumDistance = Math.min(
+      ...withDistances.map(({ distance }) => distance),
+    );
+    return withDistances
+      .filter(({ distance }) => distance === minimumDistance)
+      .map(({ card }) => card);
+  }
+  private editDistance(left: string, right: string): number {
+    let previous = Array.from(
+      { length: right.length + 1 },
+      (_, index) => index,
+    );
+    for (let leftIndex = 1; leftIndex <= left.length; leftIndex += 1) {
+      const current = [leftIndex];
+      for (let rightIndex = 1; rightIndex <= right.length; rightIndex += 1) {
+        current[rightIndex] = Math.min(
+          current[rightIndex - 1] + 1,
+          previous[rightIndex] + 1,
+          previous[rightIndex - 1] +
+            (left[leftIndex - 1] === right[rightIndex - 1] ? 0 : 1),
+        );
+      }
+      previous = current;
+    }
+    return previous[right.length];
+  }
   private normalize(name: string): string {
     return name
       .normalize("NFKD")
       .replace(/[\u0300-\u036f]/g, "")
+      .replace(/œ/gi, "oe")
+      .replace(/æ/gi, "ae")
       .replace(/[’‘]/g, "'")
       .replace(/\s+/g, " ")
       .trim()

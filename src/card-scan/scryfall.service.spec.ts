@@ -1,4 +1,4 @@
-import { ServiceUnavailableException } from "@nestjs/common";
+import { Logger, ServiceUnavailableException } from "@nestjs/common";
 import { AxiosError } from "axios";
 import { of, throwError } from "rxjs";
 import { ScryfallService } from "./scryfall.service";
@@ -16,6 +16,7 @@ describe("ScryfallService", () => {
   let service: ScryfallService;
   beforeEach(() => {
     jest.clearAllMocks();
+    jest.spyOn(Logger.prototype, "error").mockImplementation(() => undefined);
     service = new ScryfallService(http as never, config as never);
   });
   it("skips collection calls without exact identifiers", async () => {
@@ -42,6 +43,29 @@ describe("ScryfallService", () => {
         },
       },
     );
+  });
+  it("keeps concurrent Scryfall request starts at least 600 ms apart", async () => {
+    jest.useFakeTimers();
+    jest.setSystemTime(new Date("2026-01-01T00:00:00.000Z"));
+    http.post.mockReturnValue(of({ data: { data: [valid] } }));
+    try {
+      const first = service.getPrintingDetails([
+        { set: "cmm", collectorNumber: "395", quantity: 1 },
+      ]);
+      const second = service.getPrintingDetails([
+        { set: "cmm", collectorNumber: "396", quantity: 1 },
+      ]);
+      await first;
+      await Promise.resolve();
+      expect(http.post).toHaveBeenCalledTimes(1);
+      await jest.advanceTimersByTimeAsync(599);
+      expect(http.post).toHaveBeenCalledTimes(1);
+      await jest.advanceTimersByTimeAsync(1);
+      await second;
+      expect(http.post).toHaveBeenCalledTimes(2);
+    } finally {
+      jest.useRealTimers();
+    }
   });
   it("removes OCR padding from numeric collection identifiers only", async () => {
     http.post.mockReturnValue(of({ data: { data: [] } }));
@@ -77,40 +101,135 @@ describe("ScryfallService", () => {
         { set: "cmm", collectorNumber: "395", quantity: 1 },
       ]),
     ).rejects.toThrow(ServiceUnavailableException);
+    expect(Logger.prototype.error).toHaveBeenCalledWith(
+      "Scryfall collection lookup failed without an HTTP response: Error: ",
+    );
   });
-  it("gets a localized printing by set, collector number, and language", async () => {
+  it("logs the exact Scryfall response and HTTP status", async () => {
+    const error = new AxiosError("rate limited", "ERR_BAD_RESPONSE");
+    error.response = {
+      status: 429,
+      data: {
+        object: "error",
+        code: "rate_limited",
+        details: "You are requesting too quickly.",
+      },
+    } as never;
+    http.post.mockReturnValue(throwError(() => error));
+    await expect(
+      service.getPrintingDetails([
+        { set: "cmm", collectorNumber: "395", quantity: 1 },
+      ]),
+    ).rejects.toThrow(ServiceUnavailableException);
+    expect(Logger.prototype.error).toHaveBeenCalledWith(
+      'Scryfall collection lookup failed: HTTP 429; axiosCode=ERR_BAD_RESPONSE; response={"object":"error","code":"rate_limited","details":"You are requesting too quickly."}',
+    );
+  });
+  it("finds localized printings from a fuzzy card name", async () => {
     const french = {
       ...valid,
       lang: "fr" as const,
       printed_name: "Anneau solaire",
     };
-    http.get.mockReturnValue(of({ data: french }));
+    http.get
+      .mockReturnValueOnce(of({ data: valid }))
+      .mockReturnValueOnce(of({ data: { data: [french, { id: "bad" }] } }));
     await expect(
-      service.getLocalizedPrinting("c m", "3/95", "fr"),
-    ).resolves.toEqual(french);
-    expect(http.get).toHaveBeenCalledWith(
-      expect.stringContaining("c%20m/3%2F95/fr"),
-      expect.objectContaining({ headers: expect.any(Object) }),
+      service.findLocalizedPrintings("Anneau solaire", "fr"),
+    ).resolves.toEqual([french]);
+    expect(http.get).toHaveBeenNthCalledWith(
+      1,
+      "https://api.scryfall.com/cards/named",
+      expect.objectContaining({ params: { fuzzy: "Anneau solaire" } }),
+    );
+    expect(http.get).toHaveBeenNthCalledWith(
+      2,
+      "https://api.scryfall.com/cards/search",
+      expect.objectContaining({
+        params: {
+          q: `oracleid:${valid.oracle_id} lang:fr`,
+          unique: "prints",
+          include_multilingual: true,
+        },
+      }),
     );
   });
-  it("returns null for malformed localized data", async () => {
+  it("returns no localized printings for malformed fuzzy data", async () => {
     http.get.mockReturnValue(of({ data: { id: "bad" } }));
     await expect(
-      service.getLocalizedPrinting("cmm", "395", "fr"),
-    ).resolves.toBeNull();
+      service.findLocalizedPrintings("Anneau solaire", "fr"),
+    ).resolves.toEqual([]);
+    expect(http.get).toHaveBeenCalledTimes(1);
   });
-  it("returns null when a localized printing does not exist", async () => {
+  it("returns no localized printings for malformed search data", async () => {
+    http.get
+      .mockReturnValueOnce(of({ data: valid }))
+      .mockReturnValueOnce(of({ data: {} }));
+    await expect(
+      service.findLocalizedPrintings("Anneau solaire", "fr"),
+    ).resolves.toEqual([]);
+  });
+  it("returns no localized printings when the fuzzy card does not exist", async () => {
     const error = new AxiosError();
     error.response = { status: 404 } as never;
     http.get.mockReturnValue(throwError(() => error));
     await expect(
-      service.getLocalizedPrinting("cmm", "395", "fr"),
-    ).resolves.toBeNull();
+      service.findLocalizedPrintings("Carte absente", "fr"),
+    ).resolves.toEqual([]);
   });
   it("maps localized lookup failures", async () => {
     http.get.mockReturnValue(throwError(() => new Error()));
     await expect(
-      service.getLocalizedPrinting("cmm", "395", "fr"),
+      service.findLocalizedPrintings("Anneau solaire", "fr"),
+    ).rejects.toThrow(ServiceUnavailableException);
+  });
+  it("searches multilingual printed-name fragments", async () => {
+    const french = {
+      ...valid,
+      lang: "fr" as const,
+      printed_name: "Fenaison",
+    };
+    http.get.mockReturnValue(of({ data: { data: [french, { id: "bad" }] } }));
+    await expect(
+      service.findPrintedNameCandidates("R/enaison", "fr"),
+    ).resolves.toEqual([french]);
+    expect(http.get).toHaveBeenCalledWith(
+      "https://api.scryfall.com/cards/search",
+      expect.objectContaining({
+        params: {
+          q: "lang:fr name:/\\/enaison/ include:multilingual",
+          unique: "prints",
+          include_multilingual: true,
+        },
+      }),
+    );
+  });
+  it("skips printed-name fragment searches that are too short", async () => {
+    await expect(
+      service.findPrintedNameCandidates("Reap", "fr"),
+    ).resolves.toEqual([]);
+    expect(http.get).not.toHaveBeenCalled();
+  });
+  it("handles missing and failed printed-name fragment searches", async () => {
+    http.get.mockReturnValueOnce(of({ data: {} }));
+    await expect(
+      service.findPrintedNameCandidates("Renaison", "fr"),
+    ).resolves.toEqual([]);
+    const notFound = new AxiosError();
+    notFound.response = { status: 404 } as never;
+    http.get.mockReturnValueOnce(throwError(() => notFound));
+    await expect(
+      service.findPrintedNameCandidates("Renaison", "fr"),
+    ).resolves.toEqual([]);
+    http.get.mockReturnValueOnce(throwError(() => new Error("network")));
+    await expect(
+      service.findPrintedNameCandidates("Renaison", "fr"),
+    ).rejects.toThrow(ServiceUnavailableException);
+    http.get.mockReturnValueOnce(
+      throwError(() => new AxiosError("network without response")),
+    );
+    await expect(
+      service.findPrintedNameCandidates("Renaison", "fr"),
     ).rejects.toThrow(ServiceUnavailableException);
   });
   it("searches valid printings with headers", async () => {
@@ -171,7 +290,24 @@ describe("ScryfallService localized network branch", () => {
       { getOrThrow: () => 100 } as never,
     );
     await expect(
-      service.getLocalizedPrinting("cmm", "395", "fr"),
+      service.findLocalizedPrintings("Anneau solaire", "fr"),
     ).rejects.toThrow(ServiceUnavailableException);
+  });
+});
+
+describe("ScryfallService error log serialization", () => {
+  const service = new ScryfallService({} as never, {} as never) as any;
+
+  it("serializes strings and undefined values", () => {
+    expect(service.serializeLogValue("upstream message")).toBe(
+      "upstream message",
+    );
+    expect(service.serializeLogValue(undefined)).toBe("undefined");
+  });
+
+  it("falls back safely for circular response bodies", () => {
+    const circular: Record<string, unknown> = {};
+    circular.self = circular;
+    expect(service.serializeLogValue(circular)).toBe("[object Object]");
   });
 });

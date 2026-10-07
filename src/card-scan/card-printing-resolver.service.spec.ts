@@ -13,7 +13,8 @@ const card = (overrides: Partial<ScryfallCard> = {}): ScryfallCard => ({
 describe("CardPrintingResolver", () => {
   const scryfall = {
     getPrintingDetails: jest.fn(),
-    getLocalizedPrinting: jest.fn(),
+    findLocalizedPrintings: jest.fn(),
+    findPrintedNameCandidates: jest.fn(),
     findPrintings: jest.fn(),
   };
   let resolver: CardPrintingResolver;
@@ -21,7 +22,8 @@ describe("CardPrintingResolver", () => {
     jest.resetAllMocks();
     resolver = new CardPrintingResolver(scryfall as unknown as ScryfallService);
     scryfall.getPrintingDetails.mockResolvedValue([]);
-    scryfall.getLocalizedPrinting.mockResolvedValue(null);
+    scryfall.findLocalizedPrintings.mockResolvedValue([]);
+    scryfall.findPrintedNameCandidates.mockResolvedValue([]);
     scryfall.findPrintings.mockResolvedValue([]);
   });
   it("resolves an exact English printing", async () => {
@@ -46,7 +48,7 @@ describe("CardPrintingResolver", () => {
         collectorNumber: "395",
       },
     });
-    expect(scryfall.getLocalizedPrinting).not.toHaveBeenCalled();
+    expect(scryfall.findLocalizedPrintings).not.toHaveBeenCalled();
   });
   it("resolves a zero-padded collector number without falling back to ambiguous printings", async () => {
     scryfall.getPrintingDetails.mockResolvedValue([
@@ -72,10 +74,9 @@ describe("CardPrintingResolver", () => {
     expect(scryfall.findPrintings).not.toHaveBeenCalled();
   });
   it("still validates the localized language for zero-padded numbers", async () => {
-    scryfall.getPrintingDetails.mockResolvedValue([card()]);
-    scryfall.getLocalizedPrinting.mockResolvedValue(
+    scryfall.findLocalizedPrintings.mockResolvedValue([
       card({ id: "fr-id", lang: "fr", printed_name: "Anneau solaire" }),
-    );
+    ]);
     const [result] = await resolver.resolveAll([
       {
         canonicalName: "Sol Ring",
@@ -87,9 +88,8 @@ describe("CardPrintingResolver", () => {
         quantity: 1,
       },
     ]);
-    expect(scryfall.getLocalizedPrinting).toHaveBeenCalledWith(
-      "cmm",
-      "395",
+    expect(scryfall.findLocalizedPrintings).toHaveBeenCalledWith(
+      "Anneau solaire",
       "fr",
     );
     expect(result.status).toBe(ScanCardStatus.RESOLVED);
@@ -171,7 +171,54 @@ describe("CardPrintingResolver", () => {
       candidates: [],
     });
   });
-  it("keeps a localized-only name ambiguous without an exact identity", async () => {
+  it("returns not_found when an English named card has no fuzzy match", async () => {
+    const [result] = await resolver.resolveAll([
+      { canonicalName: "Sol Ring", language: "en", quantity: 1 },
+    ]);
+    expect(result).toMatchObject({
+      status: ScanCardStatus.NOT_FOUND,
+    });
+  });
+  it("resolves an English printed-only card through fuzzy fallback", async () => {
+    scryfall.findLocalizedPrintings.mockResolvedValue([
+      card({ id: "sol-ring-en" }),
+    ]);
+    const [result] = await resolver.resolveAll([
+      { printedName: "Sol Ring", language: "en", set: "cmm", quantity: 1 },
+    ]);
+    expect(result).toMatchObject({
+      status: ScanCardStatus.RESOLVED,
+      resolved: { scryfallId: "sol-ring-en" },
+    });
+  });
+  it("finds English cards by name when the detected set is wrong", async () => {
+    scryfall.findLocalizedPrintings.mockResolvedValue([
+      card({
+        id: "fissure",
+        name: "Fissure",
+        set: "drk",
+        collector_number: "70",
+      }),
+    ]);
+    const [result] = await resolver.resolveAll([
+      {
+        printedName: "Fissure",
+        canonicalName: "Fissure",
+        language: "en",
+        set: "10e",
+        quantity: 1,
+      },
+    ]);
+    expect(result).toMatchObject({
+      status: ScanCardStatus.RESOLVED,
+      resolved: { scryfallId: "fissure", set: "drk" },
+    });
+    expect(scryfall.findLocalizedPrintings).toHaveBeenCalledWith(
+      "Fissure",
+      "en",
+    );
+  });
+  it("returns not_found when a localized-only name has no fuzzy match", async () => {
     const [result] = await resolver.resolveAll([
       {
         printedName: "Anneau solaire",
@@ -181,18 +228,19 @@ describe("CardPrintingResolver", () => {
         quantity: 1,
       },
     ]);
-    expect(result.status).toBe(ScanCardStatus.AMBIGUOUS);
-    expect(scryfall.findPrintings).not.toHaveBeenCalled();
+    expect(result.status).toBe(ScanCardStatus.NOT_FOUND);
+    expect(scryfall.findLocalizedPrintings).toHaveBeenCalledWith(
+      "Anneau solaire",
+      "fr",
+    );
   });
   it("resolves a French printing and stores both names", async () => {
-    const english = card();
     const french = card({
       id: "fr-id",
       lang: "fr",
       printed_name: "Anneau solaire",
     });
-    scryfall.getPrintingDetails.mockResolvedValue([english]);
-    scryfall.getLocalizedPrinting.mockResolvedValue(french);
+    scryfall.findLocalizedPrintings.mockResolvedValue([french]);
     const [result] = await resolver.resolveAll([
       {
         canonicalName: "Sol Ring",
@@ -204,9 +252,8 @@ describe("CardPrintingResolver", () => {
         quantity: 1,
       },
     ]);
-    expect(scryfall.getLocalizedPrinting).toHaveBeenCalledWith(
-      "cmm",
-      "395",
+    expect(scryfall.findLocalizedPrintings).toHaveBeenCalledWith(
+      "Anneau solaire",
       "fr",
     );
     expect(result).toMatchObject({
@@ -220,10 +267,9 @@ describe("CardPrintingResolver", () => {
     });
   });
   it("can establish the canonical identity from a localized printed name", async () => {
-    scryfall.getPrintingDetails.mockResolvedValue([card()]);
-    scryfall.getLocalizedPrinting.mockResolvedValue(
+    scryfall.findLocalizedPrintings.mockResolvedValue([
       card({ id: "fr-id", lang: "fr", printed_name: "Anneau solaire" }),
-    );
+    ]);
     const [result] = await resolver.resolveAll([
       {
         printedName: "Anneau solaire",
@@ -237,18 +283,24 @@ describe("CardPrintingResolver", () => {
     expect(result.status).toBe(ScanCardStatus.RESOLVED);
     expect(result.resolved?.name).toBe("Sol Ring");
   });
-  it.each([
-    null,
-    card({ lang: "fr", printed_name: "Mauvais nom" }),
-    card({
-      lang: "fr",
-      printed_name: "Anneau solaire",
-      oracle_id: "different",
-    }),
-    card({ lang: "de", printed_name: "Anneau solaire" }),
-  ])("keeps invalid localized validation ambiguous", async (localized) => {
-    scryfall.getPrintingDetails.mockResolvedValue([card()]);
-    scryfall.getLocalizedPrinting.mockResolvedValue(localized);
+  it("returns not_found when fuzzy localized validation finds nothing", async () => {
+    const [result] = await resolver.resolveAll([
+      {
+        canonicalName: "Sol Ring",
+        printedName: "Anneau solaire",
+        language: "fr",
+        languageConfidence: 1,
+        set: "cmm",
+        collectorNumber: "395",
+        quantity: 1,
+      },
+    ]);
+    expect(result.status).toBe(ScanCardStatus.NOT_FOUND);
+  });
+  it("keeps localized printings in another language ambiguous", async () => {
+    scryfall.findLocalizedPrintings.mockResolvedValue([
+      card({ lang: "de", printed_name: "Anneau solaire" }),
+    ]);
     const [result] = await resolver.resolveAll([
       {
         canonicalName: "Sol Ring",
@@ -261,6 +313,185 @@ describe("CardPrintingResolver", () => {
       },
     ]);
     expect(result.status).toBe(ScanCardStatus.AMBIGUOUS);
+  });
+  it("returns localized versions for user review when printing hints are absent", async () => {
+    scryfall.findLocalizedPrintings.mockResolvedValue([
+      card({ id: "fr-1", lang: "fr", printed_name: "Anneau solaire" }),
+      card({
+        id: "fr-2",
+        lang: "fr",
+        set: "clb",
+        collector_number: "865",
+        printed_name: "Anneau solaire",
+      }),
+    ]);
+    const [result] = await resolver.resolveAll([
+      {
+        printedName: "Anneau solaire",
+        language: "fr",
+        languageConfidence: 1,
+        quantity: 1,
+      },
+    ]);
+    expect(result.status).toBe(ScanCardStatus.AMBIGUOUS);
+    expect(result.candidates?.map((candidate) => candidate.scryfallId)).toEqual(
+      ["fr-1", "fr-2"],
+    );
+  });
+  it("resolves one recognized version when OCR printing hints do not match", async () => {
+    scryfall.findLocalizedPrintings.mockResolvedValue([
+      card({
+        id: "heartstone-fr",
+        lang: "fr",
+        set: "sth",
+        collector_number: "134",
+        printed_name: "Pierrecoeur",
+      }),
+    ]);
+    const [result] = await resolver.resolveAll([
+      {
+        printedName: "Pierrecœur",
+        canonicalName: "Heartstone",
+        language: "fr",
+        languageConfidence: 1,
+        set: "1ed",
+        collectorNumber: "148",
+        quantity: 1,
+      },
+    ]);
+    expect(result).toMatchObject({
+      status: ScanCardStatus.RESOLVED,
+      resolved: { scryfallId: "heartstone-fr" },
+    });
+  });
+  it("uses English candidates when the printed and canonical names are identical", async () => {
+    scryfall.findLocalizedPrintings.mockResolvedValue([
+      card({
+        id: "portcullis-en",
+        oracle_id: "6230c179-0263-4fa4-b0ff-f2cb621de147",
+        name: "Portcullis",
+        lang: "en",
+        set: "sth",
+        collector_number: "139",
+      }),
+    ]);
+    const [result] = await resolver.resolveAll([
+      {
+        printedName: "Portcullis",
+        canonicalName: "Portcullis",
+        language: "fr",
+        languageConfidence: 1,
+        set: "1ed",
+        collectorNumber: "152",
+        quantity: 1,
+      },
+    ]);
+    expect(result).toMatchObject({
+      status: ScanCardStatus.RESOLVED,
+      resolved: {
+        scryfallId: "portcullis-en",
+        language: "en",
+      },
+    });
+    expect(scryfall.findLocalizedPrintings).toHaveBeenCalledWith(
+      "Portcullis",
+      "en",
+    );
+  });
+  it("falls back to the canonical name when the printed name finds nothing", async () => {
+    scryfall.findLocalizedPrintings
+      .mockResolvedValueOnce([])
+      .mockResolvedValueOnce([
+        card({
+          id: "fr-id",
+          name: "Phyrexian Grimoire",
+          lang: "fr",
+          printed_name: "Grimoire phyrexian",
+          set: "tmp",
+          collector_number: "301",
+        }),
+      ]);
+    const [result] = await resolver.resolveAll([
+      {
+        printedName: "Nom OCR incorrect",
+        canonicalName: "Phyrexian Grimoire",
+        language: "fr",
+        languageConfidence: 1,
+        quantity: 1,
+      },
+    ]);
+    expect(scryfall.findLocalizedPrintings).toHaveBeenNthCalledWith(
+      2,
+      "Phyrexian Grimoire",
+      "fr",
+    );
+    expect(result.status).toBe(ScanCardStatus.RESOLVED);
+  });
+  it("corrects a one-letter localized OCR error with the closest printed name", async () => {
+    scryfall.findPrintedNameCandidates.mockResolvedValue([
+      card({
+        id: "altar-reap-fr",
+        name: "Altar's Reap",
+        printed_name: "Fenaison de l'autel",
+        lang: "fr",
+        set: "c15",
+        collector_number: "112",
+      }),
+      card({
+        id: "reap-fr",
+        name: "Reap",
+        printed_name: "Fenaison",
+        lang: "fr",
+        set: "tmp",
+        collector_number: "247",
+      }),
+    ]);
+    const [result] = await resolver.resolveAll([
+      {
+        printedName: "Renaison",
+        canonicalName: "Reanimation",
+        language: "fr",
+        languageConfidence: 1,
+        set: "10e",
+        quantity: 1,
+      },
+    ]);
+    expect(scryfall.findPrintedNameCandidates).toHaveBeenCalledWith(
+      "Renaison",
+      "fr",
+    );
+    expect(result).toMatchObject({
+      status: ScanCardStatus.RESOLVED,
+      resolved: {
+        scryfallId: "reap-fr",
+        name: "Reap",
+        printedName: "Fenaison",
+      },
+    });
+  });
+  it("filters localized versions with the available set hint", async () => {
+    scryfall.findLocalizedPrintings.mockResolvedValue([
+      card({ id: "fr-1", lang: "fr", printed_name: "Anneau solaire" }),
+      card({
+        id: "fr-2",
+        lang: "fr",
+        set: "clb",
+        printed_name: "Anneau solaire",
+      }),
+    ]);
+    const [result] = await resolver.resolveAll([
+      {
+        printedName: "Anneau solaire",
+        language: "fr",
+        languageConfidence: 1,
+        set: "CLB",
+        quantity: 1,
+      },
+    ]);
+    expect(result).toMatchObject({
+      status: ScanCardStatus.RESOLVED,
+      resolved: { scryfallId: "fr-2" },
+    });
   });
   it("keeps a low-confidence non-English language ambiguous without calling Scryfall again", async () => {
     scryfall.getPrintingDetails.mockResolvedValue([card()]);
@@ -275,17 +506,15 @@ describe("CardPrintingResolver", () => {
       },
     ]);
     expect(result.status).toBe(ScanCardStatus.AMBIGUOUS);
-    expect(scryfall.getLocalizedPrinting).not.toHaveBeenCalled();
+    expect(scryfall.findLocalizedPrintings).not.toHaveBeenCalled();
   });
-  it("validates a localized printing after a unique fallback", async () => {
-    scryfall.findPrintings.mockResolvedValue([card()]);
-    scryfall.getLocalizedPrinting.mockResolvedValue(
+  it("uses the canonical name when no localized printed name is available", async () => {
+    scryfall.findLocalizedPrintings.mockResolvedValue([
       card({ id: "fr-id", lang: "fr", printed_name: "Anneau solaire" }),
-    );
+    ]);
     const [result] = await resolver.resolveAll([
       {
         canonicalName: "Sol Ring",
-        printedName: "Anneau solaire",
         language: "fr",
         languageConfidence: 1,
         set: "cmm",
@@ -293,6 +522,10 @@ describe("CardPrintingResolver", () => {
       },
     ]);
     expect(result.status).toBe(ScanCardStatus.RESOLVED);
+    expect(scryfall.findLocalizedPrintings).toHaveBeenCalledWith(
+      "Sol Ring",
+      "fr",
+    );
   });
   it("matches one face of a double-faced canonical name", async () => {
     scryfall.getPrintingDetails.mockResolvedValue([
@@ -308,6 +541,11 @@ describe("CardPrintingResolver", () => {
       },
     ]);
     expect(result.status).toBe(ScanCardStatus.RESOLVED);
+  });
+  it("normalizes French ligatures when matching printed names", () => {
+    const internalResolver = resolver as any;
+    expect(internalResolver.namesMatch("Pierrecœur", "Pierrecoeur")).toBe(true);
+    expect(internalResolver.namesMatch("Æther", "Aether")).toBe(true);
   });
 });
 
@@ -335,42 +573,5 @@ describe("CardPrintingResolver multilingual validation branches", () => {
     { language: "fr", languageConfidence: 0.79, quantity: 1 },
   ])("does not require localized lookup for %j", (candidate) => {
     expect(resolver.requiresLocalizedLookup(candidate)).toBe(false);
-  });
-  it("validates optional detected canonical and printed names", () => {
-    expect(
-      resolver.detectedNamesMatch(
-        { language: "fr", quantity: 1 },
-        card({ lang: "fr" }),
-      ),
-    ).toBe(true);
-    expect(
-      resolver.detectedNamesMatch(
-        { canonicalName: "Wrong", language: "fr", quantity: 1 },
-        card({ lang: "fr" }),
-      ),
-    ).toBe(false);
-    expect(
-      resolver.detectedNamesMatch(
-        { printedName: "Anneau solaire", language: "fr", quantity: 1 },
-        card({ lang: "fr" }),
-      ),
-    ).toBe(false);
-  });
-  it("rejects set and collector mismatches after Oracle identity matches", () => {
-    expect(
-      resolver.samePrintingIdentity(
-        english,
-        card({ lang: "fr", set: "other" }),
-      ),
-    ).toBe(false);
-    expect(
-      resolver.samePrintingIdentity(
-        english,
-        card({ lang: "fr", collector_number: "396" }),
-      ),
-    ).toBe(false);
-    expect(resolver.samePrintingIdentity(english, card({ lang: "fr" }))).toBe(
-      true,
-    );
   });
 });
