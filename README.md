@@ -68,6 +68,15 @@ Variables utilisées en développement :
 - `OPENROUTER_MODEL` (default: `qwen/qwen3.7-flash`)
 - `CARD_SCAN_HTTP_TIMEOUT_MS` (optional, default: `15000`)
 - `CARD_SCAN_MAX_IMAGE_BYTES` (optional, default: `10485760`)
+- `CARD_SCAN_STORAGE_ENDPOINT` (default local: `http://localhost:9000`)
+- `CARD_SCAN_STORAGE_REGION` (default: `us-east-1`)
+- `CARD_SCAN_STORAGE_BUCKET` (default: `card-scan-dataset`)
+- `CARD_SCAN_STORAGE_ACCESS_KEY_ID` / `CARD_SCAN_STORAGE_SECRET_ACCESS_KEY`
+- `CARD_SCAN_STORAGE_FORCE_PATH_STYLE` (`true` for local MinIO)
+- `CARD_SCAN_CROP_PADDING_RATIO` (default: `0.02`)
+- `CARD_SCAN_CROP_FORMAT` (currently `webp`)
+- `CARD_SCAN_CROP_QUALITY` (default: `90`)
+- `CARD_SCAN_PROMPT_VERSION` / `CARD_SCAN_PIPELINE_VERSION` (default: `v1`)
 
 Transactional emails are sent with [Resend](https://resend.com). `EMAIL_FROM` must use a sender address on a domain verified in Resend, for example:
 
@@ -105,7 +114,7 @@ Arrêter MongoDB :
 npm run docker:dev:down
 ```
 
-Le service expose Mongo sur `localhost:27017` et persiste les données dans le volume Docker `mongo_data`.
+Mongo est exposé sur `localhost:27017`. Le même Compose démarre MinIO sur `localhost:9000` (console sur `localhost:9001`) et crée le bucket privé `card-scan-dataset`. Les données sont persistées dans les volumes `mongo_data` et `minio_data`. Les identifiants MinIO locaux sont `mycardstrader` / `mycardstrader-local-secret` et ne doivent pas être réutilisés hors développement.
 
 À chaque `npm run docker:dev:up`, le service `mongo-seed` charge [`docker/mongo/foils.json`](./docker/mongo/foils.json) dans la collection `mycardstrader.foils`. L’import utilise l’identifiant Mongo comme clé d’upsert : il crée le document s’il est absent et le met à jour sans produire de doublon.
 
@@ -157,6 +166,8 @@ http://localhost:3000/api
 ## Card photo scans
 
 Authenticated users can upload one JPEG, PNG, or WebP image with `POST /card-scans` using multipart field `image`. Processing is synchronous: OpenRouter visually identifies candidates, then the API validates printing details through Scryfall before storing a temporary scan. Exact English set and collector-number hints are resolved with one Scryfall collection call; leading zeroes in purely numeric collector numbers are ignored for lookup and matching while the detected value is preserved; failed hints fall back to strict canonical-name-and-set searches. For reliably detected non-English cards, the API requests `GET /cards/named?fuzzy=:name`, falling back from the printed name to the canonical name when necessary, then retrieves the localized printings for the resulting Oracle ID. Printed and canonical names are both accepted as identity evidence. When both detected names are the same English name, English printings are used even if the model reported another language. Set and collector-number hints narrow the versions when they match; conflicting hints do not discard recognized versions. One remaining printing is resolved automatically, while multiple versions are returned for user review. No card is added to a binder.
+
+OpenRouter returns one normalized bounding box per physical card. The isolated card-scan pipeline rotates the source according to EXIF, adds the configured crop margin, writes one deterministic WebP object per card to private S3-compatible storage, and idempotently upserts one document into `card_scan_samples`. Automatic Scryfall matches are recorded as `auto_verified`; a manual qualification changes the current label to `user_verified` while retaining the original detection and label history. Importing a scan does not delete these dataset samples or crops. AWS S3, Cloudflare R2 and MinIO use the same adapter through endpoint, region, credentials and path-style configuration.
 
 If Scryfall's named fuzzy endpoint cannot recognize an OCR-transcribed printed name, the scanner performs one rate-limited multilingual fragment search and locally keeps the closest printed-name matches by edit distance. English cards also use the named fuzzy fallback when a detected set does not contain the card.
 
@@ -249,7 +260,7 @@ Ou en une seule commande pour le démarrage + exécution :
 npm run test:e2e:local
 ```
 
-La stack e2e utilise [docker-compose.e2e.yml](./docker-compose.e2e.yml) et expose Mongo sur `localhost:27018`, ce qui évite les collisions avec la base de développement locale sur `27017`.
+La stack e2e utilise [docker-compose.e2e.yml](./docker-compose.e2e.yml), expose Mongo sur `localhost:27018` et MinIO sur `localhost:9010` (console `9011`), ce qui évite les collisions avec les services de développement.
 
 ## Qualité
 
