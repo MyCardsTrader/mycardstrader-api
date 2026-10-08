@@ -1,6 +1,6 @@
 import { BadRequestException, NotFoundException } from "@nestjs/common";
 import { CardScanService } from "./card-scan.service";
-import { CardScanStatus, ScanCardStatus } from "./card-scan.types";
+import { CardScanStatus, ScanCardStatus } from "../card-scan.types";
 const printing = {
   scryfallId: "11111111-1111-4111-8111-111111111111",
   oracleId: "22222222-2222-4222-8222-222222222222",

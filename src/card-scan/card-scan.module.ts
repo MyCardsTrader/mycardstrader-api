@@ -4,22 +4,22 @@ import { Module } from "@nestjs/common";
 import { MongooseModule } from "@nestjs/mongoose";
 import { AuthModule } from "../auth/auth.module";
 import { UserModule } from "../user/user.module";
-import { BulkImportAccessGuard } from "./bulk-import-access.guard";
-import { CardPrintingResolver } from "./card-printing-resolver.service";
-import { CardScanController } from "./card-scan.controller";
-import { CardScanService } from "./card-scan.service";
-import { OpenRouterService } from "./openrouter.service";
-import { CardScan, CardScanSchema } from "./schema/card-scan.schema";
-import { ScryfallService } from "./scryfall.service";
-import { CardCropStorageService } from "./card-crop-storage.service";
-import { CardCropService } from "./card-crop.service";
-import { CreateDatasetSamplesService } from "./create-dataset-samples.service";
-import { ProcessCardScanService } from "./process-card-scan.service";
+import { CardScanController } from "./controllers/card-scan.controller";
+import { CardCropStorageService } from "./dataset/card-crop-storage.service";
+import { CardCropService } from "./dataset/card-crop.service";
+import { CreateDatasetSamplesService } from "./dataset/create-dataset-samples.service";
+import { VerifyDatasetSampleService } from "./dataset/verify-dataset-sample.service";
+import { BulkImportAccessGuard } from "./guards/bulk-import-access.guard";
 import {
   CardScanSample,
   CardScanSampleSchema,
-} from "./schema/card-scan-sample.schema";
-import { VerifyDatasetSampleService } from "./verify-dataset-sample.service";
+} from "./schemas/card-scan-sample.schema";
+import { CardScan, CardScanSchema } from "./schemas/card-scan.schema";
+import { CardPrintingResolver } from "./services/card-printing-resolver.service";
+import { CardScanService } from "./services/card-scan.service";
+import { OpenRouterService } from "./services/openrouter.service";
+import { ProcessCardScanService } from "./services/process-card-scan.service";
+import { ScryfallService } from "./services/scryfall.service";
 @Module({
   imports: [
     AuthModule,

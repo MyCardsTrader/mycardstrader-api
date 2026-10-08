@@ -8,14 +8,14 @@ import { ConfigService } from "@nestjs/config";
 import { InjectModel } from "@nestjs/mongoose";
 import { Model } from "mongoose";
 import { ProcessCardScanService } from "./process-card-scan.service";
-import { VerifyDatasetSampleService } from "./verify-dataset-sample.service";
+import { VerifyDatasetSampleService } from "../dataset/verify-dataset-sample.service";
 import {
   CardScanStatus,
   ResolvedScanCard,
   UploadedImage,
   ScanCardStatus,
-} from "./card-scan.types";
-import { CardScan, CardScanDocument } from "./schema/card-scan.schema";
+} from "../card-scan.types";
+import { CardScan, CardScanDocument } from "../schemas/card-scan.schema";
 const SUPPORTED_IMAGE_TYPES = new Set([
   "image/jpeg",
   "image/png",

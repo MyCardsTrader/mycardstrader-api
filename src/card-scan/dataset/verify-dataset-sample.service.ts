@@ -2,11 +2,11 @@ import { Injectable, NotFoundException } from "@nestjs/common";
 import { InjectModel } from "@nestjs/mongoose";
 import { Model } from "mongoose";
 import { DatasetLabelStatus } from "./card-scan-sample.types";
-import { ValidatedPrinting } from "./card-scan.types";
+import { ValidatedPrinting } from "../card-scan.types";
 import {
   CardScanSample,
   CardScanSampleDocument,
-} from "./schema/card-scan-sample.schema";
+} from "../schemas/card-scan-sample.schema";
 
 @Injectable()
 export class VerifyDatasetSampleService {

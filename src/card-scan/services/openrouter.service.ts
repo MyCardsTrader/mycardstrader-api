@@ -12,13 +12,13 @@ import { firstValueFrom } from "rxjs";
 import {
   CARD_VISION_RESPONSE_SCHEMA,
   CARD_VISION_SYSTEM_PROMPT,
-} from "./card-vision.prompt";
+} from "../utils/card-vision.prompt";
 import {
   CardRecognitionCandidate,
   SCRYFALL_LANGUAGES,
   ScryfallLanguage,
   VisionRecognitionResult,
-} from "./card-scan.types";
+} from "../card-scan.types";
 
 interface OpenRouterResponse {
   model?: string;

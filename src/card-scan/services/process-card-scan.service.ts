@@ -7,10 +7,10 @@ import {
 import { InjectModel } from "@nestjs/mongoose";
 import { Model } from "mongoose";
 import { CardPrintingResolver } from "./card-printing-resolver.service";
-import { CardScanStatus, ScanCardStatus } from "./card-scan.types";
+import { CardScanStatus, ScanCardStatus } from "../card-scan.types";
 import { OpenRouterService } from "./openrouter.service";
-import { CardScan, CardScanDocument } from "./schema/card-scan.schema";
-import { CreateDatasetSamplesService } from "./create-dataset-samples.service";
+import { CreateDatasetSamplesService } from "../dataset/create-dataset-samples.service";
+import { CardScan, CardScanDocument } from "../schemas/card-scan.schema";
 
 export interface ProcessCardScanInput {
   scanId: string;

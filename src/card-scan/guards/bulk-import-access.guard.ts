@@ -4,7 +4,7 @@ import {
   ForbiddenException,
   Injectable,
 } from "@nestjs/common";
-import { UserService } from "../user/user.service";
+import { UserService } from "../../user/user.service";
 @Injectable()
 export class BulkImportAccessGuard implements CanActivate {
   constructor(private readonly userService: UserService) {}

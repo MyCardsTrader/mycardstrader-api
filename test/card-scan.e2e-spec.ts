@@ -9,10 +9,10 @@ import { PassportModule, PassportStrategy } from "@nestjs/passport";
 import { Test } from "@nestjs/testing";
 import { ExtractJwt, Strategy } from "passport-jwt";
 import request from "supertest";
-import { BulkImportAccessGuard } from "../src/card-scan/bulk-import-access.guard";
+import { BulkImportAccessGuard } from "../src/card-scan/guards/bulk-import-access.guard";
 import { UserService } from "../src/user/user.service";
-import { CardScanController } from "../src/card-scan/card-scan.controller";
-import { CardScanService } from "../src/card-scan/card-scan.service";
+import { CardScanController } from "../src/card-scan/controllers/card-scan.controller";
+import { CardScanService } from "../src/card-scan/services/card-scan.service";
 import { CardScanStatus } from "../src/card-scan/card-scan.types";
 const SECRET = "card-scan-test-secret";
 class TestStrategy extends PassportStrategy(Strategy, "jwt") {

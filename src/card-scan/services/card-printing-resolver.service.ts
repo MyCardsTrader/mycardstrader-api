@@ -1,13 +1,13 @@
 import { Injectable } from "@nestjs/common";
 import { randomUUID } from "node:crypto";
-import { normalizeCollectorNumber } from "./collector-number";
+import { normalizeCollectorNumber } from "../utils/collector-number";
 import {
   CardRecognitionCandidate,
   ResolvedScanCard,
   ScanCardStatus,
   ScryfallCard,
   ValidatedPrinting,
-} from "./card-scan.types";
+} from "../card-scan.types";
 import { ScryfallService } from "./scryfall.service";
 const RELIABLE_LANGUAGE_CONFIDENCE = 0.8;
 @Injectable()

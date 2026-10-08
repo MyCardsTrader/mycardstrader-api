@@ -11,7 +11,7 @@ import { CardCropService } from "./card-crop.service";
 import {
   CardScanSample,
   CardScanSampleDocument,
-} from "./schema/card-scan-sample.schema";
+} from "../schemas/card-scan-sample.schema";
 
 @Injectable()
 export class CreateDatasetSamplesService {

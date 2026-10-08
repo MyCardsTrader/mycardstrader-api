@@ -31,13 +31,13 @@ import {
   ApiUnauthorizedResponse,
   ApiUnprocessableEntityResponse,
 } from "@nestjs/swagger";
-import { JwtAuthGuard } from "../auth/jwt.guard";
-import { BulkImportAccessGuard } from "./bulk-import-access.guard";
-import { DEFAULT_CARD_SCAN_MAX_IMAGE_BYTES } from "../config";
-import { CardScanService } from "./card-scan.service";
-import { UploadedImage } from "./card-scan.types";
-import { ListCardScansQueryDto, QualifyScanCardDto } from "./dto";
-import { CardScan } from "./schema/card-scan.schema";
+import { JwtAuthGuard } from "../../auth/jwt.guard";
+import { DEFAULT_CARD_SCAN_MAX_IMAGE_BYTES } from "../../config";
+import { UploadedImage } from "../card-scan.types";
+import { ListCardScansQueryDto, QualifyScanCardDto } from "../dto";
+import { BulkImportAccessGuard } from "../guards/bulk-import-access.guard";
+import { CardScan } from "../schemas/card-scan.schema";
+import { CardScanService } from "../services/card-scan.service";
 @ApiTags("card-scans")
 @ApiBearerAuth()
 @ApiForbiddenResponse({

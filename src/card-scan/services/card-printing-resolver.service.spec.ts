@@ -1,5 +1,5 @@
 import { CardPrintingResolver } from "./card-printing-resolver.service";
-import { ScanCardStatus, ScryfallCard } from "./card-scan.types";
+import { ScanCardStatus, ScryfallCard } from "../card-scan.types";
 import { ScryfallService } from "./scryfall.service";
 const card = (overrides: Partial<ScryfallCard> = {}): ScryfallCard => ({
   id: "11111111-1111-4111-8111-111111111111",
