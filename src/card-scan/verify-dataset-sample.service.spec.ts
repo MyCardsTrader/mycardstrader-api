@@ -1,6 +1,6 @@
 import { NotFoundException } from "@nestjs/common";
 import { VerifyDatasetSampleService } from "./verify-dataset-sample.service";
-import { DatasetLabelStatus } from "../domain/dataset-sample";
+import { DatasetLabelStatus } from "./card-scan-sample.types";
 
 describe("VerifyDatasetSampleService", () => {
   const samples = { findOne: jest.fn() };

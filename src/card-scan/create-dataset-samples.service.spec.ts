@@ -1,5 +1,5 @@
 import { CreateDatasetSamplesService } from "./create-dataset-samples.service";
-import { DatasetLabelStatus } from "../domain/dataset-sample";
+import { DatasetLabelStatus } from "./card-scan-sample.types";
 
 describe("CreateDatasetSamplesService", () => {
   const samples = { exists: jest.fn(), updateOne: jest.fn() };
@@ -13,7 +13,7 @@ describe("CreateDatasetSamplesService", () => {
   const service = new CreateDatasetSamplesService(
     samples as never,
     crops as never,
-    storage,
+    storage as never,
     config as never,
   );
   const base = {

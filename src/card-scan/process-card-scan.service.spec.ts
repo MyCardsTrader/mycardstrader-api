@@ -1,6 +1,6 @@
 import { UnprocessableEntityException } from "@nestjs/common";
 import { ProcessCardScanService } from "./process-card-scan.service";
-import { CardScanStatus, ScanCardStatus } from "../card-scan.types";
+import { CardScanStatus, ScanCardStatus } from "./card-scan.types";
 
 describe("ProcessCardScanService", () => {
   const scans = { findByIdAndUpdate: jest.fn() };

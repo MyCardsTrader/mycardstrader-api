@@ -2,7 +2,7 @@ import { Injectable } from "@nestjs/common";
 import { ConfigService } from "@nestjs/config";
 import { createHash } from "node:crypto";
 import sharp from "sharp";
-import { BoundingBox } from "../../card-scan.types";
+import { BoundingBox } from "./card-scan.types";
 
 export interface GeneratedCrop {
   buffer: Buffer;

@@ -5,14 +5,15 @@ import {
 } from "@aws-sdk/client-s3";
 import { Injectable } from "@nestjs/common";
 import { ConfigService } from "@nestjs/config";
-import {
-  CardCropStorage,
-  PutCardCrop,
-  StoredCardCrop,
-} from "./card-crop-storage";
+export interface PutCardCrop {
+  objectKey: string;
+  buffer: Buffer;
+  mimeType: string;
+  sha256: string;
+}
 
 @Injectable()
-export class S3CardCropStorage implements CardCropStorage {
+export class CardCropStorageService {
   private readonly client: S3Client;
   private readonly bucket: string;
   constructor(config: ConfigService) {
@@ -31,7 +32,7 @@ export class S3CardCropStorage implements CardCropStorage {
       },
     });
   }
-  async put(input: PutCardCrop): Promise<StoredCardCrop> {
+  async put(input: PutCardCrop): Promise<{ objectKey: string }> {
     await this.client.send(
       new PutObjectCommand({
         Bucket: this.bucket,

@@ -5,9 +5,9 @@ jest.mock("@aws-sdk/client-s3", () => ({
   PutObjectCommand: jest.fn((input) => ({ kind: "put", input })),
   DeleteObjectCommand: jest.fn((input) => ({ kind: "delete", input })),
 }));
-import { S3CardCropStorage } from "./s3-card-crop.storage";
+import { CardCropStorageService } from "./card-crop-storage.service";
 
-describe("S3CardCropStorage", () => {
+describe("CardCropStorageService", () => {
   const values: Record<string, unknown> = {
     "cardScan.storage.bucket": "bucket",
     "cardScan.storage.endpoint": "http://minio:9000",
@@ -16,7 +16,7 @@ describe("S3CardCropStorage", () => {
     "cardScan.storage.accessKeyId": "access",
     "cardScan.storage.secretAccessKey": "secret",
   };
-  const storage = new S3CardCropStorage({
+  const storage = new CardCropStorageService({
     getOrThrow: (key: string) => values[key],
   } as never);
   beforeEach(() => send.mockReset());

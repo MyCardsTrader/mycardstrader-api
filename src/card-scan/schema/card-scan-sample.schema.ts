@@ -1,7 +1,7 @@
 import { Prop, Schema, SchemaFactory } from "@nestjs/mongoose";
 import { HydratedDocument, Types } from "mongoose";
-import { DatasetLabelStatus } from "../../domain/dataset-sample";
-import { SCRYFALL_LANGUAGES, ScryfallLanguage } from "../../card-scan.types";
+import { DatasetLabelStatus } from "../card-scan-sample.types";
+import { SCRYFALL_LANGUAGES, ScryfallLanguage } from "../card-scan.types";
 
 export type CardScanSampleDocument = HydratedDocument<CardScanSample>;
 

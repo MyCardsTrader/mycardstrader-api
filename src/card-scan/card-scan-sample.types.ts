@@ -2,7 +2,7 @@ import {
   BoundingBox,
   CardRecognitionCandidate,
   ValidatedPrinting,
-} from "../card-scan.types";
+} from "./card-scan.types";
 
 export enum DatasetLabelStatus {
   PENDING = "pending",

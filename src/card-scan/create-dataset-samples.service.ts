@@ -1,20 +1,17 @@
-import { Inject, Injectable, Logger } from "@nestjs/common";
+import { Injectable, Logger } from "@nestjs/common";
 import { ConfigService } from "@nestjs/config";
 import { InjectModel } from "@nestjs/mongoose";
 import { Model } from "mongoose";
 import {
   DatasetLabelStatus,
   DatasetSampleInput,
-} from "../domain/dataset-sample";
-import { CardCropService } from "../infrastructure/image/card-crop.service";
+} from "./card-scan-sample.types";
+import { CardCropStorageService } from "./card-crop-storage.service";
+import { CardCropService } from "./card-crop.service";
 import {
   CardScanSample,
   CardScanSampleDocument,
-} from "../infrastructure/persistence/card-scan-sample.schema";
-import {
-  CARD_CROP_STORAGE,
-  CardCropStorage,
-} from "../infrastructure/storage/card-crop-storage";
+} from "./schema/card-scan-sample.schema";
 
 @Injectable()
 export class CreateDatasetSamplesService {
@@ -23,7 +20,7 @@ export class CreateDatasetSamplesService {
     @InjectModel(CardScanSample.name)
     private readonly samples: Model<CardScanSampleDocument>,
     private readonly crops: CardCropService,
-    @Inject(CARD_CROP_STORAGE) private readonly storage: CardCropStorage,
+    private readonly storage: CardCropStorageService,
     private readonly config: ConfigService,
   ) {}
 

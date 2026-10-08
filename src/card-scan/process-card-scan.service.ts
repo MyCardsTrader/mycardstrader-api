@@ -6,10 +6,10 @@ import {
 } from "@nestjs/common";
 import { InjectModel } from "@nestjs/mongoose";
 import { Model } from "mongoose";
-import { CardPrintingResolver } from "../card-printing-resolver.service";
-import { CardScanStatus, ScanCardStatus } from "../card-scan.types";
-import { OpenRouterService } from "../openrouter.service";
-import { CardScan, CardScanDocument } from "../schema/card-scan.schema";
+import { CardPrintingResolver } from "./card-printing-resolver.service";
+import { CardScanStatus, ScanCardStatus } from "./card-scan.types";
+import { OpenRouterService } from "./openrouter.service";
+import { CardScan, CardScanDocument } from "./schema/card-scan.schema";
 import { CreateDatasetSamplesService } from "./create-dataset-samples.service";
 
 export interface ProcessCardScanInput {

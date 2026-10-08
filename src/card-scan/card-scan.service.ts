@@ -7,8 +7,8 @@ import {
 import { ConfigService } from "@nestjs/config";
 import { InjectModel } from "@nestjs/mongoose";
 import { Model } from "mongoose";
-import { ProcessCardScanService } from "./application/process-card-scan.service";
-import { VerifyDatasetSampleService } from "./application/verify-dataset-sample.service";
+import { ProcessCardScanService } from "./process-card-scan.service";
+import { VerifyDatasetSampleService } from "./verify-dataset-sample.service";
 import {
   CardScanStatus,
   ResolvedScanCard,

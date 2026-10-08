@@ -11,16 +11,15 @@ import { CardScanService } from "./card-scan.service";
 import { OpenRouterService } from "./openrouter.service";
 import { CardScan, CardScanSchema } from "./schema/card-scan.schema";
 import { ScryfallService } from "./scryfall.service";
-import { ProcessCardScanService } from "./application/process-card-scan.service";
-import { CreateDatasetSamplesService } from "./application/create-dataset-samples.service";
-import { VerifyDatasetSampleService } from "./application/verify-dataset-sample.service";
-import { CardCropService } from "./infrastructure/image/card-crop.service";
+import { CardCropStorageService } from "./card-crop-storage.service";
+import { CardCropService } from "./card-crop.service";
+import { CreateDatasetSamplesService } from "./create-dataset-samples.service";
+import { ProcessCardScanService } from "./process-card-scan.service";
 import {
   CardScanSample,
   CardScanSampleSchema,
-} from "./infrastructure/persistence/card-scan-sample.schema";
-import { CARD_CROP_STORAGE } from "./infrastructure/storage/card-crop-storage";
-import { S3CardCropStorage } from "./infrastructure/storage/s3-card-crop.storage";
+} from "./schema/card-scan-sample.schema";
+import { VerifyDatasetSampleService } from "./verify-dataset-sample.service";
 @Module({
   imports: [
     AuthModule,
@@ -42,8 +41,7 @@ import { S3CardCropStorage } from "./infrastructure/storage/s3-card-crop.storage
     CreateDatasetSamplesService,
     VerifyDatasetSampleService,
     CardCropService,
-    S3CardCropStorage,
-    { provide: CARD_CROP_STORAGE, useExisting: S3CardCropStorage },
+    CardCropStorageService,
   ],
 })
 export class CardScanModule {}
