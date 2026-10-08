@@ -12,13 +12,13 @@ import { firstValueFrom } from "rxjs";
 import {
   CARD_VISION_RESPONSE_SCHEMA,
   CARD_VISION_SYSTEM_PROMPT,
-} from "./card-vision.prompt";
+} from "../utils/card-vision.prompt";
 import {
   CardRecognitionCandidate,
   SCRYFALL_LANGUAGES,
   ScryfallLanguage,
   VisionRecognitionResult,
-} from "./card-scan.types";
+} from "../card-scan.types";
 
 interface OpenRouterResponse {
   model?: string;
@@ -142,8 +142,8 @@ export class OpenRouterService {
     const value = candidate as Record<string, unknown>;
     if (
       !Number.isInteger(value.quantity) ||
-      Number(value.quantity) < 1 ||
-      Number(value.quantity) > 60 ||
+      Number(value.quantity) !== 1 ||
+      !this.isBoundingBox(value.boundingBox) ||
       !this.isOptionalConfidence(value.confidence) ||
       !this.isOptionalConfidence(value.languageConfidence)
     )
@@ -170,7 +170,8 @@ export class OpenRouterService {
       language: language as ScryfallLanguage | undefined,
       set: optionalString("set")?.toLowerCase(),
       collectorNumber: optionalString("collectorNumber"),
-      quantity: Number(value.quantity),
+      quantity: 1,
+      boundingBox: value.boundingBox,
       confidence:
         typeof value.confidence === "number" ? value.confidence : undefined,
       languageConfidence:
@@ -178,6 +179,24 @@ export class OpenRouterService {
           ? value.languageConfidence
           : undefined,
     };
+  }
+  private isBoundingBox(
+    value: unknown,
+  ): value is CardRecognitionCandidate["boundingBox"] {
+    if (typeof value !== "object" || value === null) return false;
+    const box = value as Record<string, unknown>;
+    const coordinates = [box.xMin, box.yMin, box.xMax, box.yMax];
+    return (
+      coordinates.every(
+        (coordinate) =>
+          typeof coordinate === "number" &&
+          Number.isFinite(coordinate) &&
+          coordinate >= 0 &&
+          coordinate <= 1,
+      ) &&
+      (box.xMin as number) < (box.xMax as number) &&
+      (box.yMin as number) < (box.yMax as number)
+    );
   }
   private isOptionalConfidence(value: unknown): boolean {
     return (

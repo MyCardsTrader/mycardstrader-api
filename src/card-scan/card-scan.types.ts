@@ -37,8 +37,15 @@ export interface CardRecognitionCandidate {
   set?: string;
   collectorNumber?: string;
   quantity: number;
+  boundingBox?: BoundingBox;
   confidence?: number;
   languageConfidence?: number;
+}
+export interface BoundingBox {
+  xMin: number;
+  yMin: number;
+  xMax: number;
+  yMax: number;
 }
 export interface ScryfallCard {
   id: string;

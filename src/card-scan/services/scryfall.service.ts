@@ -7,13 +7,13 @@ import {
 import { ConfigService } from "@nestjs/config";
 import { AxiosError, AxiosResponse } from "axios";
 import { firstValueFrom, Observable } from "rxjs";
-import { normalizeCollectorNumber } from "./collector-number";
+import { normalizeCollectorNumber } from "../utils/collector-number";
 import {
   CardRecognitionCandidate,
   SCRYFALL_LANGUAGES,
   ScryfallCard,
   ScryfallLanguage,
-} from "./card-scan.types";
+} from "../card-scan.types";
 interface CollectionResponse {
   data?: ScryfallCard[];
 }

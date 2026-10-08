@@ -1,6 +1,6 @@
 import { CardScanController } from "./card-scan.controller";
-import { CardScanService } from "./card-scan.service";
-import { CardScanStatus } from "./card-scan.types";
+import { CardScanStatus } from "../card-scan.types";
+import { CardScanService } from "../services/card-scan.service";
 describe("CardScanController", () => {
   const service = {
     createScan: jest.fn(),

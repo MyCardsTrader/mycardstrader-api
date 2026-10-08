@@ -1,37 +1,34 @@
 import {
   BadRequestException,
-  HttpException,
   Injectable,
   Logger,
   NotFoundException,
-  UnprocessableEntityException,
 } from "@nestjs/common";
 import { ConfigService } from "@nestjs/config";
 import { InjectModel } from "@nestjs/mongoose";
 import { Model } from "mongoose";
-import { CardPrintingResolver } from "./card-printing-resolver.service";
+import { ProcessCardScanService } from "./process-card-scan.service";
+import { VerifyDatasetSampleService } from "../dataset/verify-dataset-sample.service";
 import {
   CardScanStatus,
   ResolvedScanCard,
   UploadedImage,
   ScanCardStatus,
-} from "./card-scan.types";
-import { OpenRouterService } from "./openrouter.service";
-import { CardScan, CardScanDocument } from "./schema/card-scan.schema";
+} from "../card-scan.types";
+import { CardScan, CardScanDocument } from "../schemas/card-scan.schema";
 const SUPPORTED_IMAGE_TYPES = new Set([
   "image/jpeg",
   "image/png",
   "image/webp",
 ]);
-const MAX_CARDS_PER_SCAN = 60;
 @Injectable()
 export class CardScanService {
   private readonly logger = new Logger(CardScanService.name);
   constructor(
     @InjectModel(CardScan.name) private readonly model: Model<CardScanDocument>,
-    private readonly vision: OpenRouterService,
-    private readonly resolver: CardPrintingResolver,
     private readonly config: ConfigService,
+    private readonly processor: ProcessCardScanService,
+    private readonly datasetVerifier: VerifyDatasetSampleService,
   ) {}
   async createScan(
     userId: string,
@@ -50,59 +47,11 @@ export class CardScanService {
     this.logger.log(
       `Card scan ${scan.id} started with model ${configuredModel}`,
     );
-    try {
-      const result = await this.vision.recognizeCards(
-        file.buffer,
-        file.mimetype,
-      );
-      if (!result.cards.length)
-        throw new UnprocessableEntityException(
-          "No Magic: The Gathering cards were detected",
-        );
-      const quantity = result.cards.reduce(
-        (total, card) => total + card.quantity,
-        0,
-      );
-      if (quantity > MAX_CARDS_PER_SCAN)
-        throw new UnprocessableEntityException(
-          `A scan cannot contain more than ${MAX_CARDS_PER_SCAN} cards`,
-        );
-      const cards = await this.resolver.resolveAll(result.cards);
-      const status = this.computeStatus(cards);
-      const completedScan = await this.model.findByIdAndUpdate(
-        scan.id,
-        {
-          $set: {
-            cards,
-            status,
-            modelUsed: result.model,
-            usage: result.usage,
-            reasoning: result.reasoning,
-          },
-        },
-        { returnDocument: "after" },
-      );
-      const resolved = cards.filter(
-        (card) => card.status === ScanCardStatus.RESOLVED,
-      ).length;
-      const ambiguous = cards.filter(
-        (card) => card.status === ScanCardStatus.AMBIGUOUS,
-      ).length;
-      const notFound = cards.filter(
-        (card) => card.status === ScanCardStatus.NOT_FOUND,
-      ).length;
-      this.logger.log(
-        `Card scan ${completedScan!.id} detected ${quantity} cards: ${resolved} resolved, ${ambiguous} ambiguous, ${notFound} not found`,
-      );
-      return completedScan!;
-    } catch (error) {
-      const reason = this.publicFailureReason(error);
-      await this.model.findByIdAndUpdate(scan.id, {
-        $set: { status: CardScanStatus.FAILED, failureReason: reason },
-      });
-      this.logger.error(`Card scan ${scan.id} failed: ${reason}`);
-      throw error;
-    }
+    return this.processor.execute({
+      scanId: scan.id,
+      userId,
+      image: { buffer: file.buffer, mimeType: file.mimetype },
+    });
   }
   async listScans(
     userId: string,
@@ -135,9 +84,9 @@ export class CardScanService {
       );
     card.resolved = selected;
     card.status = ScanCardStatus.RESOLVED;
-    card.candidates = undefined;
     scan.status = this.computeStatus(scan.cards as ResolvedScanCard[]);
     await scan.save();
+    await this.datasetVerifier.execute(scanId, cardId, userId, selected);
     return scan;
   }
   async markImported(
@@ -162,10 +111,6 @@ export class CardScanService {
     if (file.size > this.config.getOrThrow<number>("cardScan.maxImageBytes"))
       throw new BadRequestException("Image exceeds the configured size limit");
   }
-  private publicFailureReason(error: unknown): string {
-    return error instanceof HttpException ? error.message : "Card scan failed";
-  }
-
   private computeStatus(cards: ResolvedScanCard[]): CardScanStatus {
     return cards.every((card) => card.status === ScanCardStatus.RESOLVED)
       ? CardScanStatus.READY

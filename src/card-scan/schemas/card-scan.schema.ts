@@ -16,6 +16,12 @@ export class DetectedCard {
   @Prop() collectorNumber?: string;
   @Prop({ min: 0, max: 1 }) confidence?: number;
   @Prop({ min: 0, max: 1 }) languageConfidence?: number;
+  @Prop({ required: true, type: Object }) boundingBox: {
+    xMin: number;
+    yMin: number;
+    xMax: number;
+    yMax: number;
+  };
 }
 @Schema({ _id: false })
 export class ValidatedCardPrinting {

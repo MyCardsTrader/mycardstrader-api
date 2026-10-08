@@ -1,6 +1,6 @@
 import { ExecutionContext, ForbiddenException } from "@nestjs/common";
 import { BulkImportAccessGuard } from "./bulk-import-access.guard";
-import { UserService } from "../user/user.service";
+import { UserService } from "../../user/user.service";
 describe("BulkImportAccessGuard", () => {
   const users = { hasBulkImportAccess: jest.fn() };
   let guard: BulkImportAccessGuard;

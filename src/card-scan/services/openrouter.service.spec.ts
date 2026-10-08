@@ -43,7 +43,8 @@ describe("OpenRouterService", () => {
             languageConfidence: 0.95,
             set: "CMM",
             collectorNumber: null,
-            quantity: 2,
+            quantity: 1,
+            boundingBox: { xMin: 0.1, yMin: 0.2, xMax: 0.4, yMax: 0.8 },
             confidence: 0.9,
           },
         ],
@@ -62,7 +63,8 @@ describe("OpenRouterService", () => {
           languageConfidence: 0.95,
           set: "cmm",
           collectorNumber: undefined,
-          quantity: 2,
+          quantity: 1,
+          boundingBox: { xMin: 0.1, yMin: 0.2, xMax: 0.4, yMax: 0.8 },
           confidence: 0.9,
         },
       ],
@@ -164,8 +166,45 @@ describe("OpenRouterService defensive parser branches", () => {
   ])("rejects every malformed boundary", (content) => {
     expect(() => parse(content)).toThrow(BadGatewayException);
   });
+  it.each([
+    {
+      quantity: 1,
+      boundingBox: { xMin: 0, yMin: 0, xMax: 1, yMax: 1 },
+      canonicalName: 4,
+    },
+    {
+      quantity: 1,
+      boundingBox: { xMin: 0, yMin: 0, xMax: 1, yMax: 1 },
+      printedName: " ",
+    },
+    {
+      quantity: 1,
+      boundingBox: { xMin: 0, yMin: 0, xMax: 1, yMax: 1 },
+      language: "xx",
+    },
+    { quantity: 1, boundingBox: null },
+    { quantity: 1, boundingBox: { xMin: null, yMin: 0, xMax: 1, yMax: 1 } },
+    { quantity: 1, boundingBox: { xMin: -1, yMin: 0, xMax: 1, yMax: 1 } },
+    { quantity: 1, boundingBox: { xMin: 0.5, yMin: 0, xMax: 0.5, yMax: 1 } },
+    { quantity: 1, boundingBox: { xMin: 0, yMin: 1, xMax: 1, yMax: 0 } },
+  ])("rejects invalid physical detection data", (candidate) => {
+    expect(() => parse(JSON.stringify({ cards: [candidate] }))).toThrow(
+      BadGatewayException,
+    );
+  });
   it("accepts absent confidence and all absent optional strings", () => {
-    expect(parse(JSON.stringify({ cards: [{ quantity: 1 }] }))).toEqual([
+    expect(
+      parse(
+        JSON.stringify({
+          cards: [
+            {
+              quantity: 1,
+              boundingBox: { xMin: 0, yMin: 0, xMax: 1, yMax: 1 },
+            },
+          ],
+        }),
+      ),
+    ).toEqual([
       {
         printedName: undefined,
         canonicalName: undefined,
@@ -174,6 +213,7 @@ describe("OpenRouterService defensive parser branches", () => {
         set: undefined,
         collectorNumber: undefined,
         quantity: 1,
+        boundingBox: { xMin: 0, yMin: 0, xMax: 1, yMax: 1 },
         confidence: undefined,
       },
     ]);

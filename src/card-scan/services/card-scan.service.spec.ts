@@ -1,8 +1,6 @@
 import { BadRequestException, NotFoundException } from "@nestjs/common";
 import { CardScanService } from "./card-scan.service";
-import { CardPrintingResolver } from "./card-printing-resolver.service";
-import { OpenRouterService } from "./openrouter.service";
-import { CardScanStatus, ScanCardStatus } from "./card-scan.types";
+import { CardScanStatus, ScanCardStatus } from "../card-scan.types";
 const printing = {
   scryfallId: "11111111-1111-4111-8111-111111111111",
   oracleId: "22222222-2222-4222-8222-222222222222",
@@ -13,14 +11,15 @@ const printing = {
 describe("CardScanService qualification and ownership", () => {
   const model = { findOne: jest.fn() };
   const config = { getOrThrow: jest.fn() };
+  const verifier = { execute: jest.fn() };
   let service: CardScanService;
   beforeEach(() => {
     jest.resetAllMocks();
     service = new CardScanService(
       model as never,
-      {} as OpenRouterService,
-      {} as CardPrintingResolver,
       config as never,
+      {} as never,
+      verifier as never,
     );
   });
   it("accepts a stored validated candidate and marks the scan ready", async () => {
@@ -50,6 +49,34 @@ describe("CardScanService qualification and ownership", () => {
       resolved: printing,
     });
     expect(scan.save).toHaveBeenCalled();
+    expect(verifier.execute).toHaveBeenCalledWith(
+      "scan-1",
+      "card-1",
+      "user-1",
+      printing,
+    );
+  });
+  it("keeps review status when another card remains unresolved", async () => {
+    const scan = {
+      cards: [
+        {
+          id: "card-1",
+          status: ScanCardStatus.AMBIGUOUS,
+          candidates: [printing],
+        },
+        { id: "card-2", status: ScanCardStatus.NOT_FOUND },
+      ],
+      status: CardScanStatus.NEEDS_REVIEW,
+      save: jest.fn(),
+    };
+    model.findOne.mockResolvedValue(scan);
+    await service.qualifyCard(
+      "user-1",
+      "scan-1",
+      "card-1",
+      printing.scryfallId,
+    );
+    expect(scan.status).toBe(CardScanStatus.NEEDS_REVIEW);
   });
   it("marks a scan imported when only not-found cards remain", async () => {
     const scan = {
@@ -113,8 +140,7 @@ describe("CardScanService processing", () => {
     findByIdAndUpdate: jest.fn(),
     find: jest.fn(),
   };
-  const vision = { recognizeCards: jest.fn() };
-  const resolver = { resolveAll: jest.fn() };
+  const processor = { execute: jest.fn() };
   const config = {
     getOrThrow: jest.fn((key: string) =>
       key.endsWith("maxImageBytes") ? 10 : "vision-model",
@@ -129,106 +155,33 @@ describe("CardScanService processing", () => {
     );
     service = new CardScanService(
       model as never,
-      vision as unknown as OpenRouterService,
-      resolver as unknown as CardPrintingResolver,
       config as never,
+      processor as never,
+      {} as never,
     );
     model.create.mockResolvedValue({ id: "scan-1" });
   });
   it("processes and stores a ready scan", async () => {
-    vision.recognizeCards.mockResolvedValue({
-      cards: [{ name: "Sol Ring", quantity: 1 }],
-      model: "actual",
-      usage: { totalTokens: 5 },
-      reasoning: "The image shows Sol Ring.",
-    });
-    resolver.resolveAll.mockResolvedValue([
-      {
-        id: "card-1",
-        quantity: 1,
-        detected: {},
-        status: ScanCardStatus.RESOLVED,
-        resolved: printing,
-      },
-    ]);
-    model.findByIdAndUpdate.mockResolvedValue({
+    processor.execute.mockResolvedValue({
       id: "scan-1",
       status: CardScanStatus.READY,
     });
     await expect(service.createScan("user-1", file)).resolves.toMatchObject({
       status: CardScanStatus.READY,
     });
-    expect(model.findByIdAndUpdate).toHaveBeenCalledWith(
-      "scan-1",
-      expect.objectContaining({
-        $set: expect.objectContaining({
-          status: CardScanStatus.READY,
-          modelUsed: "actual",
-          reasoning: "The image shows Sol Ring.",
-        }),
-      }),
-      { returnDocument: "after" },
-    );
+    expect(processor.execute).toHaveBeenCalledWith({
+      scanId: "scan-1",
+      userId: "user-1",
+      image: { buffer: file.buffer, mimeType: file.mimetype },
+    });
   });
   it("marks a scan needs_review when one result is unresolved", async () => {
-    vision.recognizeCards.mockResolvedValue({
-      cards: [{ name: "Unknown", quantity: 1 }],
-      model: "actual",
-    });
-    resolver.resolveAll.mockResolvedValue([
-      {
-        id: "card-1",
-        quantity: 1,
-        detected: {},
-        status: ScanCardStatus.NOT_FOUND,
-      },
-    ]);
-    model.findByIdAndUpdate.mockResolvedValue({
+    processor.execute.mockResolvedValue({
       id: "scan-1",
       status: CardScanStatus.NEEDS_REVIEW,
     });
     await expect(service.createScan("user-1", file)).resolves.toMatchObject({
       status: CardScanStatus.NEEDS_REVIEW,
-    });
-  });
-  it.each([
-    { cards: [], message: "No Magic" },
-    { cards: [{ quantity: 60 }, { quantity: 1 }], message: "more than 60" },
-  ])(
-    "persists failed scans for unusable model results",
-    async ({ cards, message }) => {
-      vision.recognizeCards.mockResolvedValue({ cards, model: "actual" });
-      model.findByIdAndUpdate.mockResolvedValue({});
-      await expect(service.createScan("user-1", file)).rejects.toThrow(message);
-      expect(model.findByIdAndUpdate).toHaveBeenCalledWith("scan-1", {
-        $set: expect.objectContaining({ status: CardScanStatus.FAILED }),
-      });
-    },
-  );
-  it("persists a safe generic failure reason", async () => {
-    vision.recognizeCards.mockRejectedValue("provider failed");
-    model.findByIdAndUpdate.mockResolvedValue({});
-    await expect(service.createScan("user-1", file)).rejects.toBe(
-      "provider failed",
-    );
-    expect(model.findByIdAndUpdate).toHaveBeenCalledWith("scan-1", {
-      $set: {
-        status: CardScanStatus.FAILED,
-        failureReason: "Card scan failed",
-      },
-    });
-  });
-  it("hides unexpected Error details", async () => {
-    vision.recognizeCards.mockRejectedValue(new Error("database secret"));
-    model.findByIdAndUpdate.mockResolvedValue({});
-    await expect(service.createScan("user-1", file)).rejects.toThrow(
-      "database secret",
-    );
-    expect(model.findByIdAndUpdate).toHaveBeenCalledWith("scan-1", {
-      $set: {
-        status: CardScanStatus.FAILED,
-        failureReason: "Card scan failed",
-      },
     });
   });
   it.each([
